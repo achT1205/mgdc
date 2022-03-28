@@ -1,0 +1,50 @@
+$block-big-margin: 150px;
+$block-medium-margin: 100px;
+$block-small-margin: 50px;
+
+$big-dip-o-ruby: #ac1c41;
+$black: #000000;
+$brick-red: #d24756;
+$cerise-red: #e53261;
+$flame-pea: #e26437;
+$hibiscus: #b83374;
+$plum: #993783;
+$rouge: #9d3681;
+$rusty-red: #d33847;
+$thunderbird: #de2b1a;
+$white: #ffffff;
+$black: #00000b;
+
+$layout-breakpoint-small: 576px; //420px
+$layout-breakpoint-medium: 768px; //670px
+$layout-breakpoint-large: 992px; //880px
+$layout-breakpoint-xlarge: 1200px; //1040px
+$layout-breakpoint-xxlarge: 1700px; //1040px
+
+:root {
+  --big-dip-o-ruby: #ac1c41;
+  --black: #000000;
+  --brick-red: #d24756;
+  --cerise-red: #e53261;
+  --flame-pea: #e26437;
+  --hibiscus: #b83374;
+  --plum: #993783;
+  --rouge: #9d3681;
+  --rusty-red: #d33847;
+  --thunderbird: #de2b1a;
+  --white: #ffffff;
+
+  --font-size-l: 40px;
+  --font-size-m: 36px;
+  --font-size-s: 30px;
+  --font-size-xl: 80px;
+  --font-size-xs: 19px;
+  --font-size-xxl: 87px;
+  --font-size-xxxl: 120px;
+
+  --font-family-acme: "Acme", Helvetica;
+  --font-family-helveticaneue-regular: "HelveticaNeue-Regular", Helvetica;
+  --font-family-jaapokki-regular: "Jaapokki-Regular", Helvetica;
+  --font-family-jumble: "Jumble", Helvetica;
+  --font-family-jumble-regular: "Jumble-Regular", Helvetica;
+}

@@ -1,0 +1,632 @@
+<template>
+  <div class="page">
+    <div class="viewContainer mint">
+      <div class="mintCard">
+        <p class="title1 mintTitle">MGDC profile</p>
+        <p class="text howMa">List your MDGC</p>
+        <button class="connectButton" @click="connectWallet">{{ accountID === "" ? "Connect wallet" : accountID.substring(1, 9) + "..." + accountID.substring(accountID.length - 6) }}</button>
+      </div>
+
+      <div class="breedCard" style="">
+        <div class="text nbNft" style="margin-bottom: 25px">Owned MGDC : {{ MGDC.length }}</div>
+        <div class="contentTeam ct2">
+          <BreedCard v-for="(item, i) in MGDC" :key="'b' + i" :profOrBreed="'prof'" :id="item.token_id" :breed="item.hasBreed" :listed="item.isListed" :pic="item.metadata ? item.metadata : ''" :token="item.token_id" />
+        </div>
+      </div>
+
+      <!-- <div class="mintCard">
+        <div class="viewContainer team" v-for="item in MGDC" :key="item.token_id">
+          ID : {{ item.token_id }}
+          <br />
+          <br />
+          Has breeded : {{ item.hasBreed ? "true" : "false" }}
+          <br />
+          <br />
+          Is Listed to breed : {{ item.isListed ? "true" : "false" }}
+          <br />
+          <br />
+          <div class="teamMember">
+            <div class="picContainer"><img class="pic" data-v-16dd8cbd :src="item.metadata ? item.metadata : ''" /></div>
+            <button class="connectButton" @click="list(item.token_id)">{{ item.isListed ? "Already Listed" : "List on Tinder-Ape" }}</button>
+          </div>
+          <br />
+          <br />
+        </div>
+      </div> -->
+    </div>
+    <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
+    <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
+  </div>
+</template>
+
+<script>
+import BreedCard from "@/components/BreedCard";
+
+var Web3 = require("web3");
+var CryptoJS = require("crypto-js");
+import breed from "../abis/breed.json";
+import MGDC from "../abis/mgdc.json";
+import address from "../address/address.json";
+import Moralis from "moralis";
+import axios from "axios";
+var MerkleTree = require("merkletreejs").MerkleTree;
+var SHA256 = CryptoJS.SHA256;
+
+const leaves = address.addresses.map((x) => x.replace("0x", "0x000000000000000000000000"));
+const tree = new MerkleTree(leaves, SHA256, { sortPairs: true });
+const root = tree.getRoot().toString("hex");
+
+export default {
+  name: "Profile",
+  components: { BreedCard },
+  data() {
+    return {
+      address: "",
+      accountID: "",
+      accountBalance: 0,
+      abi: [],
+      contract: [],
+      wlClaimed: 0,
+      // Contract
+      isActive: false,
+      isPresaleActive: false,
+      currentSupply: 0,
+      totalTokens: 5369,
+      maxSupply: 5369,
+      buyLimit: 2,
+      nftPrice: 250000000000000000,
+      whiteListMaxMint: 2,
+      notAllowed: false,
+      // Form data
+      nftsCountToMint: 2,
+      minted: false,
+      isMinting: false,
+      MGDC: [
+        // {
+        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
+        //   token_id: "4969",
+        //   block_number_minted: "14074267",
+        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
+        //   block_number: "14074267",
+        //   amount: "1",
+        //   contract_type: "ERC721",
+        //   name: "Meta Gold Digger Club",
+        //   symbol: "MGDC",
+        //   token_uri: null,
+        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
+        //   synced_at: null,
+        //   is_valid: 0,
+        //   syncing: 1,
+        //   frozen: 0,
+        //   hasBreed: false,
+        //   isListed: false,
+        // },
+        // {
+        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
+        //   token_id: "2",
+        //   block_number_minted: "14075098",
+        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
+        //   block_number: "14075098",
+        //   amount: "1",
+        //   contract_type: "ERC721",
+        //   name: "Meta Gold Digger Club",
+        //   symbol: "MGDC",
+        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
+        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
+        //   synced_at: "2022-01-25T13:47:40.635Z",
+        //   is_valid: 1,
+        //   syncing: 2,
+        //   frozen: 0,
+        //   hasBreed: false,
+        //   isListed: false,
+        // },
+        // {
+        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
+        //   token_id: "1",
+        //   block_number_minted: "14075078",
+        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
+        //   block_number: "14075078",
+        //   amount: "1",
+        //   contract_type: "ERC721",
+        //   name: "Meta Gold Digger Club",
+        //   symbol: "MGDC",
+        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
+        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
+        //   synced_at: "2022-01-25T13:43:02.374Z",
+        //   is_valid: 1,
+        //   syncing: 2,
+        //   frozen: 0,
+        //   hasBreed: false,
+        //   isListed: false,
+        // },
+        // {
+        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
+        //   token_id: "4969",
+        //   block_number_minted: "14074267",
+        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
+        //   block_number: "14074267",
+        //   amount: "1",
+        //   contract_type: "ERC721",
+        //   name: "Meta Gold Digger Club",
+        //   symbol: "MGDC",
+        //   token_uri: null,
+        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
+        //   synced_at: null,
+        //   is_valid: 0,
+        //   syncing: 1,
+        //   frozen: 0,
+        //   hasBreed: false,
+        //   isListed: false,
+        // },
+        // {
+        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
+        //   token_id: "2",
+        //   block_number_minted: "14075098",
+        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
+        //   block_number: "14075098",
+        //   amount: "1",
+        //   contract_type: "ERC721",
+        //   name: "Meta Gold Digger Club",
+        //   symbol: "MGDC",
+        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
+        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
+        //   synced_at: "2022-01-25T13:47:40.635Z",
+        //   is_valid: 1,
+        //   syncing: 2,
+        //   frozen: 0,
+        //   hasBreed: false,
+        //   isListed: false,
+        // },
+        // {
+        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
+        //   token_id: "1",
+        //   block_number_minted: "14075078",
+        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
+        //   block_number: "14075078",
+        //   amount: "1",
+        //   contract_type: "ERC721",
+        //   name: "Meta Gold Digger Club",
+        //   symbol: "MGDC",
+        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
+        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
+        //   synced_at: "2022-01-25T13:43:02.374Z",
+        //   is_valid: 1,
+        //   syncing: 2,
+        //   frozen: 0,
+        //   hasBreed: false,
+        //   isListed: false,
+        // },
+      ],
+      contractMGDC: [],
+    };
+  },
+  async created() {
+    await this.loadWeb3();
+  },
+  methods: {
+    GetMerkleProof(walletAddress) {
+      const leaf = walletAddress;
+      return tree.getHexProof(leaf.replace("0x", "0x000000000000000000000000"));
+    },
+    GetRoot() {
+      console.log("root");
+      console.log(root);
+      console.log(address.addresses.length);
+      console.log("contract : " + this.address);
+      return `0x${root}`;
+    },
+    async loadWeb3() {
+      const serverUrl = "https://jscrvqk2kalm.usemoralis.com:2053/server"; //'https://ttbvxxqntz1v.usemoralis.com:2053/server';
+      const appId = "000zXI8oQpWQybSDy0eXKh7OVMYOl6I91SxMetpQ"; //'D8jmxu2Y96KWnah4acDrAKNrxfky8MJ08QKFK9f9';
+      Moralis.start({ serverUrl, appId });
+
+      if (window.ethereum) {
+        window.web3 = new Web3(window.ethereum);
+
+        window.ethereum.on("accountsChanged", async (accounts) => {
+          await this.setWallet(accounts[0]);
+
+          this.wlClaimed = await this.contract.methods.whiteListClaimed(this.accountID).call();
+        });
+      } else if (window.web3) {
+        window.web3 = new Web3(window.web3.currentProvider);
+      } else {
+        window.alert("Non-Ethereum browser detected. You should consider trying MetaMask !");
+      }
+
+      await this.loadContractData();
+      setInterval(
+        function () {
+          this.loadContractData();
+        }.bind(this),
+        1000
+      );
+    },
+    async pick(nftsCountToMint) {
+      this.nftsCountToMint = nftsCountToMint;
+      console.log(this.nftsCountToMint);
+    },
+    async loadContractData() {
+      const web3 = window.web3;
+      const networkId = await web3.eth.net.getId();
+
+      if (networkId !== breed.network) {
+        window.alert("Please change to ethereum mainnet.");
+        return;
+      }
+
+      this.abi = breed.abi;
+      this.address = breed.address;
+      this.contract = new web3.eth.Contract(this.abi, this.address);
+      this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
+    },
+    async setWallet(address) {
+      this.accountID = address;
+      this.notAllowed = false;
+      this.accountBalance = await window.web3.eth.getBalance(this.accountID);
+    },
+    async connectWallet() {
+      console.log("Connect to wallet");
+      const web3js = window.web3;
+      if (typeof web3js !== "undefined") {
+        this.web3 = new Web3(web3js.currentProvider);
+        const accounts = await window.ethereum
+          .request({
+            method: "eth_requestAccounts",
+          })
+          .catch((err) => {
+            alert(err.message);
+          });
+        await this.setWallet(accounts[0]);
+        let result = await Moralis.Web3API.account.getNFTsForContract({
+          chain: "Eth",
+          address: this.accountID,
+          token_address: "0x0191c41DBceB20a612b25137133ca719E84f7933", //change for contract address
+        });
+
+        this.MGDC = result.result;
+
+        this.MGDC = this.MGDC.map((e) => {
+          if (e.metadata == null) return e;
+          e.metadata = JSON.parse(e.metadata).image;
+
+          return e;
+        });
+
+        for (var i = 0; i < this.MGDC.length; i++) {
+          this.MGDC[i].hasBreed = await this.contract.methods.hasBreed(this.MGDC[i].token_id).call();
+          this.MGDC[i].isListed = await this.contract.methods.MGDCisBreeding(this.MGDC[i].token_id).call();
+          let token = await this.contractMGDC.methods.tokenURI(this.MGDC[i].token_id).call();
+          console.log(token);
+
+          token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
+          console.log("token", token.data.image);
+          this.MGDC[i].metadata = token.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+        }
+        console.log(this.MGDC);
+        console.log("wlClaimed " + this.wlClaimed);
+      } else {
+        // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
+        alert("Unable to connect to Metamask");
+      }
+    },
+    async list(token_id) {
+      console.log(token_id);
+
+      await this.contract.methods
+        .listBreeding(token_id)
+        .send({
+          from: this.accountID,
+          value: "250000000000000000",
+        })
+        .on("receipt", function (res) {
+          this.minted = true;
+          this.isMinting = false;
+          console.log("Receipt :", res);
+        })
+        .on("error", function (err) {
+          console.log("error:" + err);
+          alert("Transaction Error");
+          this.isMinting = false;
+        });
+    },
+    //Minting Functionality
+    async mint(e) {
+      this.isMinting = true;
+      e.preventDefault();
+
+      if (this.accountID === "") {
+        window.alert("Please connect wallet first!");
+        this.isMinting = false;
+        return;
+      } else if (this.accountBalance <= this.nftPrice * this.nftsCountToMint) {
+        this.isMinting = false;
+        alert(`Insufficient funds`);
+        return;
+      }
+
+      this.isActive = await this.contract.methods.isActive().call();
+      this.isPresaleActive = await this.contract.methods.isPresaleActive().call();
+      console.log("isActive : ", this.isActive);
+      console.log("isPresaleActive : ", this.isPresaleActive);
+
+      if (!this.isActive) {
+        this.isMinting = false;
+        alert("Sale is not active yet!");
+        return;
+      }
+
+      const noOfTokens = this.nftsCountToMint;
+      console.log("nftPrice : ", this.nftPrice);
+      if (this.isPresaleActive == true) {
+        this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
+        this.wlClaimed = parseInt(await this.contract.methods.whiteListClaimed(this.accountID).call());
+
+        if (this.wlClaimed + this.nftsCountToMint > this.whiteListMaxMint) {
+          alert(`Already minted ${this.wlClaimed} but max is ${this.whiteListMaxMint}`);
+          this.notAllowed = true;
+          this.isMinting = false;
+          return;
+        }
+
+        console.log("whiteListMaxMint : ", this.whiteListMaxMint);
+        if (noOfTokens < 1 || noOfTokens == undefined) {
+          alert("Select at least 1 NFT!");
+        } else if (noOfTokens > this.whiteListMaxMint) {
+          alert("Buy limit for presale is : " + this.whiteListMaxMint);
+          this.notAllowed = true;
+          this.isMinting = false;
+        } else if (this.totalSupply >= this.totalTokens) {
+          alert("Sold out!");
+        } else {
+          const proof = await this.GetMerkleProof(this.accountID);
+          if (proof.length == 0) {
+            alert("This wallet is not whitelisted");
+            this.notAllowed = true;
+            this.isMinting = false;
+          } else {
+            const result = await this.contract.methods
+              .mintNFTDuringPresale(noOfTokens, proof)
+              .send({
+                from: this.accountID,
+                value: parseInt(this.nftPrice) * noOfTokens,
+              })
+              .on("receipt", function (res) {
+                this.minted = true;
+                this.isMinting = false;
+                console.log("Receipt :", res);
+              })
+              .on("error", function (err) {
+                console.log("error:" + err);
+                alert("Transaction Error");
+                this.isMinting = false;
+              });
+            this.minted = true;
+            console.log("Test :", result);
+          }
+        }
+      } else {
+        if (noOfTokens < 1 || noOfTokens == undefined) {
+          alert("Select at least 1 NFT!");
+        } else if (this.totalSupply >= this.currentSupply) {
+          alert("Sold out!");
+        } else {
+          const result = await this.contract.methods
+            .mintNFT(noOfTokens)
+            .send({
+              from: this.accountID,
+              value: parseInt(this.nftPrice) * noOfTokens,
+            })
+            .on("receipt", function (res) {
+              this.minted = true;
+              this.isMinting = false;
+              console.log("Receipt :", res);
+            })
+            .on("error", function (err) {
+              console.log(err);
+              alert("Transaction Error");
+              this.isMinting = false;
+            });
+          this.minted = true;
+          console.log("Test :", result);
+        }
+      }
+      this.isMinting = false;
+    },
+  },
+};
+</script>
+
+<style lang="scss">
+.page {
+  background: linear-gradient(180deg, #edbcad 1.31%, #f0d0df 27.36%, #edb8ed 56.4%);
+}
+
+.mint {
+  background-image: url("~@/assets/imgs/gold-digger-house-4@1x.png");
+  background-size: 120% 180%;
+  background-repeat: no-repeat;
+  background-position-x: 20%;
+  padding-top: 5vh;
+  padding-bottom: 5vh;
+  min-height: 100vh;
+}
+
+@media screen and (max-width: $layout-breakpoint-medium) {
+  .mint {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.mintTitle {
+  width: 100%;
+  text-transform: uppercase;
+  font-size: 80px;
+  margin-top: 50px;
+  margin-bottom: 25px;
+  filter: drop-shadow(10px -20px 1px rgb(229, 50, 97));
+  transition: all 500ms ease-in-out;
+  animation: moveTrailer 2000ms infinite linear;
+}
+@media screen and (max-width: $layout-breakpoint-xxlarge) {
+  .mintTitle {
+    margin-bottom: 25px;
+    font-size: 50px;
+  }
+}
+@media screen and (max-width: $layout-breakpoint-large) {
+  .mintTitle {
+    font-size: 40px;
+  }
+}
+@media screen and (max-width: $layout-breakpoint-medium) {
+  .mintTitle {
+    font-size: 30px;
+  }
+}
+@media screen and (max-width: $layout-breakpoint-small) {
+  .mintTitle {
+    font-size: 30px;
+  }
+}
+
+.mintCard {
+  border-radius: 50px;
+  width: 50%;
+  max-width: 1200px;
+  margin: auto;
+  background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
+  box-shadow: 0 0 20px #e56932;
+  //border: 5px solid #e56932;
+  z-index: 1000;
+  min-height: 0;
+}
+@media screen and (max-width: $layout-breakpoint-medium) {
+  .mintCard {
+    padding: 25px;
+    border-radius: 0px;
+    // min-height: 100vh;
+    width: 100%;
+  }
+}
+
+.breedCard {
+  border-radius: 50px;
+  width: 50%;
+  max-width: 1200px;
+  margin: auto;
+  margin-top: 100px;
+  padding-top: 50px;
+  background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
+  box-shadow: 0 0 20px #e56932;
+  //border: 5px solid #e56932;
+  z-index: 1000;
+}
+@media screen and (max-width: $layout-breakpoint-medium) {
+  .breedCard {
+    padding: 25px;
+    border-radius: 0px;
+    width: 100%;
+    margin-top: 0px;
+  }
+}
+
+.howMa {
+  margin: auto;
+  margin-bottom: 50px;
+  text-align: center;
+  transition: all 100ms ease-in-out;
+  animation: shineT7 3000ms infinite alternate;
+}
+@keyframes shineT7 {
+  0% {
+    filter: drop-shadow(0px 0px 0px $white);
+  }
+  50% {
+    filter: drop-shadow(0px 0px 2px $white);
+  }
+  100% {
+    filter: drop-shadow(0px 0px 0px $white);
+  }
+}
+@media screen and (max-width: $layout-breakpoint-xxlarge) {
+  .howMa {
+    margin-bottom: 25px;
+  }
+}
+
+button {
+  font-family: var(--font-family-acme);
+  border-radius: 15px;
+  border: 8px solid pink;
+  background-color: transparent;
+  color: $white;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 3px;
+  opacity: 0.85;
+  transition: all 100ms ease-in-out;
+  cursor: pointer;
+  &:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0px 0px 7px 0px #ffffff;
+  }
+}
+
+.connectButton {
+  margin-top: 25px;
+  margin-bottom: 50px;
+  padding: 15px 40px;
+  font-size: 30px;
+}
+@media screen and (max-width: $layout-breakpoint-xxlarge) {
+  .connectButton {
+    margin-top: 25px;
+    padding: 10px 20px;
+    font-size: 20px;
+    border-radius: 15px;
+    border: 4px solid pink;
+  }
+}
+
+.validateButton {
+  margin-top: 20px;
+  padding: 15px 40px;
+  font-size: 30px;
+  margin-bottom: 50px;
+}
+@media screen and (max-width: $layout-breakpoint-xxlarge) {
+  .validateButton {
+    margin-top: 25px;
+    padding: 10px 20px;
+    font-size: 20px;
+    border-radius: 15px;
+    border: 4px solid pink;
+  }
+}
+
+.nftPrice {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.nbNft {
+  text-align: center;
+}
+
+.coin22 {
+  position: absolute;
+  right: 0;
+  bottom: 10%;
+  width: 200px;
+}
+
+.redlip22 {
+  position: absolute;
+  bottom: 10%;
+  width: 300px;
+  left: 50px;
+}
+</style>

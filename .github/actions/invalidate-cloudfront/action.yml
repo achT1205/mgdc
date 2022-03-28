@@ -1,0 +1,43 @@
+---
+name: "Invalidate cloudfront"
+description: "Build and push docker images to a registry"
+
+inputs:
+  # Login
+  aws-access-key-id:
+    description: "AWS access key ID"
+    required: true
+  aws-secret-access-key:
+    description: "AWS secret access key"
+    required: true
+  aws-region:
+    description: "AWS Region"
+    required: true
+  aws_role_to_assume:
+    description: "AWS role arn to assume"
+    required: true
+  # Build
+  paths:
+    description: "A list of one or more space-separated paths to invalidate"
+    required: true
+  distribution:
+    description: "Cloudfront distribution ID to operate on, e.g., 'EDFDVBD6EXAMPLE'"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: ${{ inputs.aws_role_to_assume }}
+        role-skip-session-tagging: true
+        role-duration-seconds: 3600
+
+    - name: Invalidate CloudFront cache
+      shell: bash
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ inputs.distribution }} --paths ${{ inputs.paths }}

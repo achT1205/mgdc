@@ -1,0 +1,48 @@
+---
+name: "[CI] Sync S3 and invalidate Cloudfront"
+
+# Trigger on main
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+
+jobs:
+  sync_and_invalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup → Checkout
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-node@master
+
+      - name: Installing project dependencies
+        run: npm install
+
+      - name: Building the project
+        run: npm run build
+
+      - name: Sync → S3 Bucket
+        id: sync-s3
+        uses: ./.github/actions/sync-s3
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          source-dir: "./dist"
+          s3-bucket: ${{ secrets.S3_BUCKET }}
+
+      - name: Invalidate → Cloudfront Cache Prod
+        id: invalidate-cloudfront
+        uses: ./.github/actions/invalidate-cloudfront
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID: 
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          paths: "'/*'"
+          distribution: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
