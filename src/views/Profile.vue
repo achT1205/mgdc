@@ -1,6 +1,7 @@
 <template>
   <div class="page">
     <div class="viewContainer mint">
+      <switcher></switcher>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
         <p class="text howMa">List your MDGC</p>
@@ -49,6 +50,7 @@ import MGDC from "../abis/mgdc.json";
 import address from "../address/address.json";
 import Moralis from "moralis";
 import axios from "axios";
+import Switcher from '../components/Switcher.vue';
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
 
@@ -58,7 +60,7 @@ const root = tree.getRoot().toString("hex");
 
 export default {
   name: "Profile",
-  components: { BreedCard },
+  components: { BreedCard, Switcher },
   data() {
     return {
       address: "",

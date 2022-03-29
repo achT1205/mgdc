@@ -48,6 +48,7 @@
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
+    <breed-sidebar />
   </div>
 </template>
 
@@ -57,6 +58,7 @@ var CryptoJS = require("crypto-js");
 import breed from "../abis/breed.json";
 import MGDC from "../abis/mgdc.json";
 import address from "../address/address.json";
+import BreedSidebar from '@/components/BreedSidebar.vue'
 import axios from "axios";
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
@@ -67,9 +69,12 @@ const root = tree.getRoot().toString("hex");
 
 export default {
   name: "Breed",
-  components: {},
+  components: {
+    BreedSidebar,
+  },
   data() {
     return {
+      sidebar: false,
       address: "",
       accountID: "",
       accountBalance: 0,
