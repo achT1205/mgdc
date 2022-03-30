@@ -1,9 +1,9 @@
 <template>
   <div class="switcher">
-    <div class="switches" >
+    <div class="switches">
       <label>BAYX</label>
-      <div @click="switcher" class="switches-byx" >
-        <div class="switches-round" :class="switching ? 'primary':''"></div>
+      <div @click="switcher" class="switches-byx">
+        <div class="switches-round" :class="switching ? 'primary' : ''"></div>
       </div>
       <label>Hape Beast</label>
     </div>
@@ -13,25 +13,30 @@
 <script>
 export default {
   data: () => ({
-    cryptoType: 'BAYC',
+    cryptoType: "BAYC",
     switching: false,
   }),
-  methods:{
-    switcher(){
+  methods: {
+    switcher() {
       this.switching = !this.switching;
-      if (this.switching) this.cryptoType = 'Hape Beast'
-      else this.cryptoType = 'BAYC';
-    }
-  }
-}
+      if (this.switching) {
+        this.contractType = "Hape Beast";
+        this.$emit("changeSmartcontract", "Hape");
+      } else {
+        this.contractType = "BAYC";
+        this.$emit("changeSmartcontract", "BAYC");
+      }
+    },
+  },
+};
 </script>
 <style lang="scss" scoped>
-.switcher{
-  .switches{
+.switcher {
+  .switches {
     display: flex;
     align-items: center;
   }
-  .switches-byx{
+  .switches-byx {
     width: 40px;
     border-radius: 10px;
     height: 20px;
@@ -40,16 +45,16 @@ export default {
     display: flex;
     align-items: center;
     cursor: pointer;
-    .switches-round{
+    .switches-round {
       transition: all 200ms linear;
       background: #fff;
       height: 16px;
       width: 16px;
       border-radius: 100%;
-      margin: 0 2px ;
+      margin: 0 2px;
       transform: translateX(0);
     }
-    .switches-round.primary{
+    .switches-round.primary {
       transform: translateX(18px);
     }
   }

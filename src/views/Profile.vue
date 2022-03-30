@@ -1,17 +1,36 @@
 <template>
   <div class="page">
     <div class="viewContainer mint">
-      <switcher></switcher>
+      <switcher @changeSmartcontract="changeSmartcontract" />
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
         <p class="text howMa">List your MDGC</p>
-        <button class="connectButton" @click="connectWallet">{{ accountID === "" ? "Connect wallet" : accountID.substring(1, 9) + "..." + accountID.substring(accountID.length - 6) }}</button>
+        <button class="connectButton" @click="connectWallet">
+          {{
+            accountID === ""
+              ? "Connect wallet"
+              : accountID.substring(1, 9) +
+                "..." +
+                accountID.substring(accountID.length - 6)
+          }}
+        </button>
       </div>
 
       <div class="breedCard" style="">
-        <div class="text nbNft" style="margin-bottom: 25px">Owned MGDC : {{ MGDC.length }}</div>
+        <div class="text nbNft" style="margin-bottom: 25px">
+          Owned MGDC : {{ MGDC.length }}
+        </div>
         <div class="contentTeam ct2">
-          <BreedCard v-for="(item, i) in MGDC" :key="'b' + i" :profOrBreed="'prof'" :id="item.token_id" :breed="item.hasBreed" :listed="item.isListed" :pic="item.metadata ? item.metadata : ''" :token="item.token_id" />
+          <BreedCard
+            v-for="(item, i) in MGDC"
+            :key="'b' + i"
+            :profOrBreed="'prof'"
+            :id="item.token_id"
+            :breed="item.hasBreed"
+            :listed="item.isListed"
+            :pic="item.metadata ? item.metadata : ''"
+            :token="item.token_id"
+          />
         </div>
       </div>
 
@@ -50,11 +69,15 @@ import MGDC from "../abis/mgdc.json";
 import address from "../address/address.json";
 import Moralis from "moralis";
 import axios from "axios";
-import Switcher from '../components/Switcher.vue';
+import Switcher from "../components/Switcher.vue";
+
+
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
 
-const leaves = address.addresses.map((x) => x.replace("0x", "0x000000000000000000000000"));
+const leaves = address.addresses.map((x) =>
+  x.replace("0x", "0x000000000000000000000000")
+);
 const tree = new MerkleTree(leaves, SHA256, { sortPairs: true });
 const root = tree.getRoot().toString("hex");
 
@@ -228,12 +251,16 @@ export default {
         window.ethereum.on("accountsChanged", async (accounts) => {
           await this.setWallet(accounts[0]);
 
-          this.wlClaimed = await this.contract.methods.whiteListClaimed(this.accountID).call();
+          this.wlClaimed = await this.contract.methods
+            .whiteListClaimed(this.accountID)
+            .call();
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
       } else {
-        window.alert("Non-Ethereum browser detected. You should consider trying MetaMask !");
+        window.alert(
+          "Non-Ethereum browser detected. You should consider trying MetaMask !"
+        );
       }
 
       await this.loadContractData();
@@ -248,7 +275,7 @@ export default {
       this.nftsCountToMint = nftsCountToMint;
       console.log(this.nftsCountToMint);
     },
-    async loadContractData() {
+    async loadContractData(contract = null) {
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
 
@@ -259,6 +286,7 @@ export default {
 
       this.abi = breed.abi;
       this.address = breed.address;
+      if (contract) this.address = contract;
       this.contract = new web3.eth.Contract(this.abi, this.address);
       this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
     },
@@ -296,14 +324,23 @@ export default {
         });
 
         for (var i = 0; i < this.MGDC.length; i++) {
-          this.MGDC[i].hasBreed = await this.contract.methods.hasBreed(this.MGDC[i].token_id).call();
-          this.MGDC[i].isListed = await this.contract.methods.MGDCisBreeding(this.MGDC[i].token_id).call();
-          let token = await this.contractMGDC.methods.tokenURI(this.MGDC[i].token_id).call();
+          this.MGDC[i].hasBreed = await this.contract.methods
+            .hasBreed(this.MGDC[i].token_id)
+            .call();
+          this.MGDC[i].isListed = await this.contract.methods
+            .MGDCisBreeding(this.MGDC[i].token_id)
+            .call();
+          let token = await this.contractMGDC.methods
+            .tokenURI(this.MGDC[i].token_id)
+            .call();
           console.log(token);
 
           token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
           console.log("token", token.data.image);
-          this.MGDC[i].metadata = token.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+          this.MGDC[i].metadata = token.data.image.replace(
+            "ipfs://",
+            "https://ipfs.io/ipfs/"
+          );
         }
         console.log(this.MGDC);
         console.log("wlClaimed " + this.wlClaimed);
@@ -362,7 +399,9 @@ export default {
       console.log("nftPrice : ", this.nftPrice);
       if (this.isPresaleActive == true) {
         this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
-        this.wlClaimed = parseInt(await this.contract.methods.whiteListClaimed(this.accountID).call());
+        this.wlClaimed = parseInt(
+          await this.contract.methods.whiteListClaimed(this.accountID).call()
+        );
 
         if (this.wlClaimed + this.nftsCountToMint > this.whiteListMaxMint) {
           alert(`Already minted ${this.wlClaimed} but max is ${this.whiteListMaxMint}`);
@@ -434,6 +473,15 @@ export default {
         }
       }
       this.isMinting = false;
+    },
+    async changeSmartcontract(target) {
+      if (target === "BAYC") {
+        await this.loadContractData("0x563cB938f8945d01c1795BB7e457123E65983C06");
+        await this.connectWallet();
+      }else{
+        await this.loadContractData("newcontract");
+        await this.connectWallet();
+      }
     },
   },
 };

@@ -1,29 +1,49 @@
 <template>
   <div class="page">
     <div class="viewContainer mint">
+      <switcher @changeSmartcontract="changeSmartcontract" />
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC breed</p>
         <p class="text howMa">Find your partner</p>
-        <button class="connectButton" @click="connectWallet">{{ accountID === "" ? "Connect wallet" : accountID.substring(1, 9) + "..." + accountID.substring(accountID.length - 6) }}</button>
+        <button class="connectButton" @click="connectWallet">
+          {{
+            accountID === ""
+              ? "Connect wallet"
+              : accountID.substring(1, 9) +
+                "..." +
+                accountID.substring(accountID.length - 6)
+          }}
+        </button>
       </div>
 
-      <div class="tinder" :style="{ display: accountID !== '' && npmCnt < 5 &&!match ? 'flex' : 'none' }">
+      <div
+        class="tinder"
+        :style="{ display: accountID !== '' && !match ? 'flex' : 'none' }"
+      >
         <div class="tinder--cards">
-          <div class="tinder--card" v-for="(item, i) in MGDC.slice(0, 5)" :key="'b2' + i">
+          <div class="tinder--card" v-for="item in queue" :key="item.name">
             <img :src="item.image" />
             <h3 style="color: black">ID : {{ item.id }}</h3>
-            <p style="color: black">Has breeded : {{ item.hasBreed ? "true" : "false" }}</p>
+            <p style="color: black">
+              Has breeded : {{ item.hasBreed ? "true" : "false" }}
+            </p>
           </div>
         </div>
         <div class="tinder--buttons">
-          <button id="nope" @click="npmCnt += 1"><i class="fa fa-remove"></i></button>
-          <button id="love" @click="breed(MGDC[npmCnt].id)"><i class="fa fa-heart"></i></button>
+          <button id="nope" @click="decide(item, 'nope')">
+            <i class="fa fa-remove"></i>
+          </button>
+          <button id="nope" @click="decide(item, 'nice')">
+            <i class="fa fa-star"></i>
+          </button>
+          <button id="love" @click="decide(item, 'match')">
+            <i class="fa fa-heart"></i>
+          </button>
         </div>
       </div>
 
-      <div class="tinderCards" v-if="accountID !== '' && npmCnt >= 5 && !match">
-        <div class="tinderCard" v-for="(item, i) in MGDC" :key="'b' + i"> 
-
+      <!-- <div class="tinderCards" v-if="accountID !== '' && npmCnt >= 5 && !match">
+        <div class="tinderCard" v-for="(item, i) in MGDC" :key="'b' + i">
           ID : {{ item.id }}
           <br />
           <br />
@@ -32,13 +52,21 @@
           <br />
           <br />
           <div class="teamMember">
-            <div class="picContainer"><img class="pic" data-v-16dd8cbd :src="item.image ? item.image : ''" /></div>
-            <button class="connectButton" v-bind:style="{color: '#000000'}"   @click="breed(item.id)">breed</button>
+            <div class="picContainer">
+              <img class="pic" data-v-16dd8cbd :src="item.image ? item.image : ''" />
+            </div>
+            <button
+              class="connectButton"
+              v-bind:style="{ color: '#000000' }"
+              @click="breed(item.id)"
+            >
+              breed
+            </button>
           </div>
           <br />
           <br />
         </div>
-      </div>
+      </div> -->
 
       <div class="tinderCards" v-if="match && accountID !== ''">
         <p class="title1 matchTitle">It's a match !</p>
@@ -48,7 +76,7 @@
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar />
+    <breed-sidebar  @breed="breed"/>
   </div>
 </template>
 
@@ -58,12 +86,17 @@ var CryptoJS = require("crypto-js");
 import breed from "../abis/breed.json";
 import MGDC from "../abis/mgdc.json";
 import address from "../address/address.json";
-import BreedSidebar from '@/components/BreedSidebar.vue'
-import axios from "axios";
+import BreedSidebar from "@/components/BreedSidebar.vue";
+import Switcher from "../components/Switcher.vue";
+import { mapGetters } from "vuex";
+
+// import axios from "axios";
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
 
-const leaves = address.addresses.map((x) => x.replace("0x", "0x000000000000000000000000"));
+const leaves = address.addresses.map((x) =>
+  x.replace("0x", "0x000000000000000000000000")
+);
 const tree = new MerkleTree(leaves, SHA256, { sortPairs: true });
 const root = tree.getRoot().toString("hex");
 
@@ -71,6 +104,7 @@ export default {
   name: "Breed",
   components: {
     BreedSidebar,
+    Switcher,
   },
   data() {
     return {
@@ -97,128 +131,20 @@ export default {
       isMinting: false,
       match: false,
       npmCnt: 0,
-      MGDC: [
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "4969",
-        //   block_number_minted: "14074267",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14074267",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: null,
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: null,
-        //   is_valid: 0,
-        //   syncing: 1,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "2",
-        //   block_number_minted: "14075098",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075098",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:47:40.635Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "1",
-        //   block_number_minted: "14075078",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075078",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:43:02.374Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "4969",
-        //   block_number_minted: "14074267",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14074267",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: null,
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: null,
-        //   is_valid: 0,
-        //   syncing: 1,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "2",
-        //   block_number_minted: "14075098",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075098",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:47:40.635Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "1",
-        //   block_number_minted: "14075078",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075078",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:43:02.374Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-      ],
       contractMGDC: [],
+      queue: [],
+      offset: 0,
     };
+  },
+  computed: {
+    ...mapGetters(["tokens"]),
   },
   async created() {
     await this.loadWeb3();
     this.tinder();
+  },
+  async mounted() {
+    await this.connectWallet();
   },
   methods: {
     GetMerkleProof(walletAddress) {
@@ -242,7 +168,9 @@ export default {
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
       } else {
-        window.alert("Non-Ethereum browser detected. You should consider trying MetaMask !");
+        window.alert(
+          "Non-Ethereum browser detected. You should consider trying MetaMask !"
+        );
       }
 
       await this.loadContractData();
@@ -289,33 +217,34 @@ export default {
             alert(err.message);
           });
         await this.setWallet(accounts[0]);
+        this.mock();
 
-        let count = await this.contract.methods.MGDCisBreedingCount().call();
+        // let count = await this.contract.methods.MGDCisBreedingCount().call();
 
-        let table = [];
-        let ids = [];
-        this.MGDC = [];
-        for (var t = 0; t < count; t++) {
-          let a = await this.contract.methods.MGDCbreeding(t).call();
-          ids.push(a);
-          table.push(await this.contractMGDC.methods.tokenURI(a).call());
-          let toto = {};
-          toto.id = ids[t];
-          toto.hasBreed = await this.contract.methods.hasBreed(ids[t]).call();
-          toto.isListed = await this.contract.methods.MGDCisBreeding(ids[t]).call();
-          let token = table[t];
-          //console.log(token);
-          token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
-          console.log("token", token.data.image);
-          
-          toto.image = token.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
-          console.log(toto.image)
-          if (toto.hasBreed == false) this.MGDC.push(toto);
-        }
-        this.MGDC = this.MGDC.filter((e) => e.hasBreed == false);
+        // let table = [];
+        // let ids = [];
+        // this.MGDC = [];
+        // for (var t = 0; t < count; t++) {
+        //   let a = await this.contract.methods.MGDCbreeding(t).call();
+        //   ids.push(a);
+        //   table.push(await this.contractMGDC.methods.tokenURI(a).call());
+        //   let toto = {};
+        //   toto.id = ids[t];
+        //   toto.hasBreed = await this.contract.methods.hasBreed(ids[t]).call();
+        //   toto.isListed = await this.contract.methods.MGDCisBreeding(ids[t]).call();
+        //   let token = table[t];
+        //   //console.log(token);
+        //   token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
+        //   console.log("token", token.data.image);
 
-        console.log(this.MGDC);
-        console.log("wlClaimed " + this.wlClaimed);
+        //   toto.image = token.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+        //   console.log(toto.image);
+        //   if (toto.hasBreed == false) this.MGDC.push(toto);
+        // }
+        // this.MGDC = this.MGDC.filter((e) => e.hasBreed == false);
+
+        // console.log(this.MGDC);
+        // console.log("wlClaimed " + this.wlClaimed);
       } else {
         // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
         alert("Unable to connect to Metamask");
@@ -323,7 +252,7 @@ export default {
     },
     async breed(token_id) {
       console.log(token_id);
-      this.match=true;
+      this.match = true;
       await this.contract.methods
         .breed(token_id)
         .send({
@@ -332,13 +261,12 @@ export default {
         })
         .on("receipt", function (res) {
           console.log("Receipt :", res);
-          
         })
         .on("error", function (err) {
           console.log("error:" + err);
           alert("Transaction Error");
         });
-        this.match=true;
+      this.match = true;
     },
     //Minting Functionality
     async mint(e) {
@@ -370,7 +298,9 @@ export default {
       console.log("nftPrice : ", this.nftPrice);
       if (this.isPresaleActive == true) {
         this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
-        this.wlClaimed = parseInt(await this.contract.methods.whiteListClaimed(this.accountID).call());
+        this.wlClaimed = parseInt(
+          await this.contract.methods.whiteListClaimed(this.accountID).call()
+        );
 
         if (this.wlClaimed + this.nftsCountToMint > this.whiteListMaxMint) {
           alert(`Already minted ${this.wlClaimed} but max is ${this.whiteListMaxMint}`);
@@ -453,7 +383,8 @@ export default {
         var newCards = document.querySelectorAll(".tinder--card:not(.removed)");
         newCards.forEach(function (card, index) {
           card.style.zIndex = allCards.length - index;
-          card.style.transform = "scale(" + (20 - index) / 20 + ") translateY(-" + 30 * index + "px)";
+          card.style.transform =
+            "scale(" + (20 - index) / 20 + ") translateY(-" + 30 * index + "px)";
           card.style.opacity = (10 - index) / 10;
         });
         tinderContainer.classList.add("loaded");
@@ -468,10 +399,11 @@ export default {
           var card = cards[0];
           card.classList.add("removed");
           if (love) {
-            
-            card.style.transform = "translate(" + moveOutWidth + "px, -100px) rotate(-30deg)";
+            card.style.transform =
+              "translate(" + moveOutWidth + "px, -100px) rotate(-30deg)";
           } else {
-            card.style.transform = "translate(-" + moveOutWidth + "px, -100px) rotate(30deg)";
+            card.style.transform =
+              "translate(-" + moveOutWidth + "px, -100px) rotate(30deg)";
           }
           initCards();
           event.preventDefault();
@@ -482,6 +414,26 @@ export default {
       var loveListener = createButtonListener(true);
       nope.addEventListener("click", nopeListener);
       love.addEventListener("click", loveListener);
+    },
+    async changeSmartcontract(target) {
+      if (target === "BAYC") {
+        await this.loadContractData("0x563cB938f8945d01c1795BB7e457123E65983C06");
+        await this.connectWallet();
+      } else {
+        await this.loadContractData("newcontract");
+        await this.connectWallet();
+      }
+    },
+    async mock() {
+      let count = 0;
+      while (count < 5) {
+        const token = this.tokens[this.offset];
+        if (!token.hasBreed) {
+          this.queue.push(token);
+          count++;
+        }
+        this.offset++;
+      }
     },
   },
 };
