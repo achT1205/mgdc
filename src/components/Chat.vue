@@ -24,7 +24,6 @@
   </div>
 </template>
 <script>
-import CloseIcon from '@/assets/icons/close-icon.png'
 import Vue from 'vue'
 import Chat from 'vue-beautiful-chat'
 
@@ -35,10 +34,7 @@ export default {
   data() {
     return {
       icons:{
-        open:{
-          img: CloseIcon,
-          name: 'test',
-        },
+        open:{},
       },
       participants: [
         {
