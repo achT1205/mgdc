@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <div class="viewContainer mint">
+    <div class="viewContainer mint mt-5">
       <div class="switch">
       <switcher  @changeSmartcontract="changeSmartcontract" />
       </div>
@@ -450,11 +450,10 @@ export default {
 }
 
 .switch{
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 15px;
-  margin-bottom: 15px;
+  position: fixed;
+  top: 25px;
+  right: 20px;
+  z-index: 1;
 }
 
 .mint {
@@ -465,6 +464,10 @@ export default {
   padding-top: 5vh;
   padding-bottom: 5vh;
   min-height: 100vh;
+}
+
+.mint.mt-5{
+  padding-top: 10vh;
 }
 
 @media screen and (max-width: $layout-breakpoint-medium) {
