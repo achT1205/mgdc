@@ -450,7 +450,7 @@ export default {
       const index = this.queue.findIndex((_) => _.id === id);
       if (index > -1) {
         this.queue.splice(index, 1);
-        if (this.queue.length < 3) {
+        if (this.queue.length < 5) {
           this.mock();
         }
       }
