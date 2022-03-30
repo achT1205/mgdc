@@ -26,12 +26,16 @@
                 <div class="avatar">
                   <img :src="require('@/assets/imgs/Louis.png')" />
                 </div>
-                <div class="name">
-                  {{ item.name }} / Has breeded : {{ item.hasBreed ? "true" : "false" }}
+                <div class="breed-content">
+                <div class="has-breed">
+                  <i class="fas" :class="item.hasBreed
+                  ? 'fa-thumbs-down ': 'fa-thumbs-up '"></i>
                 </div>
-                <span v-if="!item.hasBreed" @click="$emit('breed', item)"
-                  >Breed here now</span
-                >
+                <div class="name">
+                  {{ item.name }}
+                </div>
+                <div class="join-us-on-discord2" v-if="!item.hasBreed" @click="$emit('breed', item)">Breed here now</div>
+                </div>
               </li>
             </ul>
           </div>
@@ -154,7 +158,7 @@ export default {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    padding: 0;
+    padding: 10px 0 0 0;
     margin: 0;
     height: 92vh;
     overflow: auto;
@@ -168,6 +172,7 @@ export default {
       margin: 5px;
       background: white;
       border-radius: 10px;
+      position: relative;
       .avatar {
         max-width: 50px;
         width: 100%;
@@ -187,7 +192,50 @@ export default {
     }
   }
 }
-
+.breed-content{
+    flex: 1;
+  }
+.has-breed{
+  position: absolute;
+  top: -10px;
+  right: -5px;
+  .fa-thumbs-down{
+    background: #d31616;
+    color: #fff;
+    padding: 5px;
+    border-radius: 100%;
+  }
+  .fa-thumbs-up{
+    background: #458d45;
+    color: #fff;
+    padding: 5px;
+    border-radius: 100%;
+  }
+}
+.join-us-on-discord2 {
+  font-family: Jumble;
+    font-weight: 800;
+    background-color: #e53261;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    height: 20px;
+    text-transform: uppercase;
+    opacity: 0.9;
+    font-size: 14px;
+    text-align: center;
+    transition: all 100ms ease-in-out;
+    display: flex;
+    justify-content: center;
+  &:hover {
+    filter: drop-shadow(0px 0px 5px $cerise-red);
+    //  filter: drop-shadow(0px 0px 1px #ffffff);
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
 .match-list.with-search {
   height: 80vh;
 }
