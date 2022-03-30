@@ -76,7 +76,7 @@
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar  @breed="breed"/>
+    <breed-sidebar @breed="breed" />
   </div>
 </template>
 
@@ -433,6 +433,26 @@ export default {
           count++;
         }
         this.offset++;
+      }
+    },
+    decide(item, choice) {
+      if (choice === "nope") {
+        this.swape(item.id);
+      }
+      if (choice === "nice") {
+        //add to favorits
+      }
+      if (choice === "match") {
+        //add to matchs
+      }
+    },
+    swape(id) {
+      const index = this.queue.findIndex((_) => _.id === id);
+      if (index > -1) {
+        this.queue.splice(index, 1);
+        if (this.queue.length < 3) {
+          this.mock();
+        }
       }
     },
   },
