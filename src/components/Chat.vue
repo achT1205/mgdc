@@ -1,5 +1,5 @@
 <template>
-  <div style="z-index:6000">
+  <div>
     <beautiful-chat
       :participants="participants"
       :titleImageUrl="titleImageUrl"
