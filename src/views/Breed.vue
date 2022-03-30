@@ -1,7 +1,9 @@
 <template>
   <div class="page">
     <div class="viewContainer mint">
-      <switcher @changeSmartcontract="changeSmartcontract" />
+      <div class="switch">
+      <switcher  @changeSmartcontract="changeSmartcontract" />
+      </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC breed</p>
         <p class="text howMa">Find your partner</p>
@@ -76,7 +78,8 @@
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar @breed="breed" />
+    <breed-sidebar  @breed="breed"/>
+    <chat />
   </div>
 </template>
 
@@ -88,6 +91,7 @@ import MGDC from "../abis/mgdc.json";
 import address from "../address/address.json";
 import BreedSidebar from "@/components/BreedSidebar.vue";
 import Switcher from "../components/Switcher.vue";
+import Chat from "@/components/Chat.vue";
 import { mapGetters } from "vuex";
 
 // import axios from "axios";
@@ -105,6 +109,7 @@ export default {
   components: {
     BreedSidebar,
     Switcher,
+    Chat,
   },
   data() {
     return {
@@ -462,6 +467,14 @@ export default {
 <style lang="scss">
 .page {
   background: linear-gradient(180deg, #edbcad 1.31%, #f0d0df 27.36%, #edb8ed 56.4%);
+}
+
+.switch{
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 15px;
+  margin-bottom: 15px;
 }
 
 .mint {
