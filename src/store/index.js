@@ -1,9 +1,12 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import Web3 from 'web3'
-import tokens from '../assets/mocks/data.json'
-import myMatchs from '../assets/mocks/myMatchs.json'
+import matches from '../assets/mocks/myMatchs.json'
+import frees from '../assets/mocks/frees'
+import axios from "axios";
 
+export const apiClient = axios.create();
+apiClient.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
 
 // import breed from "../abis/breed.json";
 // import MGDC from "../abis/mgdc.json";
@@ -192,16 +195,16 @@ export default new Vuex.Store({
     error: null,
     mgdcs: null,
     isbuisy: false,
-    tokens: tokens,
-    myMatchs: myMatchs
+    matches: matches,
+    freeMgdcs: frees
   },
   getters: {
     account: state => state.account,
     error: state => state.error,
     mgdcs: state => state.balance,
     isbuisy: state => state.isbuisy,
-    tokens: state => state.tokens,
-    myMatchs: state => state.myMatchs
+    matches: state => state.matches,
+    freeMgdcs: state => state.freeMgdcs
   },
   mutations: {
     SET_ERROR(state, payload) {
@@ -221,6 +224,15 @@ export default new Vuex.Store({
     },
     SET_WHITELIST_CLAIMED(state, payload) {
       state.mgdcs = payload
+    },
+    SET_MATCHES(state, payload) {
+      state.matches = payload
+    },
+    SET_MATCH(state, payload) {
+      state.matches.push(payload)
+    },
+    SET_FREE_MGDCS(state, payload) {
+      state.freeMgdcs = payload
     },
   },
   actions: {
@@ -253,6 +265,28 @@ export default new Vuex.Store({
         commit('SET_ERROR', ex)
         commit('SET_IS_BUISY', false)
       }
+    },
+    async fetchFreeMgdcs({ commit }) {
+      const freeMgdcs = await apiClient.get("https://q6o6r2cze5.execute-api.eu-west-3.amazonaws.com/dev/free-michtos");
+      console.log(freeMgdcs, freeMgdcs)
+      commit('SET_FREE_MGDCS', freeMgdcs.data)
+
+    },
+
+
+    getMatches({ commit }) {
+      // call the api to to get all my matches
+      const matches = []
+      commit('SET_MATCHES', matches)
+
+    },
+    addIntoMatches({ commit }, payload) {
+      // call the api to a my match
+
+      //then 
+      commit('SET_MATCH', payload)
+
+
     }
 
   }
