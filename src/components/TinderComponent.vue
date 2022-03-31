@@ -23,14 +23,14 @@
           </span>
         </div>
       </template>
-      <img class="like-pointer" slot="like" src="../assets/tinder/like-txt.png" />
-      <img class="nope-pointer" slot="nope" src="../assets/tinder/nope-txt.png" />
-      <img class="rewind-pointer" slot="rewind" src="../assets/tinder/rewind-txt.png" />
+      <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-txt.png" />
+      <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-txt.png" />
+      <img class="rewind-pointer" slot="rewind" src="../assets/imgs/tinder/rewind-txt.png" />
     </Tinder>
     <div class="btns">
-      <img src="../assets/tinder/rewind.png" @click="decide('rewind')" />
-      <img src="../assets/tinder/nope.png" @click="decide('nope')" />
-      <img src="../assets/tinder/like.png" @click="decide('like')" />
+      <img src="../assets/imgs/tinder/rewind.png" @click="decide('rewind')" />
+      <img src="../assets/imgs/tinder/nope.png" @click="decide('nope')" />
+      <img src="../assets/imgs/tinder/like.png" @click="decide('like')" />
     </div>
   </div>
 </template>
