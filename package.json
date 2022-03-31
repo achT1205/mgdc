@@ -17,8 +17,11 @@
     "merkletreejs": "^0.2.27",
     "moralis": "^1.1.0",
     "vue": "^2.6.11",
+    "vue-beautiful-chat": "^2.5.0",
     "vue-router": "^3.5.3",
     "vue-svg-loader": "^0.16.0",
+    "vue-swing": "^0.0.10",
+    "vue-tinder": "^2.0.3",
     "vuex": "^3.6.2",
     "web3": "^1.7.0"
   },

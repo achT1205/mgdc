@@ -1,5 +1,18 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import Web3 from 'web3'
+import tokens from '../assets/mocks/data.json'
+import myMatchs from '../assets/mocks/myMatchs.json'
+
+
+// import breed from "../abis/breed.json";
+// import MGDC from "../abis/mgdc.json";
+
+
+const web3 = new Web3(window.ethereum);
+// const contract = new web3.eth.Contract(breed.abi, breed.address);
+// const contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
+
 
 Vue.use(Vuex)
 export default new Vuex.Store({
@@ -175,5 +188,73 @@ export default new Vuex.Store({
         twitter: "",
       },
     ],
+    account: null,
+    error: null,
+    mgdcs: null,
+    isbuisy: false,
+    tokens: tokens,
+    myMatchs: myMatchs
+  },
+  getters: {
+    account: state => state.account,
+    error: state => state.error,
+    mgdcs: state => state.balance,
+    isbuisy: state => state.isbuisy,
+    tokens: state => state.tokens,
+    myMatchs: state => state.myMatchs
+  },
+  mutations: {
+    SET_ERROR(state, payload) {
+      state.error = payload
+    },
+    SET_IS_BUISY(state, payload) {
+      state.isbuisy = payload
+    },
+    CLEAN_ERROR(state) {
+      state.error = null
+    },
+    SET_ACCOUNT(state, payload) {
+      state.account = payload
+    },
+    SET_MGDCS(state, payload) {
+      state.mgdcs = payload
+    },
+    SET_WHITELIST_CLAIMED(state, payload) {
+      state.mgdcs = payload
+    },
+  },
+  actions: {
+    async connect({ commit, dispatch }) {
+      commit('SET_IS_BUISY', true)
+      try {
+        const accounts = await web3.eth.requestAccounts()
+        if (accounts && accounts.length) {
+          commit('SET_ACCOUNT', accounts[0])
+          commit('CLEAN_ERROR')
+        }
+        dispatch("getInitiumBalance")
+
+      } catch (ex) {
+        console.log(ex)
+        commit('SET_WALLET_CONNECTION_ERROR', ex.message)
+        commit('SET_ERROR', ex)
+        commit('SET_IS_BUISY', false)
+      }
+    },
+    async isWhiteListClaimed({ commit }) {
+      commit('SET_IS_BUISY', true)
+      try {
+        // const balance = await initiumTokenContract.methods.balanceOf(process.env.VUE_APP_NODEMANAGER_CONTRACT).call({ from: state.account })
+        // commit("SET_REWARDPOOL_VALUE", balance);
+        commit('SET_IS_BUISY', false)
+      }
+      catch (ex) {
+        console.error(ex);
+        commit('SET_ERROR', ex)
+        commit('SET_IS_BUISY', false)
+      }
+    }
+
   }
+
 })

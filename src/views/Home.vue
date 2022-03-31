@@ -7,7 +7,7 @@
 
     <!-- TOPDESCR -->
     <div class="viewContainer topDescr" style="min-height: 0">
-      <div class="text topDescrTitle">{{ "«" }} MGDC is a collection of 5,000 unique digital and collectible NFTs relying on the Ethereum blockchain. We call them Gold-Diggers {{ "»" }}</div>
+      <div class="text topDescrTitle">{{ "«" }} MGDC is a collection of 3,818 unique digital and collectible NFTs relying on the Ethereum blockchain. We call them Gold-Diggers {{ "»" }}</div>
     </div>
 
     <!-- EXPECT -->
@@ -23,7 +23,7 @@
             <div class="inline howCanColItem expect1">
               <p class="heart-logo">♥</p>
               <p class="textB">
-                By owning one of these 5,000 NFTs, you will receive a Wealthy Ape and a Furry Lapdog as well. You will also be offered multiple opportunities: You’ll be able to live in a metaverse through the eyes of your Gold-Digger, rubbing shoulders with some of the most famous Apes, bating and
+                By owning one of these 3,818 NFTs, you will receive a Wealthy Ape and a Furry Lapdog as well. You will also be offered multiple opportunities: You’ll be able to live in a metaverse through the eyes of your Gold-Digger, rubbing shoulders with some of the most famous Apes, bating and
                 digging-on them thanks to your Gold-Digger’s charming and unique attributes.
               </p>
             </div>

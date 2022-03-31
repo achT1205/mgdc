@@ -11,7 +11,7 @@
         </div>
 
         <p class="text nftPrice">Price : {{ (nftsCountToMint * nftPrice) / 1000000000000000000 }} ETH</p>
-        <p class="text nbNft">Minted : XXX/5,000</p>
+        <p class="text nbNft">Minted : XXX/3,818</p>
         <button class="connectButton">Connect wallet</button>
         <br />
         <button class="validateButton">Mint</button>
