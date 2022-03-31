@@ -41,11 +41,14 @@
           </div>
         </div>
       </div>
-      <div class="close-btn">
+      <div class="backdrop-mask" @click="showSidebar = false">
+        <div class="close-btn">
         <button @click.prevent="showSidebar = false" v-if="showSidebar">
           <i class="fas fa-times"></i>
         </button>
       </div>
+      </div>
+      
     </div>
   </div>
 </template>
@@ -192,6 +195,10 @@ export default {
     }
   }
 }
+
+.backdrop-mask{
+  width: 100%;
+}
 .breed-content{
     flex: 1;
   }
@@ -229,6 +236,8 @@ export default {
     transition: all 100ms ease-in-out;
     display: flex;
     justify-content: center;
+    max-width: 150px;
+    margin: 5px auto 0;
   &:hover {
     filter: drop-shadow(0px 0px 5px $cerise-red);
     //  filter: drop-shadow(0px 0px 1px #ffffff);
@@ -258,6 +267,15 @@ export default {
   }
   button:hover {
     box-shadow: none;
+  }
+}
+
+@media (min-width: 1500px) {
+  .backdrop .match-list li{
+    margin: 5px 12px;
+  }
+  .backdrop .modal{
+    max-width: 300px;
   }
 }
 </style>

@@ -15,12 +15,9 @@
             'background-image': `url(https://ipfs.io/ipfs/QmYpz9sgBezYk4A19FnP9agrvU7RxDzLcES83mbvTp39pp/1572.png)`,
           }"
         >
-          <span class="info">
-            <span class="title"
-              >{{ scope.data.item.name }}
-              </span
-            >
-          </span>
+          <div class="info">
+            <h3 class="title">{{ scope.data.item.name }}</h3>
+          </div>
         </div>
       </template>
       <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-txt.png" />
@@ -97,8 +94,8 @@ export default {
 <style>
 
 #tinder .vue-tinder {
-   width: 500px;
-   height: 740px;
+   width: 400px;
+   height: 500px;
    display: flex;
    flex-direction: column;
    position: relative;
@@ -106,6 +103,10 @@ export default {
    margin: auto;
    margin-top: 50px;
    font-family: "Jumble";
+}
+
+.tinder-card {
+  max-height: 500px;
 }
 
 .nope-pointer,
@@ -158,21 +159,17 @@ export default {
 }
 
 .btns {
-  left: 0;
-  right: 0;
-  bottom: 30px;
   margin: auto;
-  height: 65px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 300px;
-  max-width: 355px;
+  max-width: 500px;
+  width: 100%;
   margin-top: 30px;
 }
 
 .btns img {
-  margin-right: 12px;
+  margin: 6px;
   box-shadow: 0 4px 9px rgba(0, 0, 0, 0.15);
   border-radius: 50%;
   cursor: pointer;
@@ -180,14 +177,6 @@ export default {
 }
 
 
-
-.btns img:nth-last-child(1) {
-  margin-right: 0;
-}
-
-.tinder-card {
-  max-height: 530px;
-}
 /* Item Informations */
 .info {
   cursor: pointer;
@@ -266,5 +255,21 @@ export default {
   top: 5px;
   cursor: pointer;
   font-size: 20px;
+}
+
+@media (min-width: 1500px) {
+  #tinder .vue-tinder {
+   width: 400px;
+   height: 620px;
+}
+  .tinder-card {
+    max-height: 620px;
+  }
+  .backdrop .match-list li{
+    margin: 5 12px;
+  }
+  .backdrop .modal{
+    max-width: 300px;
+  }
 }
 </style>
