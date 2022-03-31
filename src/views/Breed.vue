@@ -16,7 +16,7 @@
         </button>
       </div>
 
-      <Tinder :source="tokens" />
+      <Tinder :source="freeMgdcs" />
     </div>
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
@@ -55,12 +55,13 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["tokens"]),
+    ...mapGetters(["freeMgdcs"]),
   },
   async created() {
     await this.loadWeb3();
   },
   async mounted() {
+    this.$store.dispatch("fetchFreeMgdcs")
     await this.connectWallet();
   },
   methods: {

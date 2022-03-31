@@ -22,9 +22,9 @@
               <input type="text" v-model="search" placeholder="Recherche par ID" />
             </div>
             <ul class="match-list" :class="show ? 'with-search' : ''">
-              <li v-for="(item, index) in myMatchs" :key="index">
+              <li v-for="(item, index) in matches" :key="index">
                 <div class="avatar">
-                  <img :src="require('@/assets/imgs/Louis.png')" />
+                  <img :src="`https://metagolddiggerclub.com/img/thumbnails/${item.id}.png`" />
                 </div>
                 <div class="breed-content">
                 <div class="has-breed">
@@ -60,7 +60,7 @@ export default {
     search: "",
   }),
   computed: {
-    ...mapGetters(["myMatchs"]),
+    ...mapGetters(["matches"]),
   },
 };
 </script>

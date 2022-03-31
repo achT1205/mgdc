@@ -11,21 +11,22 @@
       <template slot-scope="scope">
         <div
           class="pic"
-         :style="{
-            'background-image': `url(https://ipfs.io/ipfs/QmYpz9sgBezYk4A19FnP9agrvU7RxDzLcES83mbvTp39pp/1572.png)`,
+          :style="{
+            'background-image': `url(https://metagolddiggerclub.com/img/thumbnails/${scope.data.item.id}.png)`,
           }"
         >
           <span class="info">
-            <span class="title"
-              >{{ scope.data.item.name }}
-              </span
-            >
+            <span class="title">{{ scope.data.item.name }} </span>
           </span>
         </div>
       </template>
       <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-txt.png" />
       <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-txt.png" />
-      <img class="rewind-pointer" slot="rewind" src="../assets/imgs/tinder/rewind-txt.png" />
+      <img
+        class="rewind-pointer"
+        slot="rewind"
+        src="../assets/imgs/tinder/rewind-txt.png"
+      />
     </Tinder>
     <div class="btns">
       <img src="../assets/imgs/tinder/rewind.png" @click="decide('rewind')" />
@@ -40,7 +41,7 @@ import Tinder from "vue-tinder";
 
 export default {
   name: "MGDC-TINDER",
-  props:['source'],
+  props: ["source"],
   components: { Tinder },
   data: () => ({
     queue: [],
@@ -48,9 +49,20 @@ export default {
     history: [],
     modalShow: false,
     item: {},
+    choice: null,
   }),
   created() {
     this.mock();
+  },
+  watch: {
+    history(val, old) {
+      if (val && val.length > old.length) {
+        const item = val[val.length - 1];
+        if (this.choice === "like") {
+          this.$store.dispatch("addIntoMatches", { id: item.id, name: item.name });
+        }
+      }
+    },
   },
   methods: {
     mock(count = 5, append = true) {
@@ -75,37 +87,30 @@ export default {
       this.history.push(item);
     },
     async decide(choice) {
+      this.choice = choice;
       if (choice === "rewind") {
         if (this.history.length) {
           this.$refs.tinder.rewind([this.history.pop()]);
         }
-      }  else {
+      } else {
         this.$refs.tinder.decide(choice);
       }
-    },
-    openDetail(item) {
-      this.item = item;
-      this.modalShow = true;
-    },
-    closeModal() {
-      this.modalShow = false;
     },
   },
 };
 </script>
 
 <style>
-
 #tinder .vue-tinder {
-   width: 500px;
-   height: 740px;
-   display: flex;
-   flex-direction: column;
-   position: relative;
-   transition: opacity 0.1s ease-in-out;
-   margin: auto;
-   margin-top: 50px;
-   font-family: "Jumble";
+  width: 500px;
+  height: 740px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: opacity 0.1s ease-in-out;
+  margin: auto;
+  margin-top: 50px;
+  font-family: "Jumble";
 }
 
 .nope-pointer,
@@ -139,7 +144,6 @@ export default {
 .btns img {
   width: 53px;
 }
-
 
 .rewind-pointer {
   position: absolute;
@@ -178,8 +182,6 @@ export default {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-
-
 
 .btns img:nth-last-child(1) {
   margin-right: 0;
