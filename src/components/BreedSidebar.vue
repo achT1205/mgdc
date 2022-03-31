@@ -34,22 +34,14 @@
                   />
                 </div>
                 <div class="breed-content">
-                  <div class="has-breed">
-                    <i
-                      class="fas"
-                      :class="item.hasBreed ? 'fa-thumbs-down ' : 'fa-thumbs-up '"
-                    ></i>
-                  </div>
-                  <div class="name">
-                    {{ item.name }}
-                  </div>
-                  <div
-                    class="join-us-on-discord2"
-                    v-if="!item.hasBreed"
-                    @click="$emit('breed', item)"
-                  >
-                    Breed here now
-                  </div>
+                <div class="has-breed">
+                  <i class="fas fa-heart" :class="item.hasBreed
+                  ? 'down': 'up'"></i>
+                </div>
+                <div class="name">
+                  {{ item.name }}
+                </div>
+                <div class="join-us-on-discord2" v-if="!item.hasBreed" @click="$emit('breed', item)">Breed here now</div>
                 </div>
               </li>
             </ul>
@@ -184,8 +176,8 @@ export default {
   .match-list {
     width: 100%;
     display: flex;
-    flex-wrap: wrap;
-    padding: 10px 0 0 0;
+    flex-direction: column;
+    padding: 10px 12px 10px 12px;
     margin: 0;
     height: 92vh;
     overflow: auto;
@@ -193,10 +185,10 @@ export default {
     li {
       width: 100%;
       display: flex;
-      padding: 6px 12px;
+      padding: 6px;
       align-items: center;
       border: 1px solid #ccc;
-      margin: 5px;
+      margin: 5px 0;
       background: white;
       border-radius: 10px;
       position: relative;
@@ -230,13 +222,13 @@ export default {
   position: absolute;
   top: -10px;
   right: -5px;
-  .fa-thumbs-down {
+  .fa-heart.down{
     background: #d31616;
     color: #fff;
     padding: 5px;
     border-radius: 100%;
   }
-  .fa-thumbs-up {
+  .fa-heart.up{
     background: #458d45;
     color: #fff;
     padding: 5px;
@@ -295,10 +287,8 @@ export default {
 }
 
 @media (min-width: 1500px) {
-  .backdrop .match-list li {
-    margin: 5px 12px;
-  }
-  .backdrop .modal {
+
+  .backdrop .modal{
     max-width: 300px;
   }
 }

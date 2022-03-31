@@ -20,13 +20,9 @@
           </div>
         </div>
       </template>
-      <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-txt.png" />
-      <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-txt.png" />
-      <img
-        class="rewind-pointer"
-        slot="rewind"
-        src="../assets/imgs/tinder/rewind-txt.png"
-      />
+      <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-t.png" />
+      <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-t.png" />
+      <img class="rewind-pointer" slot="rewind" src="../assets/imgs/tinder/rewind-t.png" />
     </Tinder>
     <div class="btns">
       <img src="../assets/imgs/tinder/rewind.png" @click="decide('rewind')" />
@@ -114,16 +110,17 @@ export default {
   position: absolute;
   z-index: 1;
   top: 20px;
-  width: 64px;
-  height: 64px;
+  max-width: 64px;
 }
 
 .nope-pointer {
   right: 10px;
+  max-width: 64px;
 }
 
 .like-pointer {
   left: 10px;
+  max-width: 64px;
 }
 
 .super-pointer {
@@ -146,8 +143,7 @@ export default {
   z-index: 1;
   top: 20px;
   right: 10px;
-  width: 112px;
-  height: 78px;
+  max-width: 64px;
 }
 
 .pic {
