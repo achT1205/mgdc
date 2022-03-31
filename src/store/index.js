@@ -1,7 +1,7 @@
+/* eslint-disable no-debugger */
 import Vue from 'vue'
 import Vuex from 'vuex'
 import Web3 from 'web3'
-import matches from '../assets/mocks/myMatchs.json'
 import frees from '../assets/mocks/frees'
 import axios from "axios";
 
@@ -195,7 +195,7 @@ export default new Vuex.Store({
     error: null,
     mgdcs: null,
     isbuisy: false,
-    matches: matches,
+    matches: [],
     freeMgdcs: frees
   },
   getters: {
@@ -228,6 +228,10 @@ export default new Vuex.Store({
     SET_MATCHES(state, payload) {
       state.matches = payload
     },
+    SET_FILTERED_MATCHES(state, payload) {
+      state.matches = state.matches.filter(_ => _.name.toLowerCase().indexOf(payload.toLowerCase()) > -1)
+    },
+
     SET_MATCH(state, payload) {
       state.matches.push(payload)
     },
@@ -282,7 +286,6 @@ export default new Vuex.Store({
     },
     addIntoMatches({ commit }, payload) {
       // call the api to a my match
-
       //then 
       commit('SET_MATCH', payload)
 

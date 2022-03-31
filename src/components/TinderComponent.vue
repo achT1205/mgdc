@@ -54,16 +54,6 @@ export default {
   created() {
     this.mock();
   },
-  watch: {
-    history(val, old) {
-      if (val && val.length > old.length) {
-        const item = val[val.length - 1];
-        if (this.choice === "like") {
-          this.$store.dispatch("addIntoMatches", { id: item.id, name: item.name });
-        }
-      }
-    },
-  },
   methods: {
     mock(count = 5, append = true) {
       const list = [];
@@ -80,7 +70,9 @@ export default {
         this.queue.unshift(...list);
       }
     },
-    onSubmit({ item }) {
+    onSubmit({ type, key, item }) {
+      if (type === "like")
+        this.$store.dispatch("addIntoMatches", { id: item.item.id, name: key });
       if (this.queue.length < 3) {
         this.mock();
       }
@@ -102,15 +94,15 @@ export default {
 
 <style>
 #tinder .vue-tinder {
-   width: 400px;
-   height: 500px;
-   display: flex;
-   flex-direction: column;
-   position: relative;
-   transition: opacity 0.1s ease-in-out;
-   margin: auto;
-   margin-top: 50px;
-   font-family: "Jumble";
+  width: 400px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: opacity 0.1s ease-in-out;
+  margin: auto;
+  margin-top: 50px;
+  font-family: "Jumble";
 }
 
 .tinder-card {
@@ -265,16 +257,16 @@ export default {
 
 @media (min-width: 1500px) {
   #tinder .vue-tinder {
-   width: 400px;
-   height: 620px;
-}
+    width: 400px;
+    height: 620px;
+  }
   .tinder-card {
     max-height: 620px;
   }
-  .backdrop .match-list li{
+  .backdrop .match-list li {
     margin: 5 12px;
   }
-  .backdrop .modal{
+  .backdrop .modal {
     max-width: 300px;
   }
 }
