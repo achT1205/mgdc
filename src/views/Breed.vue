@@ -43,6 +43,24 @@
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
     <breed-sidebar @breed="breed" />
     <chat v-if="hapeBalance > 0" />
+
+    <div
+      id="overlay"
+      v-show="isLoading || errorMsg"
+      class="w-full no-nodes-content flex justify-center items-center"
+    >
+      <svg class="spinner" viewBox="0 0 50 50" v-if="!errorMsg && isLoading">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
+      <div class="warnning-notification" v-if="errorMsg && !isLoading">
+        <div class="warnning-notification-logo-wrapper">
+          <i class="fas fa-triangle-exclamation warnning"></i>
+        </div>
+        <div class="warnning-notification-content">
+          <h4 class="warnning-notification-title">{{ errorMsg }}</h4>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,6 +101,9 @@ export default {
       target: "BAYC",
       hapes: [],
       selectepHape: null,
+      isLoading: false,
+      errorMsg: null,
+      wsConnection: null,
     };
   },
   computed: {
@@ -90,6 +111,13 @@ export default {
   },
   async created() {
     await this.loadWeb3();
+    window.ethereum.on("accountsChanged", function () {
+      location.reload();
+    });
+    window.ethereum.on("networkChanged", function () {
+      location.reload();
+    });
+    this.startConnetion();
   },
   async mounted() {
     this.$store.dispatch("fetchFreeMgdcs");
@@ -97,6 +125,7 @@ export default {
   },
   methods: {
     async loadWeb3() {
+      this.isLoading = true;
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
 
@@ -105,10 +134,11 @@ export default {
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
+        this.isLoading = false;
       } else {
-        window.alert(
-          "Non-Ethereum browser detected. You should consider trying MetaMask !"
-        );
+        this.isLoading = false;
+        this.errorMsg =
+          "Non-Ethereum browser detected. You should consider trying MetaMask !";
       }
 
       await this.loadContractData(this.target);
@@ -124,7 +154,7 @@ export default {
       const networkId = await web3.eth.net.getId();
 
       if (networkId !== breed.network) {
-        window.alert("Please change to ethereum mainnet.");
+        this.errorMsg = "Please change to ethereum mainnet.";
         return;
       }
 
@@ -178,6 +208,7 @@ export default {
             this.selectepHape = this.hapes[0];
           }
         }
+        this.isLoading = false;
       }
     },
     async connectWallet() {
@@ -190,11 +221,11 @@ export default {
             method: "eth_requestAccounts",
           })
           .catch((err) => {
-            alert(err.message);
+            this.errorMsg = err.message;
           });
         await this.fetchData(accounts[0]);
       } else {
-        alert("Unable to connect to Metamask");
+        this.errorMsg = "Unable to connect to Metamask";
       }
     },
     async breed(item) {
@@ -233,15 +264,30 @@ export default {
         const owner = await this.hapeContract.methods.ownerOf(mgdc.id).call();
 
         this.$store.dispatch("addMatch", { id: mgdc.id, name: mgdc.name });
-        this.$store.dispatch("initiateChat", {
+        this.sendMessage({
           from: {
             account: this.account,
-            id: this.selectepHape.id,
+            tokenId: this.selectepHape.id,
             name: this.selectepHape.name,
           },
-          to: { account: owner, id: mgdc.id, name: mgdc.name },
+          to: { account: owner, tokenId: mgdc.id, name: mgdc.name },
         });
       }
+    },
+    sendMessage(message) {
+      this.wsConnection.send(message);
+    },
+    startConnetion() {
+      this.wsConnection = new WebSocket(
+        "wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev"
+      );
+      this.wsConnection.onmessage = (event) => {
+        console.log("onmessage", event);
+      };
+      this.wsConnection.onopen = (event) => {
+        console.log(event);
+        this.sendMessage({ action: "setOnline", address: this.account });
+      };
     },
   },
 };
@@ -320,7 +366,7 @@ export default {
   background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
   box-shadow: 0 0 20px #e56932;
   //border: 5px solid #e56932;
-  z-index: 1000;
+  z-index: 2;
 }
 @media screen and (max-width: $layout-breakpoint-medium) {
   .mintCard {
@@ -441,5 +487,93 @@ button {
   height: 50px;
   width: 50px;
   border-radius: 50%;
+}
+
+.warnning-notification {
+  display: flex;
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  align-items: center;
+  justify-content: center;
+}
+.warnning-notification-logo-wrapper {
+  flex-shrink: 0;
+}
+.warnning-notification-logo {
+  height: 3rem;
+  width: 3rem;
+}
+.warnning-notification-content {
+  margin-left: 1.5rem;
+  padding-top: 0.25rem;
+}
+.warnning-notification-title {
+  color: #1a202c;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+.warnning-notification-message {
+  color: #718096;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+#overlay {
+  position: fixed; /* Sit on top of the page content */
+  width: 100%; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+  z-index: 1001; /* Specify a stack order in case you're using a different order for other elements */
+  cursor: pointer; /* Add a pointer on hover */
+}
+
+.warnning {
+  color: #e56932;
+  font-size: 32px;
+}
+
+.spinner {
+  animation: rotate 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 50px;
+  height: 50px;
+
+  & .path {
+    stroke: pink;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
 }
 </style>

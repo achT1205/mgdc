@@ -292,6 +292,13 @@ export default new Vuex.Store({
       commit('SET_MATCH', payload)
 
 
+    },
+    initiateChat({ commit }, payload) {
+      // call the api to a my match
+      //then 
+      commit('SET_MATCH', payload)
+
+
     }
 
     //updateMatch
