@@ -106,7 +106,7 @@ export default {
     box-shadow: none;
   }
   position: fixed;
-  z-index: 5000;
+  z-index: 1002;
   top: 20px;
   left: 20px;
 }
@@ -118,11 +118,11 @@ export default {
   right: 0;
   bottom: 0;
   overflow: hidden;
-  z-index: 5000;
+  z-index: 1000;
   display: none;
   .modal {
     max-width: 250px;
-    z-index: 9999;
+    z-index: 1005;
     width: 100%;
     background: white;
     overflow: auto;

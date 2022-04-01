@@ -491,14 +491,17 @@ button {
 
 .warnning-notification {
   display: flex;
-  max-width: 24rem;
+  min-width: 24rem;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1rem;
+  position: absolute;
   border-radius: 0.5rem;
   background-color: #fff;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
   align-items: center;
-  justify-content: center;
+    /* justify-content: center; */
+  bottom: 15px;
+  left: 15px;
 }
 .warnning-notification-logo-wrapper {
   flex-shrink: 0;
@@ -530,7 +533,7 @@ button {
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
-  z-index: 1001; /* Specify a stack order in case you're using a different order for other elements */
+  z-index: 2000; /* Specify a stack order in case you're using a different order for other elements */
   cursor: pointer; /* Add a pointer on hover */
 }
 
