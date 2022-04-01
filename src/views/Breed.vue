@@ -75,7 +75,7 @@ import Switcher from "../components/Switcher.vue";
 import Chat from "@/components/Chat.vue";
 import Tinder from "@/components/TinderComponent.vue";
 import Web3 from "web3";
-import axios from "axios";
+//import axios from "axios";
 import { mapGetters } from "vuex";
 
 // import axios from "axios";
@@ -103,11 +103,13 @@ export default {
       selectepHape: null,
       isLoading: false,
       errorMsg: null,
-      wsConnection: null,
+      socket: {},
+      connectedStatus: "Not connected!",
+      message: "No message yet!",
     };
   },
   computed: {
-    ...mapGetters(["freeMgdcs"]),
+    ...mapGetters(["freeMgdcs", "chatId", "messages"]),
   },
   async created() {
     await this.loadWeb3();
@@ -117,7 +119,30 @@ export default {
     window.ethereum.on("networkChanged", function () {
       location.reload();
     });
-    this.startConnetion();
+
+    this.socket = await new WebSocket(
+      "wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev"
+    );
+
+    this.socket.onopen = () => {
+      console.log("Websocket connected.");
+      this.connectedStatus = "Connected";
+      this.sendMessage({ action: "setOnline", address: this.account });
+    };
+
+    this.socket.onmessage = (event) => {
+      let parsedMessage = JSON.parse(event.data);
+      console.log(parsedMessage);
+    };
+
+    //  this.socket.onmessage = (event) => {
+    //     console.log("onmessage listner triggered", event);
+    //   };
+
+    //   this.socket.addEventListener("message", function (event) {
+    //     console.log("Message reçu du serveur ", event.data);
+    //     this.$store.dispatch("getMeessages", this.chatId);
+    //   });
   },
   async mounted() {
     this.$store.dispatch("fetchFreeMgdcs");
@@ -174,8 +199,10 @@ export default {
         .on("data", function (event) {
           const data = event.returnValues;
           console.log(data);
-          this.$store.dispatch("updateMatch", {
+          this.$store.dispatch("breed", {
             account: this.account,
+            mgdcId: this.currentItem.id,
+            mgdcName: this.currentItem.name,
             id: this.currentItem.id,
             hasBreed: true,
           });
@@ -186,30 +213,34 @@ export default {
       this.hapes = [];
       if (address) this.account = "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD"; //address;
       this.notAllowed = false;
+      this.$store.dispatch("getMatches", this.account )
       this.accountBalance = await window.web3.eth.getBalance(this.account);
       this.hapeBalance = await this.hapeContract.methods.balanceOf(this.account).call();
-      if (this.hapeBalance) {
-        let count = this.hapeBalance;
-        for (let index = 0; index < count; index++) {
-          const hapeId = await this.hapeContract.methods
-            .tokenOfOwnerByIndex(this.account, index)
-            .call();
 
-          const uri = await this.hapeContract.methods.tokenURI(hapeId).call();
-          const resp = await axios.get(uri.replace("ipfs://", "https://ipfs.io/ipfs/"));
-          const image = resp.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+      
+      this.isLoading = false;
+      // if (this.hapeBalance) {
+      //   let count = this.hapeBalance;
+      //   for (let index = 0; index < count; index++) {
+      //     const hapeId = await this.hapeContract.methods
+      //       .tokenOfOwnerByIndex(this.account, index)
+      //       .call();
 
-          this.hapes.push({
-            id: hapeId,
-            image: image,
-            name: `${this.target} #${hapeId}`,
-          });
-          if (this.hapes && this.hapes.length) {
-            this.selectepHape = this.hapes[0];
-          }
-        }
-        this.isLoading = false;
-      }
+      //     const uri = await this.hapeContract.methods.tokenURI(hapeId).call();
+      //     const resp = await axios.get(uri.replace("ipfs://", "https://ipfs.io/ipfs/"));
+      //     const image = resp.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+
+      //     this.hapes.push({
+      //       id: hapeId,
+      //       image: image,
+      //       name: `${this.target} #${hapeId}`,
+      //     });
+      //     if (this.hapes && this.hapes.length) {
+      //       this.selectepHape = this.hapes[0];
+      //     }
+      //   }
+      //   this.isLoading = false;
+      // }
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -254,40 +285,70 @@ export default {
       this.selectepHape = hape;
     },
     async addMatch(mgdc) {
-      const hapeprofile =
-        this.selectepHape && this.selectepHape.id
-          ? this.selectepHape
-          : this.hapes.length > 0
-          ? this.hapes[0]
-          : null;
-      if (hapeprofile) {
-        const owner = await this.hapeContract.methods.ownerOf(mgdc.id).call();
+      // const hapeprofile =
+      //   this.selectepHape && this.selectepHape.id
+      //     ? this.selectepHape
+      //     : this.hapes.length > 0
+      //     ? this.hapes[0]
+      //     : null;
+      // if (hapeprofile) {
+      const owner = await this.hapeContract.methods.ownerOf(mgdc.id).call();
 
-        this.$store.dispatch("addMatch", { id: mgdc.id, name: mgdc.name });
-        this.sendMessage({
-          from: {
-            account: this.account,
-            tokenId: this.selectepHape.id,
-            name: this.selectepHape.name,
-          },
-          to: { account: owner, tokenId: mgdc.id, name: mgdc.name },
-        });
+      await this.$store.dispatch("addMatch", {
+        owner: this.account,
+        mgdcId: parseInt(mgdc.id),
+        mgdcName: mgdc.name,
+      });
+
+      await this.$store.dispatch("createChatRoom", {
+        from: this.account,
+        to: owner,
+      });
+      const message =
+        "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
+      const conversation = {
+        action: "sendMessage",
+        chatId: this.chatId,
+        message: message,
+        from: this.account,
+        to: owner,
+      };
+      this.sendMessage(conversation);
+    },
+
+    waitForOpenConnection() {
+      // We use this to measure how many times we have tried to connect to the websocket server
+      // If it fails, it throws an error.
+      return new Promise((resolve, reject) => {
+        const maxNumberOfAttempts = 10;
+        const intervalTime = 200;
+
+        let currentAttempt = 0;
+        const interval = setInterval(() => {
+          if (currentAttempt > maxNumberOfAttempts - 1) {
+            clearInterval(interval);
+            reject(new Error("Maximum number of attempts exceeded."));
+          } else if (this.socket.readyState === this.socket.OPEN) {
+            clearInterval(interval);
+            resolve();
+          }
+          currentAttempt++;
+        }, intervalTime);
+      });
+    },
+
+    async sendMessage(message) {
+      const msg = JSON.stringify(message);
+      if (this.socket.readyState !== this.socket.OPEN) {
+        try {
+          await this.waitForOpenConnection(this.socket);
+          this.socket.send(msg);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        this.socket.send(msg);
       }
-    },
-    sendMessage(message) {
-      this.wsConnection.send(message);
-    },
-    startConnetion() {
-      this.wsConnection = new WebSocket(
-        "wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev"
-      );
-      this.wsConnection.onmessage = (event) => {
-        console.log("onmessage", event);
-      };
-      this.wsConnection.onopen = (event) => {
-        console.log(event);
-        this.sendMessage({ action: "setOnline", address: this.account });
-      };
     },
   },
 };

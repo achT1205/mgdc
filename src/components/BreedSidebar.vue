@@ -35,7 +35,7 @@
               <li v-for="(item, index) in matches" :key="index">
                 <div class="avatar">
                   <img
-                    :src="`https://metagolddiggerclub.com/img/thumbnails/${item.id}.png`"
+                    :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
                   />
                 </div>
                 <div class="breed-content">
@@ -43,7 +43,7 @@
                     <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
                   </div>
                   <div class="name">
-                    {{ item.name }}
+                    {{ item.mgdcName }}
                   </div>
                   <div
                     class="join-us-on-discord2"
