@@ -202,7 +202,8 @@ export default new Vuex.Store({
     matches: [],
     freeMgdcs: [],
     chatId: localStorage.chatId ? localStorage.chatId : null,
-    messages: []
+    messages: [],
+    conversations: []
   },
   getters: {
     account: state => state.account,
@@ -212,7 +213,8 @@ export default new Vuex.Store({
     matches: state => state.matches,
     freeMgdcs: state => state.freeMgdcs,
     chatId: state => state.chatId,
-    messages: state => state.messages
+    messages: state => state.messages,
+    conversations: state => state.conversations
   },
   mutations: {
     SET_ERROR(state, payload) {
@@ -251,8 +253,12 @@ export default new Vuex.Store({
     SET_MESSAGES(state, payload) {
       state.messages = payload
     },
+    SET_CONVERSAIONS(state, payload) {
+      state.conversations = payload
+    },
+
     UPDATE_MATCH(state, payload) {
-      const index = state.matches.findindex(_ => _.mgdcId === payload.mgdcId)
+      const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)
       state.matches[index].hasBreed = true
     },
   },
@@ -291,7 +297,6 @@ export default new Vuex.Store({
       const freeMgdcs = await axios.get("https://q6o6r2cze5.execute-api.eu-west-3.amazonaws.com/dev/free-michtos");
       commit('SET_FREE_MGDCS', freeMgdcs.data)
     },
-    // no
     async getMatches({ commit }, payload) {
       const resp = await axios.get(`https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/${payload}`);
       commit('SET_MATCHES', resp.data)
@@ -315,8 +320,10 @@ export default new Vuex.Store({
     async getMeessages({ commit }, payload) {
       const resp = await axios.get(`https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/chats/${payload}`)
       commit("SET_MESSAGES", resp.data)
+    },
+    async getConversations({ commit }, payload) {
+      const resp = await axios.get(`https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/my-michtos/${payload}`)
+      commit("SET_CONVERSAIONS", resp.data)
     }
-
   }
-
 })

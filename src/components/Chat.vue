@@ -26,6 +26,7 @@
 <script>
 import Vue from 'vue'
 import Chat from 'vue-beautiful-chat'
+import { mapGetters } from "vuex";
 
 Vue.use(Chat)
 
@@ -83,6 +84,9 @@ export default {
       alwaysScrollToBottom: false, // when set to true always scrolls the chat to the bottom when new events are in (new message, user starts typing...)
       messageStyling: true // enables *bold* /emph/ _underline_ and such (more info at github.com/mattezza/msgdown)
     }
+  },
+    computed: {
+    ...mapGetters(["chatId", "messages", "conversations"]),
   },
   methods: {
     sendMessage (text) {

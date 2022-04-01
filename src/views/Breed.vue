@@ -109,7 +109,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["freeMgdcs", "chatId", "messages"]),
+    ...mapGetters(["freeMgdcs", "chatId", "messages", "conversations"]),
   },
   async created() {
     await this.loadWeb3();
@@ -213,11 +213,12 @@ export default {
       this.hapes = [];
       if (address) this.account = "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD"; //address;
       this.notAllowed = false;
-      this.$store.dispatch("getMatches", this.account )
+      this.$store.dispatch("getMatches", this.account);
+      this.$store.dispatch("getConversations", this.account);
+      this.$store.dispatch("getMeessages", this.account);
       this.accountBalance = await window.web3.eth.getBalance(this.account);
       this.hapeBalance = await this.hapeContract.methods.balanceOf(this.account).call();
 
-      
       this.isLoading = false;
       // if (this.hapeBalance) {
       //   let count = this.hapeBalance;
@@ -261,19 +262,25 @@ export default {
     },
     async breed(item) {
       this.currentItem = item;
-      await this.contract.methods
-        .breed(item.id)
-        .send({
-          from: this.account,
-          value: "250000000000000000",
-        })
-        .on("receipt", function (res) {
-          console.log("Receipt :", res);
-        })
-        .on("error", function (err) {
-          console.log("error:" + err);
-          alert("Transaction Error");
-        });
+      // await this.contract.methods
+      //   .breed(item.id)
+      //   .send({
+      //     from: this.account,
+      //     value: "250000000000000000",
+      //   })
+      //   .on("receipt", function (res) {
+      //     console.log("Receipt :", res);
+      //   })
+      //   .on("error", function (err) {
+      //     console.log("error:" + err);
+      //     alert("Transaction Error");
+      //   });
+      this.$store.dispatch("breed", {
+        account: this.account,
+        mgdcId: this.currentItem.mgdcId,
+        mgdcName: this.currentItem.mgdcName,
+        hasBreed: true,
+      });
     },
 
     async changeSmartcontract(target) {
