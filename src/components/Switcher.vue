@@ -1,8 +1,8 @@
 <template>
-  <div class="switcher">
+  <div class="switcher" @click="switcher" >
     <div class="switches">
       <label>BAYX</label>
-      <div @click="switcher" class="switches-byx">
+      <div class="switches-byx">
         <div class="switches-round" :class="switching ? 'primary' : ''"></div>
       </div>
       <label>Hape Beast</label>
@@ -20,10 +20,8 @@ export default {
     switcher() {
       this.switching = !this.switching;
       if (this.switching) {
-        this.contractType = "Hape Beast";
-        this.$emit("changeSmartcontract", "Hape");
+        this.$emit("changeSmartcontract", "HAPE");
       } else {
-        this.contractType = "BAYC";
         this.$emit("changeSmartcontract", "BAYC");
       }
     },

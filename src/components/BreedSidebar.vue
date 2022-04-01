@@ -7,7 +7,7 @@
       <div class="modal" :class="showSidebar ? 'open' : ''">
         <div class="modal-content">
           <div class="modal-header">
-            <h1>Mes breed</h1>
+            <h1>Mes Matchs</h1>
             <button
               class="search-btn"
               :class="show ? 'active' : ''"
@@ -19,36 +19,53 @@
           <div class="modal-body">
             <div class="search" :class="show ? 'show' : ''">
               <label>Recherche</label>
-              <input type="text" v-model="search" placeholder="Recherche par ID" />
+              <input
+                type="text"
+                ref="search"
+                v-model="search"
+                placeholder="Recherche par ID"
+                @keydown.enter="filter"
+              />
             </div>
-            <ul class="match-list" :class="show ? 'with-search' : ''">
+            <ul
+              class="match-list"
+              :class="show ? 'with-search' : ''"
+              v-if="matches && matches.length > 0"
+            >
               <li v-for="(item, index) in matches" :key="index">
                 <div class="avatar">
-                  <img :src="`https://metagolddiggerclub.com/img/thumbnails/${item.id}.png`" />
+                  <img
+                    :src="`https://metagolddiggerclub.com/img/thumbnails/${item.id}.png`"
+                  />
                 </div>
                 <div class="breed-content">
-                <div class="has-breed">
-                  <i class="fas" :class="item.hasBreed
-                  ? 'fa-thumbs-down ': 'fa-thumbs-up '"></i>
-                </div>
-                <div class="name">
-                  {{ item.name }}
-                </div>
-                <div class="join-us-on-discord2" v-if="!item.hasBreed" @click="$emit('breed', item)">Breed here now</div>
+                  <div class="has-breed">
+                    <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
+                  </div>
+                  <div class="name">
+                    {{ item.name }}
+                  </div>
+                  <div
+                    class="join-us-on-discord2"
+                    v-if="!item.hasBreed"
+                    @click="$emit('breed', item)"
+                  >
+                    Breed now
+                  </div>
                 </div>
               </li>
             </ul>
+            <div v-else class="no-matches-yet">Pas encore de matchs !</div>
           </div>
         </div>
       </div>
       <div class="backdrop-mask" @click="showSidebar = false">
         <div class="close-btn">
-        <button @click.prevent="showSidebar = false" v-if="showSidebar">
-          <i class="fas fa-times"></i>
-        </button>
+          <button @click.prevent="showSidebar = false" v-if="showSidebar">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
-      </div>
-      
     </div>
   </div>
 </template>
@@ -62,8 +79,20 @@ export default {
     showSidebar: false,
     search: "",
   }),
+  watch: {
+    show(val) {
+      if (val === true) {
+        this.$refs.search.focus();
+      }
+    },
+  },
   computed: {
     ...mapGetters(["matches"]),
+  },
+  methods: {
+    filter() {
+      this.$store.commit("SET_FILTERED_MATCHES", this.search);
+    },
   },
 };
 </script>
@@ -157,11 +186,15 @@ export default {
     }
   }
 
+  .no-matches-yet {
+    margin-top: 50px;
+  }
+
   .match-list {
     width: 100%;
     display: flex;
-    flex-wrap: wrap;
-    padding: 10px 0 0 0;
+    flex-direction: column;
+    padding: 10px 12px 10px 12px;
     margin: 0;
     height: 92vh;
     overflow: auto;
@@ -169,10 +202,10 @@ export default {
     li {
       width: 100%;
       display: flex;
-      padding: 6px 12px;
+      padding: 6px;
       align-items: center;
       border: 1px solid #ccc;
-      margin: 5px;
+      margin: 5px 0;
       background: white;
       border-radius: 10px;
       position: relative;
@@ -196,23 +229,23 @@ export default {
   }
 }
 
-.backdrop-mask{
+.backdrop-mask {
   width: 100%;
 }
-.breed-content{
-    flex: 1;
-  }
-.has-breed{
+.breed-content {
+  flex: 1;
+}
+.has-breed {
   position: absolute;
   top: -10px;
   right: -5px;
-  .fa-thumbs-down{
+  .fa-heart.down {
     background: #d31616;
     color: #fff;
     padding: 5px;
     border-radius: 100%;
   }
-  .fa-thumbs-up{
+  .fa-heart.up {
     background: #458d45;
     color: #fff;
     padding: 5px;
@@ -221,23 +254,23 @@ export default {
 }
 .join-us-on-discord2 {
   font-family: Jumble;
-    font-weight: 800;
-    background-color: #e53261;
-    border-radius: 20px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    height: 20px;
-    text-transform: uppercase;
-    opacity: 0.9;
-    font-size: 14px;
-    text-align: center;
-    transition: all 100ms ease-in-out;
-    display: flex;
-    justify-content: center;
-    max-width: 150px;
-    margin: 5px auto 0;
+  font-weight: 800;
+  background-color: #e53261;
+  border-radius: 20px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  height: 20px;
+  text-transform: uppercase;
+  opacity: 0.9;
+  font-size: 14px;
+  text-align: center;
+  transition: all 100ms ease-in-out;
+  display: flex;
+  justify-content: center;
+  max-width: 120px;
+  margin: 5px auto 0;
   &:hover {
     filter: drop-shadow(0px 0px 5px $cerise-red);
     //  filter: drop-shadow(0px 0px 1px #ffffff);
@@ -271,10 +304,7 @@ export default {
 }
 
 @media (min-width: 1500px) {
-  .backdrop .match-list li{
-    margin: 5px 12px;
-  }
-  .backdrop .modal{
+  .backdrop .modal {
     max-width: 300px;
   }
 }

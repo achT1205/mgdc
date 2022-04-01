@@ -20,12 +20,12 @@
           </div>
         </div>
       </template>
-      <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-txt.png" />
-      <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-txt.png" />
+      <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-t.png" />
+      <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-t.png" />
       <img
         class="rewind-pointer"
         slot="rewind"
-        src="../assets/imgs/tinder/rewind-txt.png"
+        src="../assets/imgs/tinder/rewind-t.png"
       />
     </Tinder>
     <div class="btns">
@@ -41,7 +41,7 @@ import Tinder from "vue-tinder";
 
 export default {
   name: "MGDC-TINDER",
-  props: ["source"],
+  props: ["source", "addMatch"],
   components: { Tinder },
   data: () => ({
     queue: [],
@@ -53,16 +53,6 @@ export default {
   }),
   created() {
     this.mock();
-  },
-  watch: {
-    history(val, old) {
-      if (val && val.length > old.length) {
-        const item = val[val.length - 1];
-        if (this.choice === "like") {
-          this.$store.dispatch("addIntoMatches", { id: item.id, name: item.name });
-        }
-      }
-    },
   },
   methods: {
     mock(count = 5, append = true) {
@@ -80,7 +70,10 @@ export default {
         this.queue.unshift(...list);
       }
     },
-    onSubmit({ item }) {
+    onSubmit({ type, key, item }) {
+      if (type === "like") {
+        this.$emit("addMatch", { id: item.item.id, name: key })
+      }
       if (this.queue.length < 3) {
         this.mock();
       }
@@ -102,15 +95,15 @@ export default {
 
 <style>
 #tinder .vue-tinder {
-   width: 400px;
-   height: 500px;
-   display: flex;
-   flex-direction: column;
-   position: relative;
-   transition: opacity 0.1s ease-in-out;
-   margin: auto;
-   margin-top: 50px;
-   font-family: "Jumble";
+  width: 400px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: opacity 0.1s ease-in-out;
+  margin: auto;
+  margin-top: 50px;
+  font-family: "Jumble";
 }
 
 .tinder-card {
@@ -122,16 +115,17 @@ export default {
   position: absolute;
   z-index: 1;
   top: 20px;
-  width: 64px;
-  height: 64px;
+  max-width: 64px;
 }
 
 .nope-pointer {
   right: 10px;
+  max-width: 64px;
 }
 
 .like-pointer {
   left: 10px;
+  max-width: 64px;
 }
 
 .super-pointer {
@@ -154,8 +148,7 @@ export default {
   z-index: 1;
   top: 20px;
   right: 10px;
-  width: 112px;
-  height: 78px;
+  max-width: 64px;
 }
 
 .pic {
@@ -265,16 +258,16 @@ export default {
 
 @media (min-width: 1500px) {
   #tinder .vue-tinder {
-   width: 400px;
-   height: 620px;
-}
+    width: 400px;
+    height: 620px;
+  }
   .tinder-card {
     max-height: 620px;
   }
-  .backdrop .match-list li{
+  .backdrop .match-list li {
     margin: 5 12px;
   }
-  .backdrop .modal{
+  .backdrop .modal {
     max-width: 300px;
   }
 }

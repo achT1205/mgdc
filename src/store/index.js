@@ -1,12 +1,16 @@
+/* eslint-disable no-debugger */
 import Vue from 'vue'
 import Vuex from 'vuex'
 import Web3 from 'web3'
-import matches from '../assets/mocks/myMatchs.json'
-import frees from '../assets/mocks/frees'
+
 import axios from "axios";
 
-export const apiClient = axios.create();
-apiClient.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
+// export const config = {
+//   headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+// };
+// export const apiClient = axios.create(config);
+
+// apiClient.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
 
 // import breed from "../abis/breed.json";
 // import MGDC from "../abis/mgdc.json";
@@ -195,8 +199,8 @@ export default new Vuex.Store({
     error: null,
     mgdcs: null,
     isbuisy: false,
-    matches: matches,
-    freeMgdcs: frees
+    matches: [],
+    freeMgdcs: []
   },
   getters: {
     account: state => state.account,
@@ -228,6 +232,10 @@ export default new Vuex.Store({
     SET_MATCHES(state, payload) {
       state.matches = payload
     },
+    SET_FILTERED_MATCHES(state, payload) {
+      state.matches = state.matches.filter(_ => _.name.toLowerCase().indexOf(payload.toLowerCase()) > -1)
+    },
+
     SET_MATCH(state, payload) {
       state.matches.push(payload)
     },
@@ -267,10 +275,8 @@ export default new Vuex.Store({
       }
     },
     async fetchFreeMgdcs({ commit }) {
-      const freeMgdcs = await apiClient.get("https://q6o6r2cze5.execute-api.eu-west-3.amazonaws.com/dev/free-michtos");
-      console.log(freeMgdcs, freeMgdcs)
+      const freeMgdcs = await axios.get("https://q6o6r2cze5.execute-api.eu-west-3.amazonaws.com/dev/free-michtos");
       commit('SET_FREE_MGDCS', freeMgdcs.data)
-
     },
 
 
@@ -280,14 +286,15 @@ export default new Vuex.Store({
       commit('SET_MATCHES', matches)
 
     },
-    addIntoMatches({ commit }, payload) {
+    addMatch({ commit }, payload) {
       // call the api to a my match
-
       //then 
       commit('SET_MATCH', payload)
 
 
     }
+
+    //updateMatch
 
   }
 

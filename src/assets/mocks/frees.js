@@ -3,21 +3,21 @@ export default [
         "id": 0,
         "image": "https://ipfs.io/ipfs/QmYpz9sgBezYk4A19FnP9agrvU7RxDzLcES83mbvTp39pp/1572.png",
         "name": "MGDC #0",
-        "hasBreed": false,
+        "hasBreed": true,
         "hasMatched": false
     },
     {
         "id": 1,
         "image": "https://ipfs.io/ipfs/QmPgtSCqzzpx2RUXkAyXZYES2oeqofN6roh9rCRtceFTwL/2494.png",
         "name": "MGDC #1",
-        "hasBreed": false,
+        "hasBreed": true,
         "hasMatched": false
     },
     {
         "id": 10,
         "image": "https://ipfs.io/ipfs/QmXBGoWotmPpKWwArAjWYSsUvKNm8FEJVkLJrqxSiiPDYk/5084.png",
         "name": "MGDC #10",
-        "hasBreed": false,
+        "hasBreed": true,
         "hasMatched": false
     },
     {

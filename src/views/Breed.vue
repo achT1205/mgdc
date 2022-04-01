@@ -14,26 +14,50 @@
               : account.substring(1, 9) + "..." + account.substring(account.length - 6)
           }}
         </button>
+        <div v-if="hapes && hapes.length > 0">
+          <div
+            class="chip"
+            :class="selectepHape && selectepHape.id === hape.id ? 'selected-chip' : ''"
+            v-for="hape in hapes"
+            :key="hape.id"
+            @click="selectHape(hape)"
+          >
+            <img :src="hape.image" alt="Person" width="96" height="96" />
+            {{ hape.name }}
+            <i
+              v-if="selectepHape && selectepHape.id === hape.id"
+              class="fas fa-circle-check checked"
+            ></i>
+          </div>
+        </div>
       </div>
 
-      <Tinder :source="freeMgdcs" />
+      <Tinder
+        :source="freeMgdcs"
+        @addMatch="addMatch"
+        v-if="hapeBalance > 0 && freeMgdcs && freeMgdcs.length > 0"
+      />
     </div>
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
     <breed-sidebar @breed="breed" />
-    <chat />
+    <chat v-if="hapeBalance > 0" />
   </div>
 </template>
 
 <script>
-var Web3 = require("web3");
 import breed from "../abis/breed.json";
+import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
+import bayc from "../abis/bayc.json";
+import hape from "../abis/hape.json";
 import BreedSidebar from "@/components/BreedSidebar.vue";
 import Switcher from "../components/Switcher.vue";
 import Chat from "@/components/Chat.vue";
 import Tinder from "@/components/TinderComponent.vue";
+import Web3 from "web3";
+import axios from "axios";
 import { mapGetters } from "vuex";
 
 // import axios from "axios";
@@ -52,6 +76,13 @@ export default {
       account: "",
       accountBalance: 0,
       abi: [],
+      baycAddress: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+      hapeAddress: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af",
+      hapeContract: "",
+      hapeBalance: null,
+      target: "BAYC",
+      hapes: [],
+      selectepHape: null,
     };
   },
   computed: {
@@ -61,7 +92,7 @@ export default {
     await this.loadWeb3();
   },
   async mounted() {
-    this.$store.dispatch("fetchFreeMgdcs")
+    this.$store.dispatch("fetchFreeMgdcs");
     await this.connectWallet();
   },
   methods: {
@@ -70,7 +101,7 @@ export default {
         window.web3 = new Web3(window.ethereum);
 
         window.ethereum.on("accountsChanged", async (accounts) => {
-          await this.setWallet(accounts[0]);
+          await this.fetchData(accounts[0]);
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
@@ -80,15 +111,15 @@ export default {
         );
       }
 
-      await this.loadContractData();
-      setInterval(
-        function () {
-          this.loadContractData();
-        }.bind(this),
-        1000
-      );
+      await this.loadContractData(this.target);
+      // setInterval(
+      //   function () {
+      //     this.loadContractData(this.target);
+      //   }.bind(this),
+      //   1000
+      // );
     },
-    async loadContractData() {
+    async loadContractData(target) {
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
 
@@ -97,15 +128,57 @@ export default {
         return;
       }
 
-      this.abi = breed.abi;
-      this.address = breed.address;
-      this.contract = new web3.eth.Contract(this.abi, this.address);
+      this.contract = new web3.eth.Contract(
+        breed.abi,
+        target === "HAPE" ? breedhape.address : breed.address
+      );
+      this.hapeContract =
+        target === "HAPE"
+          ? new web3.eth.Contract(hape, this.hapeAddress)
+          : new web3.eth.Contract(bayc, this.baycAddress);
+
       this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
+
+      this.contract.events
+        .TransferSingle({ filter: { operator: this.account } })
+        .on("data", function (event) {
+          const data = event.returnValues;
+          console.log(data);
+          this.$store.dispatch("updateMatch", {
+            account: this.account,
+            id: this.currentItem.id,
+            hasBreed: true,
+          });
+        })
+        .on("error", console.error);
     },
-    async setWallet(address) {
-      this.account = address;
+    async fetchData(address) {
+      this.hapes = [];
+      if (address) this.account = "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD"; //address;
       this.notAllowed = false;
       this.accountBalance = await window.web3.eth.getBalance(this.account);
+      this.hapeBalance = await this.hapeContract.methods.balanceOf(this.account).call();
+      if (this.hapeBalance) {
+        let count = this.hapeBalance;
+        for (let index = 0; index < count; index++) {
+          const hapeId = await this.hapeContract.methods
+            .tokenOfOwnerByIndex(this.account, index)
+            .call();
+
+          const uri = await this.hapeContract.methods.tokenURI(hapeId).call();
+          const resp = await axios.get(uri.replace("ipfs://", "https://ipfs.io/ipfs/"));
+          const image = resp.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+
+          this.hapes.push({
+            id: hapeId,
+            image: image,
+            name: `${this.target} #${hapeId}`,
+          });
+          if (this.hapes && this.hapes.length) {
+            this.selectepHape = this.hapes[0];
+          }
+        }
+      }
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -119,15 +192,15 @@ export default {
           .catch((err) => {
             alert(err.message);
           });
-        await this.setWallet(accounts[0]);
+        await this.fetchData(accounts[0]);
       } else {
         alert("Unable to connect to Metamask");
       }
     },
-    async breed(token_id) {
-      console.log(token_id);
+    async breed(item) {
+      this.currentItem = item;
       await this.contract.methods
-        .breed(token_id)
+        .breed(item.id)
         .send({
           from: this.account,
           value: "250000000000000000",
@@ -142,12 +215,32 @@ export default {
     },
 
     async changeSmartcontract(target) {
-      if (target === "BAYC") {
-        await this.loadContractData("0x563cB938f8945d01c1795BB7e457123E65983C06");
-        await this.connectWallet();
-      } else {
-        await this.loadContractData("newcontract");
-        await this.connectWallet();
+      this.target = target;
+      await this.loadContractData(target);
+      await this.fetchData();
+    },
+    selectHape(hape) {
+      this.selectepHape = hape;
+    },
+    async addMatch(mgdc) {
+      const hapeprofile =
+        this.selectepHape && this.selectepHape.id
+          ? this.selectepHape
+          : this.hapes.length > 0
+          ? this.hapes[0]
+          : null;
+      if (hapeprofile) {
+        const owner = await this.hapeContract.methods.ownerOf(mgdc.id).call();
+
+        this.$store.dispatch("addMatch", { id: mgdc.id, name: mgdc.name });
+        this.$store.dispatch("initiateChat", {
+          from: {
+            account: this.account,
+            id: this.selectepHape.id,
+            name: this.selectepHape.name,
+          },
+          to: { account: owner, id: mgdc.id, name: mgdc.name },
+        });
       }
     },
   },
@@ -318,5 +411,35 @@ button {
   bottom: 10%;
   width: 300px;
   left: 50px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 25px;
+  height: 50px;
+  font-size: 16px;
+  line-height: 50px;
+  border-radius: 25px;
+  background-color: pink;
+  margin: 5px;
+  cursor: pointer;
+}
+
+.selected-chip {
+  color: pink;
+  background-color: #f1f1f1;
+}
+
+.checked {
+  color: pink;
+  margin-left: 3px;
+}
+
+.chip img {
+  float: left;
+  margin: 0 10px 0 -25px;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
 }
 </style>
