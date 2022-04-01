@@ -21,12 +21,17 @@
               <label>Recherche</label>
               <input
                 type="text"
+                ref="search"
                 v-model="search"
                 placeholder="Recherche par ID"
                 @keydown.enter="filter"
               />
             </div>
-            <ul class="match-list" :class="show ? 'with-search' : ''" v-if="matches && matches.length > 0">
+            <ul
+              class="match-list"
+              :class="show ? 'with-search' : ''"
+              v-if="matches && matches.length > 0"
+            >
               <li v-for="(item, index) in matches" :key="index">
                 <div class="avatar">
                   <img
@@ -34,14 +39,19 @@
                   />
                 </div>
                 <div class="breed-content">
-                <div class="has-breed">
-                  <i class="fas fa-heart" :class="item.hasBreed
-                  ? 'down': 'up'"></i>
-                </div>
-                <div class="name">
-                  {{ item.name }}
-                </div>
-                <div class="join-us-on-discord2" v-if="!item.hasBreed" @click="$emit('breed', item)">Breed here now</div>
+                  <div class="has-breed">
+                    <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
+                  </div>
+                  <div class="name">
+                    {{ item.name }}
+                  </div>
+                  <div
+                    class="join-us-on-discord2"
+                    v-if="!item.hasBreed"
+                    @click="$emit('breed', item)"
+                  >
+                    Breed now
+                  </div>
                 </div>
               </li>
             </ul>
@@ -69,6 +79,13 @@ export default {
     showSidebar: false,
     search: "",
   }),
+  watch: {
+    show(val) {
+      if (val === true) {
+        this.$refs.search.focus();
+      }
+    },
+  },
   computed: {
     ...mapGetters(["matches"]),
   },
@@ -169,7 +186,7 @@ export default {
     }
   }
 
-  .no-matches-yet{
+  .no-matches-yet {
     margin-top: 50px;
   }
 
@@ -222,13 +239,13 @@ export default {
   position: absolute;
   top: -10px;
   right: -5px;
-  .fa-heart.down{
+  .fa-heart.down {
     background: #d31616;
     color: #fff;
     padding: 5px;
     border-radius: 100%;
   }
-  .fa-heart.up{
+  .fa-heart.up {
     background: #458d45;
     color: #fff;
     padding: 5px;
@@ -252,7 +269,7 @@ export default {
   transition: all 100ms ease-in-out;
   display: flex;
   justify-content: center;
-  max-width: 150px;
+  max-width: 120px;
   margin: 5px auto 0;
   &:hover {
     filter: drop-shadow(0px 0px 5px $cerise-red);
@@ -287,8 +304,7 @@ export default {
 }
 
 @media (min-width: 1500px) {
-
-  .backdrop .modal{
+  .backdrop .modal {
     max-width: 300px;
   }
 }

@@ -65,12 +65,14 @@ import BreedCard from "@/components/BreedCard";
 var Web3 = require("web3");
 var CryptoJS = require("crypto-js");
 import breed from "../abis/breed.json";
+import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
+import bayc from "../abis/bayc.json";
+import hape from "../abis/hape.json";
 import address from "../address/address.json";
 import Moralis from "moralis";
 import axios from "axios";
 import Switcher from "../components/Switcher.vue";
-
 
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
@@ -106,6 +108,7 @@ export default {
       nftsCountToMint: 2,
       minted: false,
       isMinting: false,
+      target: null,
       MGDC: [
         // {
         //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
@@ -263,10 +266,10 @@ export default {
         );
       }
 
-      await this.loadContractData();
+      await this.loadContractData(this.target);
       setInterval(
         function () {
-          this.loadContractData();
+          this.loadContractData(this.target);
         }.bind(this),
         1000
       );
@@ -275,7 +278,7 @@ export default {
       this.nftsCountToMint = nftsCountToMint;
       console.log(this.nftsCountToMint);
     },
-    async loadContractData(contract = null) {
+    async loadContractData(target = null) {
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
 
@@ -284,10 +287,15 @@ export default {
         return;
       }
 
-      this.abi = breed.abi;
-      this.address = breed.address;
-      if (contract) this.address = contract;
-      this.contract = new web3.eth.Contract(this.abi, this.address);
+      this.contract = new web3.eth.Contract(
+        breed.abi,
+        target === "HAPE" ? breedhape.address : breed.address
+      );
+      this.malApeContract =
+        target === "HAPE"
+          ? new web3.eth.Contract(hape, this.hapeAddress)
+          : new web3.eth.Contract(bayc, this.baycAddress);
+
       this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
     },
     async setWallet(address) {
@@ -475,13 +483,9 @@ export default {
       this.isMinting = false;
     },
     async changeSmartcontract(target) {
-      if (target === "BAYC") {
-        await this.loadContractData("0x563cB938f8945d01c1795BB7e457123E65983C06");
-        await this.connectWallet();
-      }else{
-        await this.loadContractData("newcontract");
-        await this.connectWallet();
-      }
+      this.target = target;
+      await this.loadContractData(target);
+      await this.fetchData();
     },
   },
 };

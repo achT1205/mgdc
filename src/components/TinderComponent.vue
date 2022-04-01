@@ -22,7 +22,11 @@
       </template>
       <img class="like-pointer" slot="like" src="../assets/imgs/tinder/like-t.png" />
       <img class="nope-pointer" slot="nope" src="../assets/imgs/tinder/nope-t.png" />
-      <img class="rewind-pointer" slot="rewind" src="../assets/imgs/tinder/rewind-t.png" />
+      <img
+        class="rewind-pointer"
+        slot="rewind"
+        src="../assets/imgs/tinder/rewind-t.png"
+      />
     </Tinder>
     <div class="btns">
       <img src="../assets/imgs/tinder/rewind.png" @click="decide('rewind')" />
@@ -37,7 +41,7 @@ import Tinder from "vue-tinder";
 
 export default {
   name: "MGDC-TINDER",
-  props: ["source"],
+  props: ["source", "addMatch"],
   components: { Tinder },
   data: () => ({
     queue: [],
@@ -67,8 +71,9 @@ export default {
       }
     },
     onSubmit({ type, key, item }) {
-      if (type === "like")
-        this.$store.dispatch("addIntoMatches", { id: item.item.id, name: key });
+      if (type === "like") {
+        this.$emit("addMatch", { id: item.item.id, name: key })
+      }
       if (this.queue.length < 3) {
         this.mock();
       }
