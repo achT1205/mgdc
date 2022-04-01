@@ -48,3 +48,7 @@ $layout-breakpoint-xxlarge: 1700px; //1040px
   --font-family-jumble: "Jumble", Helvetica;
   --font-family-jumble-regular: "Jumble-Regular", Helvetica;
 }
+
+.sc-chat-window{
+  z-index: 1000;
+}

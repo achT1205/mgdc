@@ -1,26 +1,26 @@
 <template>
   <div>
-    <beautiful-chat
-      :participants="participants"
-      :titleImageUrl="titleImageUrl"
-      :onMessageWasSent="onMessageWasSent"
-      :messageList="messageList"
-      :newMessagesCount="newMessagesCount"
-      :isOpen="isChatOpen"
-      :close="closeChat"
-      :open="openChat"
-      :showEmoji="true"
-      :showFile="false"
-      :showEdition="true"
-      :showDeletion="true"
-      :showTypingIndicator="showTypingIndicator"
-      :showLauncher="true"
-      :showCloseButton="true"
-      :colors="colors"
-      :alwaysScrollToBottom="alwaysScrollToBottom"
-      :messageStyling="messageStyling"
-      @onType="handleOnType"
-      @edit="editMessage" />
+      <beautiful-chat
+        :participants="participants"
+        :titleImageUrl="titleImageUrl"
+        :onMessageWasSent="onMessageWasSent"
+        :messageList="messageList"
+        :newMessagesCount="newMessagesCount"
+        :isOpen="isChatOpen"
+        :close="closeChat"
+        :open="openChat"
+        :showEmoji="true"
+        :showFile="false"
+        :showEdition="true"
+        :showDeletion="true"
+        :showTypingIndicator="showTypingIndicator"
+        :showLauncher="true"
+        :showCloseButton="true"
+        :colors="colors"
+        :alwaysScrollToBottom="alwaysScrollToBottom"
+        :messageStyling="messageStyling"
+        @onType="handleOnType"
+        @edit="editMessage" />
   </div>
 </template>
 <script>
@@ -125,6 +125,6 @@ export default {
 </script>
 <style lang="scss" scoped>
 .sc-chat-window{
-  z-index: 2;
+  z-index: 1000!important;
 }
 </style>
