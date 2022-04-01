@@ -1,0 +1,22 @@
+{
+  "name": "mgdc-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Firdaws Aboulaye",
+  "license": "ISC",
+  "scripts": {
+    "generate:thumbnails": "node thumbnails/index.js",
+    "package:michtos": "sam package --config-env michtos",
+    "deploy:michtos": "sam deploy --config-env michtos --no-fail-on-empty-changeset",
+    "push:michtos": "npm run package:michtos && npm run deploy:michtos",
+    "package:chat": "sam package --config-env chat",
+    "deploy:chat": "sam deploy --config-env chat --no-fail-on-empty-changeset",
+    "push:chat": "npm run package:chat && npm run deploy:chat"
+  },
+  "devDependencies": {
+    "request": "^2.88.2",
+    "request-progress": "^3.0.0",
+    "sharp": "^0.30.3"
+  }
+}
