@@ -5,20 +5,19 @@ const { CONNECTIONS_DB, CHATS_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-  console.log("Event", event);
+  console.log("Event", JSON.stringify(event));
 
-  const { connectionId, requestTime } = event.requestContext;
+  const { domainName, stage } = event.requestContext;
 
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-    endpoint:
-      event.requestContext.domainName + "/" + event.requestContext.stage,
+    endpoint: `${domainName}/${stage}`,
   });
 
   const body = JSON.parse(event.body);
   const { chatId, from, to, message } = body;
   try {
-    await sendPrivate(apigwManagementApi, connectionId, message, to);
-    await storeMessage(chatId, from, to, message, requestTime);
+    const status = await sendPrivate(apigwManagementApi, message, to);
+    await storeMessage(chatId, from, to, message, status);
   } catch (e) {
     console.error("Failed to send message", e);
     return { statusCode: 500, body: e.stack };
@@ -27,25 +26,31 @@ exports.handler = async (event) => {
   return { statusCode: 200, body: "Data sent." };
 };
 
-const sendPrivate = async (client, id, message, to) => {
+const sendPrivate = async (client, message, to) => {
+  let connectionId;
   try {
     const receiverConnection = await findReceiverConnectionId(to);
     if (!receiverConnection) {
-      throw new Error(`User ${to} is not connected`);
+      console.log("User %s is not connected");
+      return false;
     }
+    connectionId = receiverConnection.connectionId;
     await client
       .postToConnection({
-        ConnectionId: receiverConnection.connectionId,
+        ConnectionId: connectionId,
         Data: Buffer.from(JSON.stringify(message)),
       })
       .promise();
+    return true;
   } catch (e) {
     if (e.statusCode === 410) {
-      console.log(`Found stale connection, deleting ${id}`);
+      console.log(`Found stale connection, deleting ${connectionId}`);
       await clientdb
-        .delete({ TableName: CONNECTIONS_DB, Key: { id } })
+        .delete({ TableName: CONNECTIONS_DB, Key: { connectionId } })
         .promise();
+      return false;
     } else {
+      // Something bad happen, we don't know what is it
       throw e;
     }
   }
@@ -66,8 +71,7 @@ const findReceiverConnectionId = async (to) => {
   return result.Items.length > 0 ? result.Items[0] : null;
 };
 
-const storeMessage = async (chatId, from, to, message, requestTime) => {
-  console.log("Reqest time", Date.parse(requestTime));
+const storeMessage = async (chatId, from, to, message, status) => {
   const tscreated = new Date().getTime();
   const params = {
     TableName: CHATS_DB,
@@ -77,7 +81,8 @@ const storeMessage = async (chatId, from, to, message, requestTime) => {
       tscreated: tscreated,
       message: message,
       author: from,
-      to: to,
+      to,
+      read: status,
     },
   };
 

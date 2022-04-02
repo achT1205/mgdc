@@ -18,6 +18,10 @@ exports.handler = async () => {
     } while (typeof items.LastEvaluatedKey !== "undefined");
     return {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(result),
     };
   } catch (err) {

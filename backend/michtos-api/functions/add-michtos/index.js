@@ -40,6 +40,10 @@ exports.handler = async (event) => {
     }
     return {
       statusCode: 202,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
     };
   } catch (err) {
     console.error("Failed to store michtos", err);

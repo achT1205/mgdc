@@ -6,15 +6,20 @@
   "author": "Firdaws Aboulaye",
   "license": "ISC",
   "scripts": {
-    "generate:thumbnails": "node thumbnails/index.js",
+    "download:thumbnails": "node thumbnails/async.js",
+    "resize:thumbnails": "node thumbnails/async-resizing.js",
     "package:michtos": "sam package --config-env michtos",
     "deploy:michtos": "sam deploy --config-env michtos --no-fail-on-empty-changeset",
     "push:michtos": "npm run package:michtos && npm run deploy:michtos",
     "package:chat": "sam package --config-env chat",
     "deploy:chat": "sam deploy --config-env chat --no-fail-on-empty-changeset",
-    "push:chat": "npm run package:chat && npm run deploy:chat"
+    "push:chat": "npm run package:chat && npm run deploy:chat",
+    "package:breed": "sam package --config-env breed",
+    "deploy:breed": "sam deploy --config-env breed --no-fail-on-empty-changeset",
+    "push:breed": "npm run package:breed && npm run deploy:breed"
   },
   "devDependencies": {
+    "async": "^3.2.3",
     "request": "^2.88.2",
     "request-progress": "^3.0.0",
     "sharp": "^0.30.3"

@@ -1,16 +1,18 @@
 const AWS = require("aws-sdk");
 
-const { CHATS_DB } = process.env;
+const { BREED_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-  const { username } = event.pathParameters;
+  console.log("Event", event);
+  const { owner } = event.pathParameters;
   const params = {
-    TableName: CHATS_DB,
-    IndexName: "chat-sort-key-index",
-    KeyConditionExpression: "chatSortKey = :user",
+    TableName: BREED_DB,
+    KeyConditionExpression: "#owner = :owner and #mgdcId > :rkey",
+    ExpressionAttributeNames: { "#owner": "owner", "#mgdcId": "mgdcId" },
     ExpressionAttributeValues: {
-      ":user": `member_${username}`,
+      ":owner": owner,
+      ":rkey": 0,
     },
   };
 
@@ -25,7 +27,7 @@ exports.handler = async (event) => {
       body: JSON.stringify(result.Items),
     };
   } catch (err) {
-    console.error("Failed to load my michtos chats", err);
+    console.error("Failed to load breeds", err);
     return {
       statusCode: 500,
       body: err,

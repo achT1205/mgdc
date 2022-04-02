@@ -112,15 +112,6 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnDisconnectFunction.Arn}/invocations
 
-  DefaultRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref ChatWebSocketApi
-      RouteKey: $default
-      AuthorizationType: NONE
-      OperationName: DefaulttRoute
-      Target: !Sub integrations/${DefaultInteg}
-
   DefaultInteg:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -183,24 +174,24 @@ Resources:
 
   # Functions
 
-  CreateChatFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/create-chat/
-      FunctionName: !Sub ${Stage}-${App}-create-chat
-      Environment:
-        Variables:
-          CHATS_DB: !Ref ChatsTable
-      Policies:
-        - DynamoDBWritePolicy:
-            TableName: !Ref ChatsTable
-      Events:
-        CreateChatEvent:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ChatApi
-            Path: /
-            Method: POST
+  #CreateChatFunction:
+  #  Type: AWS::Serverless::Function
+  #  Properties:
+  #    CodeUri: functions/create-chat/
+  #    FunctionName: !Sub ${Stage}-${App}-create-chat
+  #    Environment:
+  #      Variables:
+  #        CHATS_DB: !Ref ChatsTable
+  #    Policies:
+  #      - DynamoDBCrudPolicy:
+  #          TableName: !Ref ChatsTable
+  #    Events:
+  #      CreateChatEvent:
+  #        Type: Api
+  #        Properties:
+  #          RestApiId: !Ref ChatApi
+  #          Path: /
+  #          Method: POST
 
   ChatsFunction:
     Type: AWS::Serverless::Function
@@ -276,6 +267,21 @@ Resources:
       FunctionName: !Ref OnDisconnectFunction
       Principal: apigateway.amazonaws.com
 
+  DefaultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/default/
+      FunctionName: !Sub ${Stage}-${App}-default
+
+  DefaultPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ChatWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DefaultFunction
+      Principal: apigateway.amazonaws.com
+
   SendMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -344,13 +350,13 @@ Resources:
           KeyType: "HASH"
       SSESpecification:
         SSEEnabled: True
-      GlobalSecondaryIndexes:
-        - IndexName: username-index
-          KeySchema:
-            - AttributeName: username
-              KeyType: HASH
-          Projection:
-            ProjectionType: "ALL"
+      #GlobalSecondaryIndexes:
+      #  - IndexName: username-index
+      #    KeySchema:
+      #      - AttributeName: username
+      #        KeyType: HASH
+      #    Projection:
+      #      ProjectionType: "ALL"
       BillingMode: PAY_PER_REQUEST
       Tags:
         - Key: App
@@ -369,6 +375,8 @@ Resources:
           AttributeType: "S"
         - AttributeName: "chatSortKey"
           AttributeType: "S"
+        - AttributeName: "to"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "chatId"
           KeyType: "HASH"
@@ -383,6 +391,14 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: "ALL"
+        #- IndexName: chat-sort-key-to-index
+        #  KeySchema:
+        #    - AttributeName: chatSortKey
+        #      KeyType: HASH
+        #    - AttributeName: to
+        #      KeyType: RANGE
+        #  Projection:
+        #    ProjectionType: "ALL"
       BillingMode: PAY_PER_REQUEST
       Tags:
         - Key: App
@@ -394,11 +410,11 @@ Resources:
 
   # Logs
 
-  CreateChatFunctionLog:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-create-chat
-      RetentionInDays: !Ref LogRetentionInDays
+  #CreateChatFunctionLog:
+  #  Type: AWS::Logs::LogGroup
+  #  Properties:
+  #    LogGroupName: !Sub /aws/lambda/${Stage}-${App}-create-chat
+  #    RetentionInDays: !Ref LogRetentionInDays
 
   ChatsFunctionLog:
     Type: AWS::Logs::LogGroup
@@ -424,6 +440,12 @@ Resources:
       LogGroupName: !Sub /aws/lambda/${Stage}-${App}-on-disconnect
       RetentionInDays: !Ref LogRetentionInDays
 
+  DefaultFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-default
+      RetentionInDays: !Ref LogRetentionInDays
+
   SetOnlineFunctionLog:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -443,3 +465,8 @@ Outputs:
   ChatWebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Sub wss://${ChatWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiStage}
+  ChatDbTableName:
+    Description: "Chat table name"
+    Value: !Ref ChatsTable
+    Export:
+      Name: !Sub ${Stage}-${App}-chats-table
