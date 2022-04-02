@@ -309,7 +309,6 @@ export default new Vuex.Store({
     },
     async addMatch({ commit }, payload) {
       const resp = await axios.post("https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/match", payload);
-      debugger
       const { chatId } = resp.data
       localStorage.chatId = chatId
       commit('SET_CHATCH_ID', chatId)

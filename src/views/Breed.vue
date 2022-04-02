@@ -9,7 +9,7 @@
         <p class="text howMa">Find your partner</p>
         <button class="connectButton" @click="connectWallet">
           {{
-            account === ""
+            account === null
               ? "Connect wallet"
               : account.substring(1, 9) + "..." + account.substring(account.length - 6)
           }}
@@ -44,7 +44,7 @@
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
     <breed-sidebar @breed="breed" />
-    <chat :account="account" @sendMessage="sendMessage" v-if="malBalance > 0" />
+    <chat @sendMessage="sendMessage" v-if="malBalance > 0" />
 
     <div
       id="overlay"
@@ -91,13 +91,12 @@ export default {
   data() {
     return {
       address: "",
-      account: "",
       accountBalance: 0,
       abi: [],
       baycAddress: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
       hapeAddress: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af",
       malContract: "",
-      malBalance: null,
+      malBalance: 1,
       breedContract: null,
       target: "BAYC",
       hapes: [],
@@ -109,7 +108,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["freeMgdcs", "chatId", "messages", "conversations"]),
+    ...mapGetters(["freeMgdcs", "chatId", "messages", "conversations", "account"]),
   },
   async created() {
     await this.loadWeb3();
@@ -134,15 +133,6 @@ export default {
       let parsedMessage = JSON.parse(event.data);
       console.log(parsedMessage);
     };
-
-    //  this.socket.onmessage = (event) => {
-    //     console.log("onmessage listner triggered", event);
-    //   };
-
-    //   this.socket.addEventListener("message", function (event) {
-    //     console.log("Message reçu du serveur ", event.data);
-    //     this.$store.dispatch("getMeessages", this.chatId);
-    //   });
   },
   async mounted() {
     this.$store.dispatch("fetchFreeMgdcs");
@@ -155,7 +145,8 @@ export default {
         window.web3 = new Web3(window.ethereum);
 
         window.ethereum.on("accountsChanged", async (accounts) => {
-          await this.fetchData(accounts[0]);
+          this.$store.commit("SET_ACCOUNT", accounts[0]);
+          await this.fetchData();
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
@@ -205,15 +196,14 @@ export default {
         })
         .on("error", console.error);
     },
-    async fetchData(address) {
+    async fetchData() {
       this.hapes = [];
-      if (address) this.account = "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD"; //address;
       this.notAllowed = false;
       this.$store.dispatch("getMatches", this.account);
       this.$store.dispatch("getConversations", this.account);
       this.$store.dispatch("getMeessages", this.chatId);
       this.accountBalance = await window.web3.eth.getBalance(this.account);
-      this.malBalance = await this.malContract.methods.balanceOf(this.account).call();
+      // this.malBalance = await this.malContract.methods.balanceOf(this.account).call();
       console.log("malBalance", this.malBalance);
       // if (this.malBalance) {
       //   let count = this.malBalance;
@@ -250,7 +240,8 @@ export default {
           .catch((err) => {
             this.errorMsg = err.message;
           });
-        await this.fetchData(accounts[0]);
+        this.$store.commit("SET_ACCOUNT", accounts[0]);
+        await this.fetchData();
       } else {
         this.errorMsg = "Unable to connect to Metamask";
       }
@@ -302,11 +293,6 @@ export default {
         mgdcName: mgdc.name,
       });
 
-      // await this.$store.dispatch("createChatRoom", {
-      //   from: this.account,
-      //   to: owner,
-      // });
-
       const message =
         "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
       const conversation = {
@@ -316,12 +302,10 @@ export default {
         from: this.account,
         to: owner,
       };
-      this.sendMessage(conversation);
+      this.sendMessage(conversation, true);
     },
 
     waitForOpenConnection() {
-      // We use this to measure how many times we have tried to connect to the websocket server
-      // If it fails, it throws an error.
       return new Promise((resolve, reject) => {
         const maxNumberOfAttempts = 10;
         const intervalTime = 200;
@@ -340,18 +324,42 @@ export default {
       });
     },
 
-    async sendMessage(message) {
-      const msg = JSON.stringify(message);
+    async sendMessage(message, match) {
+      let msg = JSON.stringify(message);
       if (this.socket.readyState !== this.socket.OPEN) {
         try {
           await this.waitForOpenConnection(this.socket);
           this.socket.send(msg);
+          this.localUpdate(match, message);
         } catch (err) {
           console.error(err);
         }
       } else {
         this.socket.send(msg);
+        this.localUpdate(match, message);
       }
+    },
+    localUpdate(match, message) {
+      let messages = this.messages;
+      if (match) {
+        messages = []
+        const conversations = [];
+        conversations.push({
+          chatId: this.chatId,
+          to: message.to,
+        });
+        this.$store.commit("SET_CONVERSAIONS", conversations);
+      }
+      const msg = {
+        author: this.account,
+        chatId: this.chatId,
+        message: message.message,
+        read: true,
+        to: message.to,
+      };
+      //messages.push({ type: "text", author: `me`, data: { text: message.message } });
+      messages.push(msg);
+      this.$store.commit("SET_MESSAGES", messages);
     },
 
     isTinderLoading(loading) {

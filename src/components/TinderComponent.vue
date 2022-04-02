@@ -38,6 +38,7 @@
 
 <script>
 import Tinder from "vue-tinder";
+import { mapGetters } from "vuex";
 
 export default {
   name: "MGDC-TINDER",
@@ -54,21 +55,27 @@ export default {
   created() {
     this.mock();
   },
+  computed: {
+    ...mapGetters(["matches"]),
+  },
   methods: {
     async mock(append = true) {
       const list = [];
       let count = 0;
       while (count < 5) {
+        const id = this.source[this.offset].id;
         // const listed = await this.breedContract.methods
-        //   .MGDCisBreeding(this.source[this.offset].id)
+        //   .MGDCisBreeding(id)
         //   .call();
-        // if (!listed) {
+        const index = this.matches.findIndex((_) => _.mgdcId == id);
+        if (index === -1) {
+          //add && !listed
           list.push({
             title: this.source[this.offset].name,
             item: this.source[this.offset],
           });
           count++;
-        //}
+        }
         this.offset++;
       }
       if ((this.source.length > 5 && count === 5) || this.source.length <= 5) {
