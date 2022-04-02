@@ -32,7 +32,11 @@
               :class="show ? 'with-search' : ''"
               v-if="matches && matches.length > 0"
             >
-              <li v-for="(item, index) in matches" :key="index">
+              <li
+                v-for="(item, index) in matches"
+                :key="index"
+                @click.prevent="onSelect(item)"
+              >
                 <div class="avatar">
                   <img
                     :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
@@ -92,6 +96,11 @@ export default {
   methods: {
     filter() {
       this.$store.commit("SET_FILTERED_MATCHES", this.search);
+    },
+    onSelect(item) {
+      this.$store.commit("SET_CHATCH_ID", item.chatId);
+      this.$store.dispatch("getMeessages", item.chatId);
+      this.$store.commit("SET_IS_CHAT_OPEN", true);
     },
   },
 };
@@ -200,6 +209,7 @@ export default {
     overflow: auto;
     background: #edf4f6;
     li {
+      cursor: pointer;
       width: 100%;
       display: flex;
       padding: 6px;

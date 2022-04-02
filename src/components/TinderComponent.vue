@@ -41,7 +41,7 @@ import Tinder from "vue-tinder";
 
 export default {
   name: "MGDC-TINDER",
-  props: ["source", "addMatch"],
+  props: ["source", "addMatch", "breedContract", "isTinderLoading"],
   components: { Tinder },
   data: () => ({
     queue: [],
@@ -55,15 +55,26 @@ export default {
     this.mock();
   },
   methods: {
-    mock(count = 5, append = true) {
+    async mock(append = true) {
       const list = [];
-      for (let i = 0; i < count; i++) {
-        list.push({
-          title: this.source[this.offset].name,
-          item: this.source[this.offset],
-        });
+      let count = 0;
+      while (count < 5) {
+        // const listed = await this.breedContract.methods
+        //   .MGDCisBreeding(this.source[this.offset].id)
+        //   .call();
+        // if (!listed) {
+          list.push({
+            title: this.source[this.offset].name,
+            item: this.source[this.offset],
+          });
+          count++;
+        //}
         this.offset++;
       }
+      if ((this.source.length > 5 && count === 5) || this.source.length <= 5) {
+        this.$emit("isTinderLoading", false);
+      }
+
       if (append) {
         this.queue = this.queue.concat(list);
       } else {
@@ -72,7 +83,7 @@ export default {
     },
     onSubmit({ type, key, item }) {
       if (type === "like") {
-        this.$emit("addMatch", { id: item.item.id, name: key })
+        this.$emit("addMatch", { id: item.item.id, name: key });
       }
       if (this.queue.length < 3) {
         this.mock();

@@ -485,7 +485,7 @@ export default {
     async changeSmartcontract(target) {
       this.target = target;
       await this.loadContractData(target);
-      await this.fetchData();
+      await this.connectWallet();
     },
   },
 };
@@ -682,5 +682,11 @@ button {
   bottom: 10%;
   width: 300px;
   left: 50px;
+}
+.switch {
+  position: fixed;
+  top: 25px;
+  right: 20px;
+  z-index: 1;
 }
 </style>

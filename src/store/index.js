@@ -203,7 +203,8 @@ export default new Vuex.Store({
     freeMgdcs: [],
     chatId: localStorage.chatId ? localStorage.chatId : null,
     messages: [],
-    conversations: []
+    conversations: [],
+    isChatOpen :false,
   },
   getters: {
     account: state => state.account,
@@ -214,11 +215,15 @@ export default new Vuex.Store({
     freeMgdcs: state => state.freeMgdcs,
     chatId: state => state.chatId,
     messages: state => state.messages,
-    conversations: state => state.conversations
+    conversations: state => state.conversations,
+    isChatOpen : state => state.isChatOpen
   },
   mutations: {
     SET_ERROR(state, payload) {
       state.error = payload
+    },
+    SET_IS_CHAT_OPEN(state, payload) {
+      state.isChatOpen = payload
     },
     SET_IS_BUISY(state, payload) {
       state.isbuisy = payload
@@ -248,6 +253,7 @@ export default new Vuex.Store({
       state.freeMgdcs = payload
     },
     SET_CHATCH_ID(state, payload) {
+      localStorage.chatId = payload
       state.chatId = payload
     },
     SET_MESSAGES(state, payload) {
@@ -302,7 +308,11 @@ export default new Vuex.Store({
       commit('SET_MATCHES', resp.data)
     },
     async addMatch({ commit }, payload) {
-      await axios.post("https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/match", payload);
+      const resp = await axios.post("https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/match", payload);
+      debugger
+      const { chatId } = resp.data
+      localStorage.chatId = chatId
+      commit('SET_CHATCH_ID', chatId)
       commit("SET_MATCH", payload)
     },
     async breed({ commit }, payload) {
@@ -311,12 +321,12 @@ export default new Vuex.Store({
       });
       commit('UPDATE_MATCH', payload)
     },
-    async createChatRoom({ commit }, payload) {
-      const resp = await axios.post("https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev", payload)
-      const { chatId } = resp.data
-      localStorage.chatId = chatId
-      commit('SET_CHATCH_ID', chatId)
-    },
+    // async createChatRoom({ commit }, payload) {
+    //   const resp = await axios.post("https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev", payload)
+    //   const { chatId } = resp.data
+    //   localStorage.chatId = chatId
+    //   commit('SET_CHATCH_ID', chatId)
+    // },
     async getMeessages({ commit }, payload) {
       const resp = await axios.get(`https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/chats/${payload}`)
       commit("SET_MESSAGES", resp.data)

@@ -35,14 +35,16 @@
       <Tinder
         :source="freeMgdcs"
         @addMatch="addMatch"
-        v-if="hapeBalance > 0 && freeMgdcs && freeMgdcs.length > 0"
+        v-if="malBalance > 0 && freeMgdcs && freeMgdcs.length > 0"
+        :breedContract="breedContract"
+        @isTinderLoading="isTinderLoading"
       />
     </div>
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
     <breed-sidebar @breed="breed" />
-    <chat v-if="hapeBalance > 0" />
+    <chat :account="account" @sendMessage="sendMessage" v-if="malBalance > 0" />
 
     <div
       id="overlay"
@@ -78,8 +80,6 @@ import Web3 from "web3";
 //import axios from "axios";
 import { mapGetters } from "vuex";
 
-// import axios from "axios";
-
 export default {
   name: "Breed",
   components: {
@@ -96,8 +96,9 @@ export default {
       abi: [],
       baycAddress: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
       hapeAddress: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af",
-      hapeContract: "",
-      hapeBalance: null,
+      malContract: "",
+      malBalance: null,
+      breedContract: null,
       target: "BAYC",
       hapes: [],
       selectepHape: null,
@@ -105,7 +106,6 @@ export default {
       errorMsg: null,
       socket: {},
       connectedStatus: "Not connected!",
-      message: "No message yet!",
     };
   },
   computed: {
@@ -159,22 +159,20 @@ export default {
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
-        this.isLoading = false;
       } else {
-        this.isLoading = false;
         this.errorMsg =
           "Non-Ethereum browser detected. You should consider trying MetaMask !";
       }
 
-      await this.loadContractData(this.target);
+      await this.loadContractData();
       // setInterval(
       //   function () {
-      //     this.loadContractData(this.target);
+      //     this.loadContractData();
       //   }.bind(this),
       //   1000
       // );
     },
-    async loadContractData(target) {
+    async loadContractData() {
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
 
@@ -183,27 +181,25 @@ export default {
         return;
       }
 
-      this.contract = new web3.eth.Contract(
-        breed.abi,
-        target === "HAPE" ? breedhape.address : breed.address
-      );
-      this.hapeContract =
-        target === "HAPE"
+      const breedAddress = this.target === "HAPE" ? breedhape.address : breed.address;
+      this.breedContract = new web3.eth.Contract(breed.abi, breedAddress);
+
+      this.malContract =
+        this.target === "HAPE"
           ? new web3.eth.Contract(hape, this.hapeAddress)
           : new web3.eth.Contract(bayc, this.baycAddress);
 
       this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
 
-      this.contract.events
+      this.breedContract.events
         .TransferSingle({ filter: { operator: this.account } })
         .on("data", function (event) {
           const data = event.returnValues;
           console.log(data);
           this.$store.dispatch("breed", {
             account: this.account,
-            mgdcId: this.currentItem.id,
-            mgdcName: this.currentItem.name,
-            id: this.currentItem.id,
+            mgdcId: this.currentItem.mgdcId,
+            mgdcName: this.currentItem.mgdcName,
             hasBreed: true,
           });
         })
@@ -215,13 +211,12 @@ export default {
       this.notAllowed = false;
       this.$store.dispatch("getMatches", this.account);
       this.$store.dispatch("getConversations", this.account);
-      this.$store.dispatch("getMeessages", this.account);
+      this.$store.dispatch("getMeessages", this.chatId);
       this.accountBalance = await window.web3.eth.getBalance(this.account);
-      this.hapeBalance = await this.hapeContract.methods.balanceOf(this.account).call();
-
-      this.isLoading = false;
-      // if (this.hapeBalance) {
-      //   let count = this.hapeBalance;
+      this.malBalance = await this.malContract.methods.balanceOf(this.account).call();
+      console.log("malBalance", this.malBalance);
+      // if (this.malBalance) {
+      //   let count = this.malBalance;
       //   for (let index = 0; index < count; index++) {
       //     const hapeId = await this.hapeContract.methods
       //       .tokenOfOwnerByIndex(this.account, index)
@@ -262,7 +257,7 @@ export default {
     },
     async breed(item) {
       this.currentItem = item;
-      // await this.contract.methods
+      // await this.breedContract.methods
       //   .breed(item.id)
       //   .send({
       //     from: this.account,
@@ -285,8 +280,6 @@ export default {
 
     async changeSmartcontract(target) {
       this.target = target;
-      await this.loadContractData(target);
-      await this.fetchData();
     },
     selectHape(hape) {
       this.selectepHape = hape;
@@ -299,18 +292,21 @@ export default {
       //     ? this.hapes[0]
       //     : null;
       // if (hapeprofile) {
-      const owner = await this.hapeContract.methods.ownerOf(mgdc.id).call();
+
+      const owner = await this.malContract.methods.ownerOf(mgdc.id).call();
 
       await this.$store.dispatch("addMatch", {
-        owner: this.account,
+        from: this.account,
+        to: owner,
         mgdcId: parseInt(mgdc.id),
         mgdcName: mgdc.name,
       });
 
-      await this.$store.dispatch("createChatRoom", {
-        from: this.account,
-        to: owner,
-      });
+      // await this.$store.dispatch("createChatRoom", {
+      //   from: this.account,
+      //   to: owner,
+      // });
+
       const message =
         "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
       const conversation = {
@@ -356,6 +352,10 @@ export default {
       } else {
         this.socket.send(msg);
       }
+    },
+
+    isTinderLoading(loading) {
+      this.isLoading = loading;
     },
   },
 };
@@ -567,7 +567,7 @@ button {
   background-color: #fff;
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
   align-items: center;
-    /* justify-content: center; */
+  /* justify-content: center; */
   bottom: 15px;
   left: 15px;
 }
