@@ -205,6 +205,7 @@ export default new Vuex.Store({
     messages: [],
     conversations: [],
     isChatOpen :false,
+    matchActive: '',
   },
   getters: {
     account: state => state.account,
@@ -216,7 +217,8 @@ export default new Vuex.Store({
     chatId: state => state.chatId,
     messages: state => state.messages,
     conversations: state => state.conversations,
-    isChatOpen : state => state.isChatOpen
+    isChatOpen : state => state.isChatOpen,
+    matchActive: state => state.matchActive,
   },
   mutations: {
     SET_ERROR(state, payload) {
@@ -262,7 +264,9 @@ export default new Vuex.Store({
     SET_CONVERSAIONS(state, payload) {
       state.conversations = payload
     },
-
+    SET_MATCH_ACTIVE(state, payload) {
+      state.matchActive = payload
+    },
     UPDATE_MATCH(state, payload) {
       const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)
       state.matches[index].hasBreed = true

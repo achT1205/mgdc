@@ -35,6 +35,7 @@
               <li
                 v-for="(item, index) in matches"
                 :key="index"
+                :class="matchActive === item.id ? 'active':''"
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
@@ -52,7 +53,7 @@
                   <div
                     class="join-us-on-discord2"
                     v-if="!item.hasBreed"
-                    @click="$emit('breed', item)"
+                    @click="onBreed(item)"
                   >
                     Breed now
                   </div>
@@ -91,7 +92,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["matches"]),
+    ...mapGetters(["matches", "matchActive"]),
   },
   methods: {
     filter() {
@@ -102,6 +103,10 @@ export default {
       this.$store.dispatch("getMeessages", item.chatId);
       this.$store.commit("SET_IS_CHAT_OPEN", true);
     },
+    onBreed(item) {
+      this.$store.commit('SET_MATCH_ACTIVE', item.id);
+      this.$emit('breed', item)
+    }
   },
 };
 </script>
@@ -236,6 +241,9 @@ export default {
         padding: 0 10px;
       }
     }
+    li.active{
+      box-shadow: 0 0 6px 0 rgba(110,110,110,0.42);
+    }
   }
 }
 
@@ -254,6 +262,7 @@ export default {
     color: #fff;
     padding: 5px;
     border-radius: 100%;
+    animation: animateHeart 1.2s infinite;
   }
   .fa-heart.up {
     background: #458d45;
@@ -310,6 +319,28 @@ export default {
   }
   button:hover {
     box-shadow: none;
+  }
+}
+
+@keyframes animateHeart {
+  // scale down and scale up faster in irregular intervals to get the throbbing effect
+  0% {
+    transform: scale(0.8);
+  }
+  5% {
+    transform: scale(0.9);
+  }
+  10% {
+    transform: scale(0.8);
+  }
+  15% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(0.8);
   }
 }
 
