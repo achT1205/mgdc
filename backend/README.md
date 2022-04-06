@@ -39,7 +39,7 @@ Pour info dans le frontend le POST des messages se fera à partir cet endpoint <
 en combinaison avec la connectionId
 
 Pour récupérer la list de ses discussions avec les autres
-curl --location --request GET 'https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/my-michtos/@faboulaye'
+curl --location --request GET 'https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/my-mgdc/@faboulaye'
 
 Pour récupérer l'historique d'une conversation avec un autre
 curl --location --request GET 'https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/chats/f2c57a84-9446-4654-b199-d65a09a9860d'

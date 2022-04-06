@@ -20,10 +20,18 @@ Parameters:
       - test
       - staging
       - prod
+  ChatExpirationInMonth:
+    Type: Number
+    Description: Chat expiration in month
+    Default: 2
   LogRetentionInDays:
     Type: Number
     Description: CloudWatch Logs retention period before deletion
     Default: 14
+  ApiDomain:
+    Type: String
+    Description: Custom Api domain name
+    Default: api.metagolddiggerclub.com
 
 Globals:
   Function:
@@ -77,6 +85,15 @@ Resources:
         App: !Ref App
         Stage: !Ref Stage
         Project: !Ref Project
+
+  RestApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      ApiId: !Ref ChatApi
+      ApiMappingKey: !Sub ${Stage}/chats
+      DomainName: !Ref ApiDomain
+      Stage: !Ref ChatApi.Stage
 
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -174,25 +191,6 @@ Resources:
 
   # Functions
 
-  #CreateChatFunction:
-  #  Type: AWS::Serverless::Function
-  #  Properties:
-  #    CodeUri: functions/create-chat/
-  #    FunctionName: !Sub ${Stage}-${App}-create-chat
-  #    Environment:
-  #      Variables:
-  #        CHATS_DB: !Ref ChatsTable
-  #    Policies:
-  #      - DynamoDBCrudPolicy:
-  #          TableName: !Ref ChatsTable
-  #    Events:
-  #      CreateChatEvent:
-  #        Type: Api
-  #        Properties:
-  #          RestApiId: !Ref ChatApi
-  #          Path: /
-  #          Method: POST
-
   ChatsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -209,14 +207,14 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ChatApi
-            Path: /chats/{chatId}
+            Path: /{chatId}
             Method: GET
 
-  MyMichtosFunction:
+  MyChatsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/my-michtos/
-      FunctionName: !Sub ${Stage}-${App}-my-michtos-chats
+      CodeUri: functions/chat-rooms/
+      FunctionName: !Sub ${Stage}-${App}-chat-rooms
       Environment:
         Variables:
           CHATS_DB: !Ref ChatsTable
@@ -224,11 +222,11 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref ChatsTable
       Events:
-        MyMichtosEvent:
+        MyChatsEvent:
           Type: Api
           Properties:
             RestApiId: !Ref ChatApi
-            Path: /my-michtos/{username}
+            Path: /rooms/{username}
             Method: GET
 
   OnConnectFunction:
@@ -290,6 +288,7 @@ Resources:
       Environment:
         Variables:
           CHATS_DB: !Ref ChatsTable
+          CHAT_EXPIRATION_IN_MONTH: !Ref ChatExpirationInMonth
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ConnectionsTable
@@ -350,13 +349,13 @@ Resources:
           KeyType: "HASH"
       SSESpecification:
         SSEEnabled: True
-      #GlobalSecondaryIndexes:
-      #  - IndexName: username-index
-      #    KeySchema:
-      #      - AttributeName: username
-      #        KeyType: HASH
-      #    Projection:
-      #      ProjectionType: "ALL"
+      GlobalSecondaryIndexes:
+        - IndexName: username-index
+          KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: PAY_PER_REQUEST
       Tags:
         - Key: App
@@ -391,15 +390,18 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: "ALL"
-        #- IndexName: chat-sort-key-to-index
-        #  KeySchema:
-        #    - AttributeName: chatSortKey
-        #      KeyType: HASH
-        #    - AttributeName: to
-        #      KeyType: RANGE
-        #  Projection:
-        #    ProjectionType: "ALL"
+        - IndexName: chat-sort-key-to-index
+          KeySchema:
+            - AttributeName: chatSortKey
+              KeyType: HASH
+            - AttributeName: to
+              KeyType: RANGE
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expdate
+        Enabled: true
       Tags:
         - Key: App
           Value: !Ref App
@@ -410,22 +412,16 @@ Resources:
 
   # Logs
 
-  #CreateChatFunctionLog:
-  #  Type: AWS::Logs::LogGroup
-  #  Properties:
-  #    LogGroupName: !Sub /aws/lambda/${Stage}-${App}-create-chat
-  #    RetentionInDays: !Ref LogRetentionInDays
-
   ChatsFunctionLog:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${Stage}-${App}-chats
       RetentionInDays: !Ref LogRetentionInDays
 
-  MyMichtosFunctionLog:
+  MyMgdcFunctionLog:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-my-michtos-chats
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-my-chats
       RetentionInDays: !Ref LogRetentionInDays
 
   OnConnectFunctionLog:

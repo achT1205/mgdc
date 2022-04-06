@@ -1,12 +1,12 @@
 const AWS = require("aws-sdk");
 
-const { MICHTOS_DB } = process.env;
+const { MGDC_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async () => {
   const params = {
-    TableName: MICHTOS_DB,
-    IndexName: "free-michtos-index",
+    TableName: MGDC_DB,
+    IndexName: "free-mgdc-index",
     KeyConditionExpression: "hasBreed = :breed",
     ExpressionAttributeValues: {
       ":breed": "false",
@@ -24,7 +24,7 @@ exports.handler = async () => {
       body: JSON.stringify(result.Items),
     };
   } catch (err) {
-    console.error("Failed to load free michtos", err);
+    console.error("Failed to load free mgdc", err);
     return {
       statusCode: 500,
       body: err,

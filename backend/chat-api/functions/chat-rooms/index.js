@@ -25,7 +25,7 @@ exports.handler = async (event) => {
       body: JSON.stringify(result.Items),
     };
   } catch (err) {
-    console.error("Failed to load my michtos chats", err);
+    console.error("Failed to load my mgdc chats", err);
     return {
       statusCode: 500,
       body: err,

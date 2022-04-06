@@ -1,11 +1,11 @@
 const AWS = require("aws-sdk");
 
-const { MICHTOS_DB } = process.env;
+const { MGDC_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async () => {
   const params = {
-    TableName: MICHTOS_DB,
+    TableName: MGDC_DB,
   };
 
   try {
@@ -25,7 +25,7 @@ exports.handler = async () => {
       body: JSON.stringify(result),
     };
   } catch (err) {
-    console.error("Failed to load michtos", err);
+    console.error("Failed to load mgdc", err);
     return {
       statusCode: 500,
       body: err,

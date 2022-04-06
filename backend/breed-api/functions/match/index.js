@@ -63,7 +63,7 @@ exports.handler = async (event) => {
       body: rslt,
     };
   } catch (err) {
-    console.error("Failed to store michtos", err);
+    console.error("Failed to store mgdc", err);
     return {
       statusCode: 500,
       body: err,
