@@ -1,7 +1,7 @@
 const AWS = require("aws-sdk");
 const { randomBytes } = require("crypto");
 
-const { CONNECTIONS_DB, CHATS_DB } = process.env;
+const { CONNECTIONS_DB, CHATS_DB, CHAT_EXPIRATION_IN_MONTH } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
@@ -73,12 +73,17 @@ const findReceiverConnectionId = async (to) => {
 
 const storeMessage = async (chatId, from, to, message, status) => {
   const tscreated = new Date().getTime();
+  const expiration = new Date();
+  expiration.setMonth(
+    expiration.getMonth() + parseInt(CHAT_EXPIRATION_IN_MONTH)
+  );
   const params = {
     TableName: CHATS_DB,
     Item: {
       chatId: chatId,
       chatSortKey: `message_${tscreated}_${randomBytes(8).toString("hex")}`,
-      tscreated: tscreated,
+      tscreated: tscreated.getTime(),
+      expdate: expiration,
       message: message,
       author: from,
       to,

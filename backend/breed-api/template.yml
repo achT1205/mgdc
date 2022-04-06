@@ -24,6 +24,10 @@ Parameters:
     Type: Number
     Description: CloudWatch Logs retention period before deletion
     Default: 14
+  ApiDomain:
+    Type: String
+    Description: Custom Api domain name
+    Default: api.metagolddiggerclub.com
 
 Globals:
   Function:
@@ -71,20 +75,36 @@ Resources:
         Stage: !Ref Stage
         Project: !Ref Project
 
+  RestApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      ApiId: !Ref BreedApi
+      ApiMappingKey: !Sub ${Stage}/breed
+      DomainName: !Ref ApiDomain
+      Stage: !Ref BreedApi.Stage
+
   BreedFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: functions/breed/
       FunctionName: !Sub ${Stage}-${App}-breed
+      Environment:
+        Variables:
+          BREED_MGDC_QUEUE_URL:
+            Fn::ImportValue: !Sub ${Stage}-${App}-breed-queue-url
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref BreedTable
+        - SQSSendMessagePolicy:
+            QueueName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-breed-queue
       Events:
         BreedEvent:
           Type: Api
           Properties:
             RestApiId: !Ref BreedApi
-            Path: /breed/{owner}
+            Path: /{owner}
             Method: PUT
 
   MatchFunction:
@@ -107,7 +127,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref BreedApi
-            Path: /match
+            Path: /
             Method: POST
 
   ListBreedFunction:
@@ -172,6 +192,6 @@ Resources:
       RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
-  MichtosApiDomain:
+  BreedApiDomain:
     Description: "Breed API default base domain"
     Value: !Sub https://${BreedApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}

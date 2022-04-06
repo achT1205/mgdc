@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk");
 
-const { MICHTOS_DB } = process.env;
+const { MGDC_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
@@ -14,7 +14,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const data = event.body;
+  const data = JSON.parse(event.body);
   const batchRequest = data.map((elmt) => {
     elmt.id = elmt.id + "";
     elmt.hasBreed = elmt.hasBreed + "";
@@ -46,7 +46,7 @@ exports.handler = async (event) => {
       },
     };
   } catch (err) {
-    console.error("Failed to store michtos", err);
+    console.error("Failed to store MGDC", err);
     return {
       statusCode: 500,
       body: err,
@@ -62,6 +62,6 @@ const batchWrite = async (chunck) => {
 
   const params = {};
   params["RequestItems"] = {};
-  params["RequestItems"][MICHTOS_DB] = chunck;
+  params["RequestItems"][MGDC_DB] = chunck;
   await clientdb.batchWrite(params).promise();
 };

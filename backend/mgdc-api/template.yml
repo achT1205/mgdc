@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: MGDC API
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name
+    Default: "Meta Gold Digger Club"
+  App:
+    Type: String
+    Description: Application environment name
+    Default: mgdc
+  Stage:
+    Type: String
+    Description: Application environment stage
+    Default: test
+    AllowedValues:
+      - dev
+      - test
+      - staging
+      - prod
+  LogRetentionInDays:
+    Type: Number
+    Description: CloudWatch Logs retention period before deletion
+    Default: 14
+  ApiDomain:
+    Type: String
+    Description: Custom Api domain name
+    Default: api.metagolddiggerclub.com
+
+Globals:
+  Function:
+    Handler: index.handler
+    Runtime: nodejs14.x
+    Timeout: 30
+    Environment:
+      Variables:
+        MGDC_DB: !Ref MgdcTable
+    Tags:
+      App: !Ref App
+      Stage: !Ref Stage
+      Project: !Ref Project
+
+Resources:
+  # Api
+
+  MgdcApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub ${Stage}-${App}-mgdc-api
+      StageName: !Ref Stage
+      EndpointConfiguration:
+        Type: REGIONAL
+      Cors:
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+        MaxAge: "'3600'"
+        AllowMethods: "'OPTIONS,POST,GET,PUT,DELETE'"
+      GatewayResponses:
+        DEFAULT_4xx:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
+        DEFAULT_5xx:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
+      Tags:
+        App: !Ref App
+        Stage: !Ref Stage
+        Project: !Ref Project
+
+  RestApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      ApiId: !Ref MgdcApi
+      ApiMappingKey: !Sub ${Stage}/mgdc
+      DomainName: !Ref ApiDomain
+      Stage: !Ref MgdcApi.Stage
+
+  AddMgdc:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/add-mgdc/
+      FunctionName: !Sub ${Stage}-${App}-add-mgdc
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref MgdcTable
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MgdcApi
+            Path: /
+            Method: POST
+
+  GetMgdc:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/get-mgdc/
+      FunctionName: !Sub ${Stage}-${App}-get-mgdc
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref MgdcTable
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MgdcApi
+            Path: /{id}
+            Method: GET
+
+  ListMgdc:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/list-mgdc/
+      FunctionName: !Sub ${Stage}-${App}-list-mgdc
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref MgdcTable
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MgdcApi
+            Path: /
+            Method: GET
+
+  FreeMgdc:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/free-mgdc/
+      FunctionName: !Sub ${Stage}-${App}-free-mgdc
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref MgdcTable
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MgdcApi
+            Path: /free
+            Method: GET
+
+  BreedMgdc:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/breed-mgdc/
+      FunctionName: !Sub ${Stage}-${App}-breed-mgdc
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref MgdcTable
+        - SQSPollerPolicy:
+            QueueName: !GetAtt BreedQueue.QueueName
+      Events:
+        BreedEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt BreedQueue.Arn
+            BatchSize: 1
+
+  # Table
+
+  MgdcTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${Stage}-${App}-mgdc
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: hasBreed
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: free-mgdc-index
+          KeySchema:
+            - AttributeName: hasBreed
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+  # Queue
+
+  BreedQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${Stage}-${App}-breed-mgdc
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt BreedDLQueue.Arn
+        maxReceiveCount: 2
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+  BreedDLQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${Stage}-${App}-breed-mgdc-dl
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+  # Logs
+
+  AddMgdcLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-add-mgdc
+      RetentionInDays: !Ref LogRetentionInDays
+
+  GetMgdcLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-get-mgdc
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ListMgdcLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-list-mgdc
+      RetentionInDays: !Ref LogRetentionInDays
+
+  FreeMgdcLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-free-mgdc
+      RetentionInDays: !Ref LogRetentionInDays
+
+  BreedMgdcLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-breed-mgdc
+      RetentionInDays: !Ref LogRetentionInDays
+
+Outputs:
+  MgdcApiDomain:
+    Description: "Mgdc API default base domain"
+    Value: !Sub https://${MgdcApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+  BreedQueueName:
+    Description: "Breed queue name"
+    Value: !GetAtt BreedQueue.QueueName
+    Export:
+      Name: !Sub ${Stage}-${App}-breed-queue
+  BreedQueueUrl:
+    Description: "Breed queue url"
+    Value: !Ref BreedQueue
+    Export:
+      Name: !Sub ${Stage}-${App}-breed-queue-url

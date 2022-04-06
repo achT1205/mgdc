@@ -1,7 +1,8 @@
 const AWS = require("aws-sdk");
 
-const { BREED_DB } = process.env;
+const { BREED_DB, BREED_MGDC_QUEUE_URL } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
+const sqs = new AWS.SQS();
 
 exports.handler = async (event) => {
   console.log("Event", event);
@@ -37,6 +38,7 @@ exports.handler = async (event) => {
 
   try {
     await clientdb.update(params).promise();
+    await sendBreedEvent(mgdcId);
     console.log("Update successfully");
     return {
       statusCode: 202,
@@ -69,5 +71,23 @@ const isBreed = async (owner, mgdcId) => {
   } catch (err) {
     console.error("Failed to check the breed", err);
     return false;
+  }
+};
+
+const sendBreedEvent = async (mgdcId) => {
+  try {
+    const body = JSON.stringify({ mgdcId });
+    const params = {
+      MessageBody: body,
+      QueueUrl: BREED_MGDC_QUEUE_URL,
+    };
+    await sqs.sendMessage(params).promise();
+    console.log(
+      "Send event %s succesfully to the queue %s",
+      body,
+      BREED_MGDC_QUEUE_URL
+    );
+  } catch (err) {
+    console.error("Failed to send breed event to queue", err);
   }
 };
