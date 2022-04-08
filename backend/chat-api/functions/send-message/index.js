@@ -82,7 +82,7 @@ const storeMessage = async (chatId, from, to, message, status) => {
     Item: {
       chatId: chatId,
       chatSortKey: `message_${tscreated}_${randomBytes(8).toString("hex")}`,
-      tscreated: tscreated.getTime(),
+      tscreated: tscreated,
       expdate: expiration,
       message: message,
       author: from,
