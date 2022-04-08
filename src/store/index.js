@@ -205,7 +205,9 @@ export default new Vuex.Store({
     messages: [],
     conversations: [],
     isChatOpen: false,
-    curremgdcid: localStorage.curremgdcid ? parseInt(localStorage.curremgdcid) : null
+    curremgdcid: localStorage.curremgdcid ? parseInt(localStorage.curremgdcid) : null,
+    curremgdcname: localStorage.curremgdcname ? localStorage.curremgdcname : null
+
   },
   getters: {
     account: state => state.account,
@@ -219,6 +221,7 @@ export default new Vuex.Store({
     conversations: state => state.conversations,
     isChatOpen: state => state.isChatOpen,
     curremgdcid: state => state.curremgdcid,
+    curremgdcname : state => state.curremgdcname,
   },
   mutations: {
     SET_ERROR(state, payload) {
@@ -267,6 +270,10 @@ export default new Vuex.Store({
     SET_MATCH_ACTIVE(state, payload) {
       state.curremgdcid = payload
       localStorage.curremgdcid = payload
+    },
+    SET_CURRENET_NAME(state, payload) {
+      state.curremgdcname= payload
+      localStorage.curremgdcname = payload
     },
     UPDATE_MATCH(state, payload) {
       const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)

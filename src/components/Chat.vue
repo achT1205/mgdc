@@ -28,7 +28,7 @@
           class="sc-header--img"
         />
         <div data-v-61edfd75="" class="sc-header--title enabled">
-          {{ participants[0].name }}
+          {{ curremgdcname }}
         </div>
       </template>
     </beautiful-chat>
@@ -104,6 +104,7 @@ export default {
       "isChatOpen",
       "account",
       "curremgdcid",
+      "curremgdcname",
       "matches",
     ]),
   },

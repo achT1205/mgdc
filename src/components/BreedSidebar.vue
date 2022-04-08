@@ -102,6 +102,7 @@ export default {
       this.$store.commit("SET_CHATCH_ID", item.chatId);
       this.$store.dispatch("getMeessages", item.chatId);
       this.$store.commit("SET_MATCH_ACTIVE", item.mgdcId);
+      this.$store.commit("SET_CURRENET_NAME", item.mgdcName);
       this.$store.commit("SET_IS_CHAT_OPEN", true);
     },
     onBreed(item) {
