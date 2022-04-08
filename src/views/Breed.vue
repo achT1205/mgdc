@@ -9,7 +9,7 @@
         <p class="text howMa">Find your partner</p>
         <button class="connectButton" @click="connectWallet">
           {{
-            account === null
+            account === null || !account
               ? "Connect wallet"
               : account.substring(1, 9) + "..." + account.substring(account.length - 6)
           }}
@@ -120,7 +120,7 @@ export default {
     });
 
     this.socket = await new WebSocket(
-      "wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev"
+      "wss://ptyibt9mo0.execute-api.eu-west-3.amazonaws.com/dev"//"wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev"
     );
 
     this.socket.onopen = () => {
