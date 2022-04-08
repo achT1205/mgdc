@@ -204,8 +204,8 @@ export default new Vuex.Store({
     chatId: localStorage.chatId ? localStorage.chatId : null,
     messages: [],
     conversations: [],
-    isChatOpen :false,
-    matchActive: '',
+    isChatOpen: false,
+    curremgdcid: localStorage.curremgdcid ? parseInt(localStorage.curremgdcid) : null
   },
   getters: {
     account: state => state.account,
@@ -217,8 +217,8 @@ export default new Vuex.Store({
     chatId: state => state.chatId,
     messages: state => state.messages,
     conversations: state => state.conversations,
-    isChatOpen : state => state.isChatOpen,
-    matchActive: state => state.matchActive,
+    isChatOpen: state => state.isChatOpen,
+    curremgdcid: state => state.curremgdcid,
   },
   mutations: {
     SET_ERROR(state, payload) {
@@ -265,7 +265,8 @@ export default new Vuex.Store({
       state.conversations = payload
     },
     SET_MATCH_ACTIVE(state, payload) {
-      state.matchActive = payload
+      state.curremgdcid = payload
+      localStorage.curremgdcid = payload
     },
     UPDATE_MATCH(state, payload) {
       const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)
@@ -304,38 +305,33 @@ export default new Vuex.Store({
       }
     },
     async fetchFreeMgdcs({ commit }) {
-      const freeMgdcs = await axios.get("https://q6o6r2cze5.execute-api.eu-west-3.amazonaws.com/dev/free-michtos");
+      const freeMgdcs = await axios.get("https://api.metagolddiggerclub.com/dev/mgdc/free");
       commit('SET_FREE_MGDCS', freeMgdcs.data)
     },
     async getMatches({ commit }, payload) {
-      const resp = await axios.get(`https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/${payload}`);
+      const resp = await axios.get(`https://api.metagolddiggerclub.com/dev/breed/${payload}`);
       commit('SET_MATCHES', resp.data)
     },
     async addMatch({ commit }, payload) {
-      const resp = await axios.post("https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/match", payload);
+      const resp = await axios.post("https://api.metagolddiggerclub.com/dev/breed", payload);
       const { chatId } = resp.data
       localStorage.chatId = chatId
       commit('SET_CHATCH_ID', chatId)
+      commit("SET_MATCH_ACTIVE", payload.mgdcId)
       commit("SET_MATCH", payload)
     },
     async breed({ commit }, payload) {
-      await axios.put(`https://1dq00g9kr5.execute-api.eu-west-3.amazonaws.com/dev/breed/${payload.account}`, {
+      await axios.put(`https://api.metagolddiggerclub.com/dev/breed/${payload.account}`, {
         "mgdcId": payload.mgdcId
       });
       commit('UPDATE_MATCH', payload)
     },
-    // async createChatRoom({ commit }, payload) {
-    //   const resp = await axios.post("https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev", payload)
-    //   const { chatId } = resp.data
-    //   localStorage.chatId = chatId
-    //   commit('SET_CHATCH_ID', chatId)
-    // },
     async getMeessages({ commit }, payload) {
-      const resp = await axios.get(`https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/chats/${payload}`)
+      const resp = await axios.get(`https://api.metagolddiggerclub.com/dev/chats/${payload}`)
       commit("SET_MESSAGES", resp.data)
     },
     async getConversations({ commit }, payload) {
-      const resp = await axios.get(`https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/my-michtos/${payload}`)
+      const resp = await axios.get(`https://api.metagolddiggerclub.com/dev/chats/rooms/${payload}`)
       commit("SET_CONVERSAIONS", resp.data)
     }
   }

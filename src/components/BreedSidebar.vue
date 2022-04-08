@@ -35,7 +35,7 @@
               <li
                 v-for="(item, index) in matches"
                 :key="index"
-                :class="matchActive === item.id ? 'active':''"
+                :class="curremgdcid === item.mgdcId ? 'active' : ''"
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
@@ -92,7 +92,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["matches", "matchActive"]),
+    ...mapGetters(["matches", "curremgdcid"]),
   },
   methods: {
     filter() {
@@ -101,12 +101,12 @@ export default {
     onSelect(item) {
       this.$store.commit("SET_CHATCH_ID", item.chatId);
       this.$store.dispatch("getMeessages", item.chatId);
+      this.$store.commit("SET_MATCH_ACTIVE", item.mgdcId);
       this.$store.commit("SET_IS_CHAT_OPEN", true);
     },
     onBreed(item) {
-      this.$store.commit('SET_MATCH_ACTIVE', item.id);
-      this.$emit('breed', item)
-    }
+      this.$emit("breed", item);
+    },
   },
 };
 </script>
@@ -241,8 +241,10 @@ export default {
         padding: 0 10px;
       }
     }
-    li.active{
-      box-shadow: 0 0 6px 0 rgba(110,110,110,0.42);
+    li.active {
+      box-shadow: 0 0 6px 0 rgba(110, 110, 110, 0.42);
+      border-style: solid;
+      border-color: pink;
     }
   }
 }

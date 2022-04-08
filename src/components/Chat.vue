@@ -2,7 +2,6 @@
   <div v-if="participants && participants.length">
     <beautiful-chat
       :participants="participants"
-      :titleImageUrl="titleImageUrl"
       :onMessageWasSent="onMessageWasSent"
       :messageList="messageList"
       :newMessagesCount="newMessagesCount"
@@ -21,7 +20,18 @@
       :messageStyling="messageStyling"
       @onType="handleOnType"
       @edit="editMessage"
-    />
+    >
+      <template v-slot:header>
+        <img
+          :src="`https://metagolddiggerclub.com/img/thumbnails/${curremgdcid}.png`"
+          alt=""
+          class="sc-header--img"
+        />
+        <div data-v-61edfd75="" class="sc-header--title enabled">
+          {{ participants[0].name }}
+        </div>
+      </template>
+    </beautiful-chat>
   </div>
 </template>
 <script>
@@ -52,7 +62,6 @@ export default {
         //   imageUrl: 'https://avatars3.githubusercontent.com/u/37018832?s=200&v=4'
         // }
       ], // the list of all the participant of the conversation. `name` is the user name, `id` is used to establish the author of a message, `imageUrl` is supposed to be the user avatar.
-      titleImageUrl: "https://a.slack-edge.com/66f9/img/avatars-teams/ava_0001-34.png",
       messageList: [
         // { type: 'text', author: `me`, data: { text: `Say yes!` } },
         // { type: 'text', author: `user1`, data: { text: `No.` } }
@@ -88,7 +97,15 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["chatId", "messages", "conversations", "isChatOpen", "account"]),
+    ...mapGetters([
+      "chatId",
+      "messages",
+      "conversations",
+      "isChatOpen",
+      "account",
+      "curremgdcid",
+      "matches",
+    ]),
   },
   mounted() {
     this.formatParticipants();
@@ -161,20 +178,20 @@ export default {
     },
     async formatParticipants() {
       if (this.conversations && this.conversations.length) {
+        const mgdc = this.matches.find((_) => _.mgdcId === this.curremgdcid);
         const participants = [];
         participants.push({
           id: this.account,
-          name: this.formateId(this.account),
+          name: mgdc ? mgdc.mgdcName : "", //this.formateId(this.account),
           imageUrl: "https://avatars3.githubusercontent.com/u/1915989?s=230&v=4",
         });
 
-        const index = this.conversations.findIndex((_) => _.chatId == this.chatId);
-        const conv = this.conversations[index];
-        if (conv && conv.to)
+        const conv = this.conversations.find((_) => _.chatId == this.chatId);
+        if (conv && conv.to && mgdc)
           participants.push({
             id: conv.to,
-            name: this.formateId(conv.to),
-            imageUrl: "https://avatars3.githubusercontent.com/u/1915989?s=230&v=4",
+            name: conv.to,
+            imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${mgdc.mgdcId}.png`,
           });
 
         this.participants = participants;
@@ -197,5 +214,8 @@ export default {
 <style lang="scss" scoped>
 .sc-chat-window {
   z-index: 2;
+}
+.sc-header--img {
+  width: 70px !important;
 }
 </style>
