@@ -36,7 +36,8 @@ Globals:
     Timeout: 30
     Environment:
       Variables:
-        MGDC_DB: !Ref MgdcTable
+        MGDC_DB:
+          Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
     Tags:
       App: !Ref App
       Stage: !Ref Stage
@@ -91,7 +92,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-add-mgdc
       Policies:
         - DynamoDBWritePolicy:
-            TableName: !Ref MgdcTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
       Events:
         GetEvent:
           Type: Api
@@ -107,7 +109,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-get-mgdc
       Policies:
         - DynamoDBReadPolicy:
-            TableName: !Ref MgdcTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
       Events:
         GetEvent:
           Type: Api
@@ -123,7 +126,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-list-mgdc
       Policies:
         - DynamoDBReadPolicy:
-            TableName: !Ref MgdcTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
       Events:
         GetEvent:
           Type: Api
@@ -139,7 +143,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-free-mgdc
       Policies:
         - DynamoDBReadPolicy:
-            TableName: !Ref MgdcTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
       Events:
         GetEvent:
           Type: Api
@@ -155,7 +160,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-breed-mgdc
       Policies:
         - DynamoDBWritePolicy:
-            TableName: !Ref MgdcTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
         - SQSPollerPolicy:
             QueueName: !GetAtt BreedQueue.QueueName
       Events:
@@ -164,36 +170,6 @@ Resources:
           Properties:
             Queue: !GetAtt BreedQueue.Arn
             BatchSize: 1
-
-  # Table
-
-  MgdcTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub ${Stage}-${App}-mgdc
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-        - AttributeName: hasBreed
-          AttributeType: S
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      GlobalSecondaryIndexes:
-        - IndexName: free-mgdc-index
-          KeySchema:
-            - AttributeName: hasBreed
-              KeyType: HASH
-          Projection:
-            ProjectionType: "ALL"
-      BillingMode: PAY_PER_REQUEST
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Stage
-          Value: !Ref Stage
-        - Key: Project
-          Value: !Ref Project
 
   # Queue
 

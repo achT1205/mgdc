@@ -25,3 +25,11 @@ pnpm-debug.log*
 out.yml
 samconfig.toml
 backend/images/*
+
+coverage
+coverage.json
+typechain
+
+#Hardhat files
+cache
+artifacts

@@ -32,6 +32,10 @@ Parameters:
     Type: String
     Description: Custom Api domain name
     Default: api.metagolddiggerclub.com
+  WSApiDomain:
+    Type: String
+    Description: Custom for web socket Api domain name
+    Default: wsapi.metagolddiggerclub.com
 
 Globals:
   Function:
@@ -40,7 +44,8 @@ Globals:
     Timeout: 30
     Environment:
       Variables:
-        CONNECTIONS_DB: !Ref ConnectionsTable
+        CONNECTIONS_DB:
+          Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
     Tags:
       App: !Ref App
       Stage: !Ref Stage
@@ -55,6 +60,14 @@ Resources:
       Name: !Sub ${Stage}-${App}-chat-websocket-api
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
+
+  WebSocketApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      DomainName: !Ref WSApiDomain
+      ApiId: !Ref ChatWebSocketApi
+      Stage: !Ref ApiStage
 
   ChatApi:
     Type: AWS::Serverless::Api
@@ -90,10 +103,10 @@ Resources:
     Type: AWS::ApiGatewayV2::ApiMapping
     DeletionPolicy: Delete
     Properties:
-      ApiId: !Ref ChatApi
-      ApiMappingKey: !Sub ${Stage}/chats
       DomainName: !Ref ApiDomain
+      ApiId: !Ref ChatApi
       Stage: !Ref ChatApi.Stage
+      ApiMappingKey: !Sub ${Stage}/chats
 
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -185,7 +198,6 @@ Resources:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       StageName: !Ref Stage
-      Description: Prod Stage
       DeploymentId: !Ref Deployment
       ApiId: !Ref ChatWebSocketApi
 
@@ -198,10 +210,12 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-chats
       Environment:
         Variables:
-          CHATS_DB: !Ref ChatsTable
+          CHATS_DB:
+            Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
       Policies:
         - DynamoDBReadPolicy:
-            TableName: !Ref ChatsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
       Events:
         ChatsEvent:
           Type: Api
@@ -217,10 +231,12 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-chat-rooms
       Environment:
         Variables:
-          CHATS_DB: !Ref ChatsTable
+          CHATS_DB:
+            Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
       Policies:
         - DynamoDBReadPolicy:
-            TableName: !Ref ChatsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
       Events:
         MyChatsEvent:
           Type: Api
@@ -236,7 +252,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-on-connect
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref ConnectionsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
 
   OnConnectPermission:
     Type: AWS::Lambda::Permission
@@ -254,7 +271,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-on-disconnect
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref ConnectionsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
 
   OnDisconnectPermission:
     Type: AWS::Lambda::Permission
@@ -287,13 +305,16 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-send-message
       Environment:
         Variables:
-          CHATS_DB: !Ref ChatsTable
+          CHATS_DB:
+            Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
           CHAT_EXPIRATION_IN_MONTH: !Ref ChatExpirationInMonth
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref ConnectionsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
         - DynamoDBCrudPolicy:
-            TableName: !Ref ChatsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
         - Statement:
             - Effect: Allow
               Action:
@@ -317,7 +338,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-set-online
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref ConnectionsTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
         - Statement:
             - Effect: Allow
               Action:
@@ -333,82 +355,6 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SetOnlineFunction
       Principal: apigateway.amazonaws.com
-
-  # Tables
-  ConnectionsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub ${Stage}-${App}-connections
-      AttributeDefinitions:
-        - AttributeName: "connectionId"
-          AttributeType: "S"
-        - AttributeName: "username"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "connectionId"
-          KeyType: "HASH"
-      SSESpecification:
-        SSEEnabled: True
-      GlobalSecondaryIndexes:
-        - IndexName: username-index
-          KeySchema:
-            - AttributeName: username
-              KeyType: HASH
-          Projection:
-            ProjectionType: "ALL"
-      BillingMode: PAY_PER_REQUEST
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Stage
-          Value: !Ref Stage
-        - Key: Project
-          Value: !Ref Project
-
-  ChatsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub ${Stage}-${App}-chats
-      AttributeDefinitions:
-        - AttributeName: "chatId"
-          AttributeType: "S"
-        - AttributeName: "chatSortKey"
-          AttributeType: "S"
-        - AttributeName: "to"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "chatId"
-          KeyType: "HASH"
-        - AttributeName: "chatSortKey"
-          KeyType: "RANGE"
-      SSESpecification:
-        SSEEnabled: True
-      GlobalSecondaryIndexes:
-        - IndexName: chat-sort-key-index
-          KeySchema:
-            - AttributeName: chatSortKey
-              KeyType: HASH
-          Projection:
-            ProjectionType: "ALL"
-        - IndexName: chat-sort-key-to-index
-          KeySchema:
-            - AttributeName: chatSortKey
-              KeyType: HASH
-            - AttributeName: to
-              KeyType: RANGE
-          Projection:
-            ProjectionType: "ALL"
-      BillingMode: PAY_PER_REQUEST
-      TimeToLiveSpecification:
-        AttributeName: expdate
-        Enabled: true
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Stage
-          Value: !Ref Stage
-        - Key: Project
-          Value: !Ref Project
 
   # Logs
 
@@ -461,8 +407,3 @@ Outputs:
   ChatWebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Sub wss://${ChatWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiStage}
-  ChatDbTableName:
-    Description: "Chat table name"
-    Value: !Ref ChatsTable
-    Export:
-      Name: !Sub ${Stage}-${App}-chats-table

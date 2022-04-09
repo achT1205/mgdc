@@ -10,36 +10,102 @@ Have this tools install on your local machine before starting
 - Nodejs [Install nodejs](https://nodejs.org/en/download/)
 
 
-pour utiliser le chat en local tu peux installer le client wscat (un package npm)
+pour utiliser le chat en local, installer le client wscat (un package npm)
 Initialisation de la connexion (dans 2 terminaux)
-wscat -c wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev
-wscat -c wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev
+
+Dans le terminal 1
+
+```bash
+wscat -c wss://wsapi.metagolddiggerclub.com/dev
+```
+
+Dans le terminal 2
+
+```bash
+wscat -c wss://wsapi.metagolddiggerclub.com/dev
+```
 
 En suite mettre les utilisateurs en ligne (Associer leur connectionId à leur address)
-{"action":"setOnline", "address":"@faboulaye"}
-{"action":"setOnline", "address":"@achille"}
+Dans le terminal 1
 
-Avant d'envoyer les messages s'assurer de créer le chat room
+```bash
+{"action":"setOnline", "address":"<from Address>"}
+```
 
-curl --location --request POST 'https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/' \
+Dans le terminal 2
+
+```bash
+{"action":"setOnline", "address":"<to Address>"}
+```
+
+Avant d'envoyer les messages s'assurer de créer le chat room en matchant un MGDC
+
+```bash
+curl --location --request POST 'https://api.metagolddiggerclub.com/dev/breed' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-  "from": "@faboulaye",
-  "fromTokenId": "xxx",
-  "to": "@achille"
-  "toTokenId":"xxx",
+        "from": "<from Address>",
+        "to": "<to Address>",
+        "mgdcId": 228,
+        "mgdcName": "MGDC #228"
 }'
+```
 
 A partir du chatId récupérer en réponse on peut now envoyer les messages (Remplacer la valeur du chatId)
+Dans le terminal 1
 
-{"action":"sendMessage", "chatId": "f2c57a84-9446-4654-b199-d65a09a9860d", "message":"ping", "from": "@faboulaye", "to": "@achille"}
-{"action":"sendMessage", "chatId": "f2c57a84-9446-4654-b199-d65a09a9860d", "message":"pong", "from": "@achille", "to": "@faboulaye"}
+```bash
+{"action":"sendMessage", "chatId": "<chat ID>", "message":"ping", "from": "<from Address>", "to": "<to Address>"}
+```
 
-Pour info dans le frontend le POST des messages se fera à partir cet endpoint <https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev>
-en combinaison avec la connectionId
+Dans le terminal 2
+
+```bash
+{"action":"sendMessage", "chatId": "<chat ID>", "message":"ping", "from": "<from Address>", "to": "<to Address>"}
+```
+
+Pour breeder avec un MGDC
+
+```bash
+curl --location --request PUT 'https://api.metagolddiggerclub.com/dev/breed/<owner Address>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "mgdcId": 1009
+}'
+```
 
 Pour récupérer la list de ses discussions avec les autres
-curl --location --request GET 'https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/my-mgdc/@faboulaye'
+
+```bash
+curl --location --request GET 'https://api.metagolddiggerclub.com/dev/chats/rooms/<owner Address>'
+```
 
 Pour récupérer l'historique d'une conversation avec un autre
-curl --location --request GET 'https://dtd9glv2pc.execute-api.eu-west-3.amazonaws.com/dev/chats/f2c57a84-9446-4654-b199-d65a09a9860d'
+
+```bash
+curl --location --request GET 'https://api.metagolddiggerclub.com/dev/chats/<chat ID>'
+```
+
+Pour récupérer la liste des matchs et des breeds
+
+```bash
+curl --location --request GET 'https://api.metagolddiggerclub.com/dev/breed/<owner Address>'
+```
+
+Pour récupérer la liste des MGDC
+
+```bash
+curl --location --request GET 'https://api.metagolddiggerclub.com/dev/mgdc'
+```
+
+Pour récupérer la liste des MGDC non breeder
+
+```bash
+curl --location --request GET 'https://api.metagolddiggerclub.com/dev/mgdc/free'
+```
+
+Pour récupérer un mgdc à partir de son ID
+
+```bash
+curl --location --request GET 'https://api.metagolddiggerclub.com/dev/mgdc/<mgdc ID>'
+```

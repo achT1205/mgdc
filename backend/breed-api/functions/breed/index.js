@@ -41,7 +41,7 @@ exports.handler = async (event) => {
     await sendBreedEvent(mgdcId);
     console.log("Update successfully");
     return {
-      statusCode: 202,
+      statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json",

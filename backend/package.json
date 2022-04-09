@@ -8,6 +8,9 @@
   "scripts": {
     "download:thumbnails": "node thumbnails/async.js",
     "resize:thumbnails": "node thumbnails/async-resizing.js",
+    "package:db": "sam package --config-env db",
+    "deploy:db": "sam deploy --config-env db --no-fail-on-empty-changeset",
+    "push:db": "npm run package:db && npm run deploy:db",
     "package:mgdc": "sam package --config-env mgdc",
     "deploy:mgdc": "sam deploy --config-env mgdc --no-fail-on-empty-changeset",
     "push:mgdc": "npm run package:mgdc && npm run deploy:mgdc",
@@ -17,7 +20,7 @@
     "package:breed": "sam package --config-env breed",
     "deploy:breed": "sam deploy --config-env breed --no-fail-on-empty-changeset",
     "push:breed": "npm run package:breed && npm run deploy:breed",
-    "push:all": "npm run push:mgdc && npm run push:chat && npm run push:breed"
+    "push:all": "npm run push:db && npm run push:mgdc && npm run push:chat && npm run push:breed"
   },
   "devDependencies": {
     "async": "^3.2.3",

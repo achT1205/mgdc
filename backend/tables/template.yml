@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Dynamodb tables
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name
+    Default: "Meta Gold Digger Club"
+  App:
+    Type: String
+    Description: Application environment name
+    Default: db
+  Stage:
+    Type: String
+    Description: Application environment stage
+    Default: test
+    AllowedValues:
+      - dev
+      - test
+      - staging
+      - prod
+
+Resources:
+  # Tables
+
+  MgdcTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${Stage}-${App}-mgdc
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: hasBreed
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: free-mgdc-index
+          KeySchema:
+            - AttributeName: hasBreed
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+  BreedTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${Stage}-${App}-breed
+      AttributeDefinitions:
+        - AttributeName: owner
+          AttributeType: S
+        - AttributeName: mgdcId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: owner
+          KeyType: HASH
+        - AttributeName: mgdcId
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${Stage}-${App}-connections
+      AttributeDefinitions:
+        - AttributeName: "connectionId"
+          AttributeType: "S"
+        - AttributeName: "username"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "connectionId"
+          KeyType: "HASH"
+      SSESpecification:
+        SSEEnabled: True
+      GlobalSecondaryIndexes:
+        - IndexName: username-index
+          KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+  ChatsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${Stage}-${App}-chats
+      AttributeDefinitions:
+        - AttributeName: "chatId"
+          AttributeType: "S"
+        - AttributeName: "chatSortKey"
+          AttributeType: "S"
+        - AttributeName: "to"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "chatId"
+          KeyType: "HASH"
+        - AttributeName: "chatSortKey"
+          KeyType: "RANGE"
+      SSESpecification:
+        SSEEnabled: True
+      GlobalSecondaryIndexes:
+        - IndexName: chat-sort-key-index
+          KeySchema:
+            - AttributeName: chatSortKey
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
+        - IndexName: chat-sort-key-to-index
+          KeySchema:
+            - AttributeName: chatSortKey
+              KeyType: HASH
+            - AttributeName: to
+              KeyType: RANGE
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expdate
+        Enabled: true
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Stage
+          Value: !Ref Stage
+        - Key: Project
+          Value: !Ref Project
+
+Outputs:
+  MgdcTableName:
+    Description: "MGDC table name"
+    Value: !Sub ${Stage}-${App}-mgdc
+    Export:
+      Name: !Sub ${Stage}-${App}-mgdc-table
+  BreedTableName:
+    Description: "Breed table name"
+    Value: !Sub ${Stage}-${App}-breed
+    Export:
+      Name: !Sub ${Stage}-${App}-breed-table
+  ChatsTableName:
+    Description: "Chats table name"
+    Value: !Sub ${Stage}-${App}-chats
+    Export:
+      Name: !Sub ${Stage}-${App}-chats-table
+  ConnectionsTableName:
+    Description: "Connections table name"
+    Value: !Sub ${Stage}-${App}-connections
+    Export:
+      Name: !Sub ${Stage}-${App}-connections-table

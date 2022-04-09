@@ -36,7 +36,8 @@ Globals:
     Timeout: 60
     Environment:
       Variables:
-        BREED_DB: !Ref BreedTable
+        BREED_DB:
+          Fn::ImportValue: !Sub ${Stage}-${App}-breed-table
     Tags:
       App: !Ref App
       Stage: !Ref Stage
@@ -95,7 +96,8 @@ Resources:
             Fn::ImportValue: !Sub ${Stage}-${App}-breed-queue-url
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref BreedTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-breed-table
         - SQSSendMessagePolicy:
             QueueName:
               Fn::ImportValue: !Sub ${Stage}-${App}-breed-queue
@@ -118,7 +120,8 @@ Resources:
             Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref BreedTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-breed-table
         - DynamoDBCrudPolicy:
             TableName:
               Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
@@ -137,7 +140,8 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-list-breed
       Policies:
         - DynamoDBReadPolicy:
-            TableName: !Ref BreedTable
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-breed-table
       Events:
         ListBreedEvent:
           Type: Api
@@ -145,31 +149,6 @@ Resources:
             RestApiId: !Ref BreedApi
             Path: /{owner}
             Method: GET
-
-  # Table
-
-  BreedTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub ${Stage}-${App}-breed
-      AttributeDefinitions:
-        - AttributeName: owner
-          AttributeType: S
-        - AttributeName: mgdcId
-          AttributeType: N
-      KeySchema:
-        - AttributeName: owner
-          KeyType: HASH
-        - AttributeName: mgdcId
-          KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Stage
-          Value: !Ref Stage
-        - Key: Project
-          Value: !Ref Project
 
   # Logs
 
