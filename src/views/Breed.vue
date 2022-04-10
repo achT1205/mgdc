@@ -357,6 +357,7 @@ export default {
           chatId: this.chatId,
           to: message.to,
         });
+        this.$store.commit("SET_MESSAGES", []);
         this.$store.commit("SET_CONVERSAIONS", conversations);
       }
       const msg = {
@@ -364,7 +365,6 @@ export default {
         author: `me`,
         data: { text: message.message },
       };
-
       this.$store.commit("SET_MESSAGE", msg);
     },
 
