@@ -111,14 +111,17 @@ export default {
         name: item.mgdcName,
         imageUrl: "",
       };
+      let other = null;
+
       const conv = this.conversations.find((_) => _.chatId == this.chatId);
-      const other = {
-        id: conv.to,
-        name: conv.to,
-        imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
-      };
+      if (conv)
+        other = {
+          id: conv.to,
+          name: conv.to,
+          imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
+        };
       participants.push(me);
-      participants.push(other);
+      if (other) participants.push(other);
       this.$store.commit("SET_PARTICIPANTS", participants);
     },
     onBreed(item) {
