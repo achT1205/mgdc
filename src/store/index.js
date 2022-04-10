@@ -206,7 +206,9 @@ export default new Vuex.Store({
     conversations: [],
     isChatOpen: false,
     curremgdcid: localStorage.curremgdcid ? parseInt(localStorage.curremgdcid) : null,
-    curremgdcname: localStorage.curremgdcname ? localStorage.curremgdcname : null
+    curremgdcname: localStorage.curremgdcname ? localStorage.curremgdcname : null,
+    isMatching: false,
+    participants: []
 
   },
   getters: {
@@ -221,11 +223,19 @@ export default new Vuex.Store({
     conversations: state => state.conversations,
     isChatOpen: state => state.isChatOpen,
     curremgdcid: state => state.curremgdcid,
-    curremgdcname : state => state.curremgdcname,
+    curremgdcname: state => state.curremgdcname,
+    isMatching: state => state.isMatching,
+    participants: state => state.participants,
   },
   mutations: {
+    SET_PARTICIPANTS(state, payload) {
+      state.participants = payload
+    },
     SET_ERROR(state, payload) {
       state.error = payload
+    },
+    SET_IS_MATCHIING(state, payload) {
+      state.isMatching = payload
     },
     SET_IS_CHAT_OPEN(state, payload) {
       state.isChatOpen = payload
@@ -262,7 +272,19 @@ export default new Vuex.Store({
       state.chatId = payload
     },
     SET_MESSAGES(state, payload) {
-      state.messages = payload
+      state.messages = []
+      payload.forEach((m) => {
+        if (m.message) {
+          state.messages.push({
+            type: "text",
+            author: m.author === state.account ? `me` : m.author,
+            data: { text: m.message },
+          });
+        }
+      });
+    },
+    SET_MESSAGE(state, payload) {
+      state.messages.push(payload)
     },
     SET_CONVERSAIONS(state, payload) {
       state.conversations = payload
@@ -272,7 +294,7 @@ export default new Vuex.Store({
       localStorage.curremgdcid = payload
     },
     SET_CURRENET_NAME(state, payload) {
-      state.curremgdcname= payload
+      state.curremgdcname = payload
       localStorage.curremgdcname = payload
     },
     UPDATE_MATCH(state, payload) {
@@ -292,7 +314,6 @@ export default new Vuex.Store({
         dispatch("getInitiumBalance")
 
       } catch (ex) {
-        console.log(ex)
         commit('SET_WALLET_CONNECTION_ERROR', ex.message)
         commit('SET_ERROR', ex)
         commit('SET_IS_BUISY', false)
@@ -312,15 +333,15 @@ export default new Vuex.Store({
       }
     },
     async fetchFreeMgdcs({ commit }) {
-      const freeMgdcs = await axios.get("https://api.metagolddiggerclub.com/dev/mgdc/free");
+      const freeMgdcs = await axios.get(`${process.env.VUE_APP_API_URL}/mgdc/free`);
       commit('SET_FREE_MGDCS', freeMgdcs.data)
     },
     async getMatches({ commit }, payload) {
-      const resp = await axios.get(`https://api.metagolddiggerclub.com/dev/breed/${payload}`);
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/${payload}`);
       commit('SET_MATCHES', resp.data)
     },
     async addMatch({ commit }, payload) {
-      const resp = await axios.post("https://api.metagolddiggerclub.com/dev/breed", payload);
+      const resp = await axios.post(`${process.env.VUE_APP_API_URL}/breed`, payload);
       const { chatId } = resp.data
       localStorage.chatId = chatId
       commit('SET_CHATCH_ID', chatId)
@@ -328,17 +349,17 @@ export default new Vuex.Store({
       commit("SET_MATCH", payload)
     },
     async breed({ commit }, payload) {
-      await axios.put(`https://api.metagolddiggerclub.com/dev/breed/${payload.account}`, {
+      await axios.put(`${process.env.VUE_APP_API_URL}/breed/${payload.account}`, {
         "mgdcId": payload.mgdcId
       });
       commit('UPDATE_MATCH', payload)
     },
     async getMeessages({ commit }, payload) {
-      const resp = await axios.get(`https://api.metagolddiggerclub.com/dev/chats/${payload}`)
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/chats/${payload}`)
       commit("SET_MESSAGES", resp.data)
     },
     async getConversations({ commit }, payload) {
-      const resp = await axios.get(`https://api.metagolddiggerclub.com/dev/chats/rooms/${payload}`)
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/chats/rooms/${payload}`)
       commit("SET_CONVERSAIONS", resp.data)
     }
   }

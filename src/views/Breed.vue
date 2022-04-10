@@ -48,10 +48,14 @@
 
     <div
       id="overlay"
-      v-show="isLoading || errorMsg"
+      v-show="isLoading || isMatching || errorMsg"
       class="w-full no-nodes-content flex justify-center items-center"
     >
-      <svg class="spinner" viewBox="0 0 50 50" v-if="!errorMsg && isLoading">
+      <svg
+        class="spinner"
+        viewBox="0 0 50 50"
+        v-if="!errorMsg && (isLoading || isMatching)"
+      >
         <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
       </svg>
       <div class="warnning-notification" v-if="errorMsg && !isLoading">
@@ -68,7 +72,6 @@
 
 <script>
 import breed from "../abis/breed.json";
-import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
@@ -93,8 +96,6 @@ export default {
       address: "",
       accountBalance: 0,
       abi: [],
-      baycAddress: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
-      hapeAddress: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af",
       malContract: "",
       malBalance: 1,
       breedContract: null,
@@ -108,7 +109,14 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["freeMgdcs", "chatId", "messages", "conversations", "account"]),
+    ...mapGetters([
+      "freeMgdcs",
+      "chatId",
+      "messages",
+      "conversations",
+      "account",
+      "isMatching",
+    ]),
   },
   async created() {
     await this.loadWeb3();
@@ -119,9 +127,7 @@ export default {
       location.reload();
     });
 
-    this.socket = await new WebSocket(
-      "wss://ptyibt9mo0.execute-api.eu-west-3.amazonaws.com/dev"//"wss://da42imq2q2.execute-api.eu-west-3.amazonaws.com/dev"
-    );
+    this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
 
     this.socket.onopen = () => {
       console.log("Websocket connected.");
@@ -172,13 +178,17 @@ export default {
         return;
       }
 
-      const breedAddress = this.target === "HAPE" ? breedhape.address : breed.address;
+      const breedAddress =
+        this.target === "HAPE"
+          ? process.env.VUE_APP_BREED_HAPE
+          : process.env.VUE_APP_BREED_BAYC;
+
       this.breedContract = new web3.eth.Contract(breed.abi, breedAddress);
 
       this.malContract =
         this.target === "HAPE"
-          ? new web3.eth.Contract(hape, this.hapeAddress)
-          : new web3.eth.Contract(bayc, this.baycAddress);
+          ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
+          : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
       this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
 
@@ -302,7 +312,8 @@ export default {
         from: this.account,
         to: owner,
       };
-      this.sendMessage(conversation, true);
+      await this.sendMessage(conversation, true);
+      this.$store.commit("SET_IS_MATCHIING", false);
     },
 
     waitForOpenConnection() {
@@ -340,9 +351,7 @@ export default {
       }
     },
     localUpdate(match, message) {
-      let messages = this.messages;
       if (match) {
-        messages = []
         const conversations = [];
         conversations.push({
           chatId: this.chatId,
@@ -351,15 +360,12 @@ export default {
         this.$store.commit("SET_CONVERSAIONS", conversations);
       }
       const msg = {
-        author: this.account,
-        chatId: this.chatId,
-        message: message.message,
-        read: true,
-        to: message.to,
+        type: "text",
+        author: `me`,
+        data: { text: message.message },
       };
-      //messages.push({ type: "text", author: `me`, data: { text: message.message } });
-      messages.push(msg);
-      this.$store.commit("SET_MESSAGES", messages);
+
+      this.$store.commit("SET_MESSAGE", msg);
     },
 
     isTinderLoading(loading) {

@@ -84,6 +84,7 @@ export default {
     showSidebar: false,
     search: "",
   }),
+  mounted() {},
   watch: {
     show(val) {
       if (val === true) {
@@ -92,7 +93,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["matches", "curremgdcid"]),
+    ...mapGetters(["matches", "curremgdcid", "account", "conversations", "chatId"]),
   },
   methods: {
     filter() {
@@ -104,6 +105,21 @@ export default {
       this.$store.commit("SET_MATCH_ACTIVE", item.mgdcId);
       this.$store.commit("SET_CURRENET_NAME", item.mgdcName);
       this.$store.commit("SET_IS_CHAT_OPEN", true);
+      let participants = [];
+      const me = {
+        id: this.account,
+        name: item.mgdcName,
+        imageUrl: "",
+      };
+      const conv = this.conversations.find((_) => _.chatId == this.chatId);
+      const other = {
+        id: conv.to,
+        name: conv.to,
+        imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
+      };
+      participants.push(me);
+      participants.push(other);
+      this.$store.commit("SET_PARTICIPANTS", participants);
     },
     onBreed(item) {
       this.$emit("breed", item);

@@ -3,7 +3,7 @@
     <beautiful-chat
       :participants="participants"
       :onMessageWasSent="onMessageWasSent"
-      :messageList="messageList"
+      :messageList="messages"
       :newMessagesCount="newMessagesCount"
       :isOpen="isChatOpen"
       :close="closeChat"
@@ -50,22 +50,6 @@ export default {
         open: {},
         init: true,
       },
-      participants: [
-        // {
-        //   id: 'user1',
-        //   name: 'Matteo',
-        //   imageUrl: 'https://avatars3.githubusercontent.com/u/1915989?s=230&v=4'
-        // },
-        // {
-        //   id: 'user2',
-        //   name: 'Support',
-        //   imageUrl: 'https://avatars3.githubusercontent.com/u/37018832?s=200&v=4'
-        // }
-      ], // the list of all the participant of the conversation. `name` is the user name, `id` is used to establish the author of a message, `imageUrl` is supposed to be the user avatar.
-      messageList: [
-        // { type: 'text', author: `me`, data: { text: `Say yes!` } },
-        // { type: 'text', author: `user1`, data: { text: `No.` } }
-      ], // the list of the messages to show, can be paginated and adjusted dynamically
       newMessagesCount: 0,
       showTypingIndicator: "", // when set to a value matching the participant.id it shows the typing indicator for the specific user
       colors: {
@@ -106,38 +90,15 @@ export default {
       "curremgdcid",
       "curremgdcname",
       "matches",
+      "participants",
     ]),
   },
   mounted() {
-    this.formatParticipants();
-    this.formatMessages();
-    setTimeout(this.finishInit, 5000);
-  },
-  watch: {
-    async conversations(val) {
-      if (val) {
-        if (this.chatId && this.account) {
-          await this.formatParticipants();
-          this.$store.commit("SET_IS_CHAT_OPEN", true);
-        }
-      }
-    },
-    async messages(val) {
-      if (val) {
-        await this.formatMessages();
-        this.$store.commit("SET_IS_CHAT_OPEN", true);
-      }
-    },
+    if (this.messages && this.messages.length) {
+      this.$store.commit("SET_IS_CHAT_OPEN", true);
+    }
   },
   methods: {
-    // sendMessage(text) {
-    //   if (text.length > 0) {
-    //     this.newMessagesCount = this.isChatOpen
-    //       ? this.newMessagesCount
-    //       : this.newMessagesCount + 1;
-    //     this.onMessageWasSent({ author: "support", type: "text", data: { text } });
-    //   }
-    // },
     onMessageWasSent(message) {
       const conversation = {
         action: "sendMessage",
@@ -146,9 +107,7 @@ export default {
         from: this.account,
         to: this.participants[1].id,
       };
-      console.log(conversation);
       this.$emit("sendMessage", conversation);
-      //this.messageList = [ ...this.messageList, message ]
     },
     finishInit() {
       this.init = false;
@@ -167,47 +126,12 @@ export default {
       // leverage pagination for loading another page of messages
     },
     handleOnType() {
-      console.log("Emit typing event");
-    },
+
+},
     editMessage(message) {
       const m = this.messageList.find((m) => m.id === message.id);
       m.isEdited = true;
       m.data.text = message.data.text;
-    },
-    formateId(id) {
-      return id.substring(1, 4) + "..." + id.substring(id.length - 4);
-    },
-    async formatParticipants() {
-      if (this.conversations && this.conversations.length) {
-        const mgdc = this.matches.find((_) => _.mgdcId === this.curremgdcid);
-        const participants = [];
-        participants.push({
-          id: this.account,
-          name: mgdc ? mgdc.mgdcName : "", //this.formateId(this.account),
-          imageUrl: "https://avatars3.githubusercontent.com/u/1915989?s=230&v=4",
-        });
-
-        const conv = this.conversations.find((_) => _.chatId == this.chatId);
-        if (conv && conv.to && mgdc)
-          participants.push({
-            id: conv.to,
-            name: conv.to,
-            imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${mgdc.mgdcId}.png`,
-          });
-
-        this.participants = participants;
-      }
-    },
-    async formatMessages() {
-      const messages = [];
-      this.messages.forEach((m) => {
-        messages.push({
-          type: "text",
-          author: m.author === this.account ? `me` : m.author,
-          data: { text: m.message },
-        });
-      });
-      this.messageList = messages;
     },
   },
 };

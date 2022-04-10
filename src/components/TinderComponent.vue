@@ -92,6 +92,7 @@ export default {
     },
     onSubmit({ type, key, item }) {
       if (type === "like") {
+        this.$store.commit("SET_IS_MATCHIING", true)
         this.$emit("addMatch", { id: item.item.id, name: key });
       }
       if (this.queue.length < 3) {
