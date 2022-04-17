@@ -35,7 +35,7 @@
       <Tinder
         :source="freeMgdcs"
         @addMatch="addMatch"
-        v-if="malBalance > 0 && freeMgdcs && freeMgdcs.length > 0"
+        v-if="freeMgdcs && freeMgdcs.length > 0"
         :breedContract="breedContract"
         @isTinderLoading="isTinderLoading"
       />
@@ -63,7 +63,13 @@
           <i class="fas fa-triangle-exclamation warnning"></i>
         </div>
         <div class="warnning-notification-content">
-          <h4 class="warnning-notification-title">{{ errorMsg }}</h4>
+          <h4 class="warnning-notification-title">
+            {{ errorMsg }}
+            <span v-if="malBalance === 0"
+              ><button class="buy-bn">Buy a BAYC</button> ou
+              <button class="buy-bn">Buy an HAPE</button></span
+            >
+          </h4>
         </div>
       </div>
     </div>
@@ -97,7 +103,7 @@ export default {
       accountBalance: 0,
       abi: [],
       malContract: "",
-      malBalance: 1,
+      malBalance: 0,
       breedContract: null,
       target: "BAYC",
       hapes: [],
@@ -105,6 +111,7 @@ export default {
       isLoading: false,
       errorMsg: null,
       socket: {},
+      contractMGDC: null,
       connectedStatus: "Not connected!",
     };
   },
@@ -172,9 +179,9 @@ export default {
     async loadContractData() {
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
-
-      if (networkId !== breed.network) {
-        this.errorMsg = "Please change to ethereum mainnet.";
+      if (networkId != process.env.VUE_APP_CHAIN_ID) {
+        this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+        this.isTinderLoading(false);
         return;
       }
 
@@ -190,7 +197,7 @@ export default {
           ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
-      this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
+      this.contractMGDC = new web3.eth.Contract(MGDC.abi, process.env.VUE_APP_MGDC);
 
       this.breedContract.events
         .TransferSingle({ filter: { operator: this.account } })
@@ -213,7 +220,9 @@ export default {
       this.$store.dispatch("getConversations", this.account);
       this.$store.dispatch("getMeessages", this.chatId);
       this.accountBalance = await window.web3.eth.getBalance(this.account);
-      // this.malBalance = await this.malContract.methods.balanceOf(this.account).call();
+      this.malBalance = await this.malContract.methods.balanceOf(this.account).call();
+      if (this.malBalance == 0)
+        this.errorMsg = `Vous n'avez pas encre ni de BAYC ni de HAPE best. Vous pouvez en acheter ici :`;
       console.log("malBalance", this.malBalance);
       // if (this.malBalance) {
       //   let count = this.malBalance;
@@ -258,25 +267,25 @@ export default {
     },
     async breed(item) {
       this.currentItem = item;
-      // await this.breedContract.methods
-      //   .breed(item.id)
-      //   .send({
-      //     from: this.account,
-      //     value: "250000000000000000",
-      //   })
-      //   .on("receipt", function (res) {
-      //     console.log("Receipt :", res);
-      //   })
-      //   .on("error", function (err) {
-      //     console.log("error:" + err);
-      //     alert("Transaction Error");
-      //   });
-      this.$store.dispatch("breed", {
-        account: this.account,
-        mgdcId: this.currentItem.mgdcId,
-        mgdcName: this.currentItem.mgdcName,
-        hasBreed: true,
-      });
+      await this.breedContract.methods
+        .breed(item.mgdcId)
+        .send({
+          from: this.account,
+          value: "250000000000000000",
+        })
+        .on("receipt", function (res) {
+          console.log("Receipt :", res);
+        })
+        .on("error", function (err) {
+          console.log("error:" + err);
+          alert("Transaction Error");
+        });
+      // this.$store.dispatch("breed", {
+      //   account: this.account,
+      //   mgdcId: this.currentItem.mgdcId,
+      //   mgdcName: this.currentItem.mgdcName,
+      //   hasBreed: true,
+      // });
     },
 
     async changeSmartcontract(target) {
@@ -294,26 +303,28 @@ export default {
       //     : null;
       // if (hapeprofile) {
 
-      const owner = await this.malContract.methods.ownerOf(mgdc.id).call();
+      const owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
 
-      await this.$store.dispatch("addMatch", {
-        from: this.account,
-        to: owner,
-        mgdcId: parseInt(mgdc.id),
-        mgdcName: mgdc.name,
-      });
+      if (owner !== null) {
+        await this.$store.dispatch("addMatch", {
+          from: this.account,
+          to: owner,
+          mgdcId: parseInt(mgdc.id),
+          mgdcName: mgdc.name,
+        });
 
-      const message =
-        "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
-      const conversation = {
-        action: "sendMessage",
-        chatId: this.chatId,
-        message: message,
-        from: this.account,
-        to: owner,
-      };
-      await this.sendMessage(conversation, true);
-      this.$store.commit("SET_IS_MATCHIING", false);
+        const message =
+          "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
+        const conversation = {
+          action: "sendMessage",
+          chatId: this.chatId,
+          message: message,
+          from: this.account,
+          to: owner,
+        };
+        await this.sendMessage(conversation, true);
+        this.$store.commit("SET_IS_MATCHIING", false);
+      }
     },
 
     waitForOpenConnection() {
@@ -481,6 +492,20 @@ export default {
   .howMa {
     margin-bottom: 25px;
   }
+}
+
+.buy-bn {
+  font-family: var(--font-family-acme);
+  border-radius: 15px;
+  border: 2px solid pink;
+  background-color: transparent;
+  color: pink;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 3px;
+  opacity: 0.85;
+  transition: all 100ms ease-in-out;
+  cursor: pointer;
 }
 
 button {
