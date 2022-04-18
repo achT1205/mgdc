@@ -14,7 +14,7 @@
               : account.substring(1, 9) + "..." + account.substring(account.length - 6)
           }}
         </button>
-        <div v-if="hapes && hapes.length > 0">
+        <!-- <div v-if="hapes && hapes.length > 0">
           <div
             class="chip"
             :class="selectepHape && selectepHape.id === hape.id ? 'selected-chip' : ''"
@@ -29,7 +29,7 @@
               class="fas fa-circle-check checked"
             ></i>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <Tinder
@@ -65,11 +65,25 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
-            <span v-if="malBalance === 0"
-              ><button class="buy-bn">Buy a BAYC</button> ou
-              <button class="buy-bn">Buy an HAPE</button></span
+            <span v-if="malBalance == 0">
+              <a
+                href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
+                target="_blank"
+                class="buy-bn"
+                >Buy a BAYC</a
+              >
+              ou
+              <a
+                href="https://opensea.io/assets/hapeprime"
+                target="_blank"
+                class="buy-bn"
+                >Buy an HAPE</a
+              ></span
             >
           </h4>
+        </div>
+        <div class="warnning-notification-logo-wrapper" @click="clearError">
+          <i class="fas fa-times-circle close"></i>
         </div>
       </div>
     </div>
@@ -101,10 +115,10 @@ export default {
     return {
       address: "",
       accountBalance: 0,
-      abi: [],
-      malContract: "",
-      malBalance: 0,
+      malContract: null,
+      malBalance: null,
       breedContract: null,
+      breedAddress: null,
       target: "BAYC",
       hapes: [],
       selectepHape: null,
@@ -152,6 +166,11 @@ export default {
     await this.connectWallet();
   },
   methods: {
+    clearError() {
+      this.errorMsg = null;
+      this.isTinderLoading(false);
+      this.loading = false;
+    },
     async loadWeb3() {
       this.isLoading = true;
       if (window.ethereum) {
@@ -185,19 +204,19 @@ export default {
         return;
       }
 
-      const breedAddress =
+      this.breedAddress =
         this.target === "HAPE"
           ? process.env.VUE_APP_BREED_HAPE
           : process.env.VUE_APP_BREED_BAYC;
 
-      this.breedContract = new web3.eth.Contract(breed.abi, breedAddress);
+      this.breedContract = new web3.eth.Contract(breed, this.breedAddress);
 
       this.malContract =
         this.target === "HAPE"
           ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
-      this.contractMGDC = new web3.eth.Contract(MGDC.abi, process.env.VUE_APP_MGDC);
+      this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
 
       this.breedContract.events
         .TransferSingle({ filter: { operator: this.account } })
@@ -266,6 +285,13 @@ export default {
       }
     },
     async breed(item) {
+      const listed = await this.breedContract.methods
+        .MGDCisBreeding(parseInt(item.mgdcId))
+        .call();
+      if (!listed) {
+        this.errorMsg = `This MGDC is not listed yet`;
+        return;
+      }
       this.currentItem = item;
       await this.breedContract.methods
         .breed(item.mgdcId)
@@ -278,7 +304,7 @@ export default {
         })
         .on("error", function (err) {
           console.log("error:" + err);
-          alert("Transaction Error");
+          this.errorMsg = err;
         });
       // this.$store.dispatch("breed", {
       //   account: this.account,
@@ -647,6 +673,12 @@ button {
 .warnning {
   color: #e56932;
   font-size: 32px;
+}
+
+.close {
+  color: #000;
+  font-size: 20px;
+  margin-left: 10px;
 }
 
 .spinner {
