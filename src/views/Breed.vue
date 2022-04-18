@@ -14,22 +14,6 @@
               : account.substring(1, 9) + "..." + account.substring(account.length - 6)
           }}
         </button>
-        <!-- <div v-if="hapes && hapes.length > 0">
-          <div
-            class="chip"
-            :class="selectepHape && selectepHape.id === hape.id ? 'selected-chip' : ''"
-            v-for="hape in hapes"
-            :key="hape.id"
-            @click="selectHape(hape)"
-          >
-            <img :src="hape.image" alt="Person" width="96" height="96" />
-            {{ hape.name }}
-            <i
-              v-if="selectepHape && selectepHape.id === hape.id"
-              class="fas fa-circle-check checked"
-            ></i>
-          </div>
-        </div> -->
       </div>
 
       <Tinder
@@ -186,14 +170,7 @@ export default {
         this.errorMsg =
           "Non-Ethereum browser detected. You should consider trying MetaMask !";
       }
-
       await this.loadContractData();
-      // setInterval(
-      //   function () {
-      //     this.loadContractData();
-      //   }.bind(this),
-      //   1000
-      // );
     },
     async loadContractData() {
       const web3 = window.web3;
@@ -243,28 +220,6 @@ export default {
       if (this.malBalance == 0)
         this.errorMsg = `Vous n'avez pas encre ni de BAYC ni de HAPE best. Vous pouvez en acheter ici :`;
       console.log("malBalance", this.malBalance);
-      // if (this.malBalance) {
-      //   let count = this.malBalance;
-      //   for (let index = 0; index < count; index++) {
-      //     const hapeId = await this.hapeContract.methods
-      //       .tokenOfOwnerByIndex(this.account, index)
-      //       .call();
-
-      //     const uri = await this.hapeContract.methods.tokenURI(hapeId).call();
-      //     const resp = await axios.get(uri.replace("ipfs://", "https://ipfs.io/ipfs/"));
-      //     const image = resp.data.image.replace("ipfs://", "https://ipfs.io/ipfs/");
-
-      //     this.hapes.push({
-      //       id: hapeId,
-      //       image: image,
-      //       name: `${this.target} #${hapeId}`,
-      //     });
-      //     if (this.hapes && this.hapes.length) {
-      //       this.selectepHape = this.hapes[0];
-      //     }
-      //   }
-      //   this.isLoading = false;
-      // }
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -306,12 +261,6 @@ export default {
           console.log("error:" + err);
           this.errorMsg = err;
         });
-      // this.$store.dispatch("breed", {
-      //   account: this.account,
-      //   mgdcId: this.currentItem.mgdcId,
-      //   mgdcName: this.currentItem.mgdcName,
-      //   hasBreed: true,
-      // });
     },
 
     async changeSmartcontract(target) {
@@ -321,14 +270,6 @@ export default {
       this.selectepHape = hape;
     },
     async addMatch(mgdc) {
-      // const hapeprofile =
-      //   this.selectepHape && this.selectepHape.id
-      //     ? this.selectepHape
-      //     : this.hapes.length > 0
-      //     ? this.hapes[0]
-      //     : null;
-      // if (hapeprofile) {
-
       const owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
 
       if (owner !== null) {

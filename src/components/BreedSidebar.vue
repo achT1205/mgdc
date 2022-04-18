@@ -1,6 +1,10 @@
 <template>
   <div class="sidebar">
-    <button class="btn-sidebar" @click.prevent="showSidebar = true" v-if="!showSidebar">
+    <button
+      class="btn-sidebar"
+      @click.prevent="showSidebar = true"
+      v-if="!showSidebar"
+    >
       <i class="fas fa-bars"></i>
     </button>
     <div class="backdrop" :class="showSidebar ? 'd-flex' : ''">
@@ -40,19 +44,23 @@
               >
                 <div class="avatar">
                   <img
+                    v-if="!profile"
                     :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
                   />
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
-                    <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
+                    <i
+                      class="fas fa-heart"
+                      :class="item.hasBreed ? 'down' : 'up'"
+                    ></i>
                   </div>
                   <div class="name">
                     {{ item.mgdcName }}
                   </div>
                   <div
                     class="join-us-on-discord2"
-                    v-if="!item.hasBreed"
+                    v-if="!profile && !item.hasBreed"
                     @click="onBreed(item)"
                   >
                     Breed now
@@ -78,7 +86,7 @@
 import { mapGetters } from "vuex";
 
 export default {
-  props: ["breed"],
+  props: ["breed", "profile"],
   data: () => ({
     show: false,
     showSidebar: false,
@@ -93,7 +101,13 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["matches", "curremgdcid", "account", "conversations", "chatId"]),
+    ...mapGetters([
+      "matches",
+      "curremgdcid",
+      "account",
+      "conversations",
+      "chatId",
+    ]),
   },
   methods: {
     filter() {
@@ -171,7 +185,12 @@ export default {
     .modal-header {
       font-family: var(--font-family-acme);
       display: flex;
-      background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
+      background: linear-gradient(
+        180deg,
+        #e56932 0%,
+        #ba3474 83.74%,
+        #9b3782 100%
+      );
       color: white;
       padding: 10px 12px;
       justify-content: space-between;

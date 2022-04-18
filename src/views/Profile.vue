@@ -1,8 +1,9 @@
 <template>
   <div class="page">
     <div class="viewContainer mint">
-      <switcher @changeSmartcontract="changeSmartcontract" />
-      <div class="mintCard">
+      <div class="switch">
+        <switcher @changeSmartcontract="changeSmartcontract" />
+      </div>      <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
         <p class="text howMa">List your MDGC</p>
         <button class="connectButton" @click="connectWallet">
@@ -56,6 +57,8 @@
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
+    <breed-sidebar :profile="true" />
+    <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
     <div
       id="overlay"
       v-show="errorMsg"
@@ -69,7 +72,10 @@
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
             <span v-if="mgdcBalance == 0">
-              <a href="https://opensea.io/collection/mgdc" target="_blank" class="buy-bn"
+              <a
+                href="https://opensea.io/collection/mgdc"
+                target="_blank"
+                class="buy-bn"
                 >Buy an MGDC</a
               ></span
             >
@@ -96,6 +102,9 @@ import address from "../address/address.json";
 import Moralis from "moralis";
 import axios from "axios";
 import Switcher from "../components/Switcher.vue";
+import Chat from "@/components/Chat.vue";
+import BreedSidebar from "@/components/BreedSidebar.vue";
+import { mapGetters } from "vuex";
 
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
@@ -108,7 +117,7 @@ const root = tree.getRoot().toString("hex");
 
 export default {
   name: "Profile",
-  components: { BreedCard, Switcher },
+  components: { BreedCard, Switcher, Chat, BreedSidebar },
   data() {
     return {
       errorMsg: null,
@@ -253,15 +262,73 @@ export default {
       breedAddress: null,
       malContract: null,
       mgdcBalance: null,
+      socket: {},
+      connectedStatus: "Not connected!",
     };
   },
   async created() {
     await this.loadWeb3();
+    window.ethereum.on("accountsChanged", function () {
+      location.reload();
+    });
+    window.ethereum.on("networkChanged", function () {
+      location.reload();
+    });
+
+    this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
+
+    this.socket.onopen = () => {
+      console.log("Websocket connected.");
+      this.connectedStatus = "Connected";
+      this.sendMessage({ action: "setOnline", address: this.account });
+    };
+
+    this.socket.onmessage = (event) => {
+      let parsedMessage = JSON.parse(event.data);
+      console.log(parsedMessage);
+    };
+  },
+  computed: {
+    ...mapGetters(["chatId", "messages", "conversations", "account"]),
   },
   methods: {
     clearError() {
       this.errorMsg = null;
     },
+
+    async sendMessage(message, match) {
+      let msg = JSON.stringify(message);
+      if (this.socket.readyState !== this.socket.OPEN) {
+        try {
+          await this.waitForOpenConnection(this.socket);
+          this.socket.send(msg);
+          this.localUpdate(match, message);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        this.socket.send(msg);
+        this.localUpdate(match, message);
+      }
+    },
+    localUpdate(match, message) {
+      if (match) {
+        const conversations = [];
+        conversations.push({
+          chatId: this.chatId,
+          to: message.to,
+        });
+        this.$store.commit("SET_MESSAGES", []);
+        this.$store.commit("SET_CONVERSAIONS", conversations);
+      }
+      const msg = {
+        type: "text",
+        author: `me`,
+        data: { text: message.message },
+      };
+      this.$store.commit("SET_MESSAGE", msg);
+    },
+
     GetMerkleProof(walletAddress) {
       const leaf = walletAddress;
       return tree.getHexProof(leaf.replace("0x", "0x000000000000000000000000"));
@@ -354,6 +421,11 @@ export default {
           .call();
         if (this.mgdcBalance == 0)
           this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
+        else {
+          this.$store.dispatch("getMatches", this.account);
+          this.$store.dispatch("getConversations", this.account);
+          this.$store.dispatch("getMeessages", this.chatId);
+        }
 
         let result = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
@@ -382,7 +454,9 @@ export default {
             .call();
           console.log(token);
 
-          token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
+          token = await axios.get(
+            token.replace("ipfs://", "https://ipfs.io/ipfs/")
+          );
           console.log("token", token.data.image);
           this.MGDC[i].metadata = token.data.image.replace(
             "ipfs://",
@@ -432,7 +506,9 @@ export default {
       }
 
       this.isActive = await this.contract.methods.isActive().call();
-      this.isPresaleActive = await this.contract.methods.isPresaleActive().call();
+      this.isPresaleActive = await this.contract.methods
+        .isPresaleActive()
+        .call();
       console.log("isActive : ", this.isActive);
       console.log("isPresaleActive : ", this.isPresaleActive);
 
@@ -445,7 +521,9 @@ export default {
       const noOfTokens = this.nftsCountToMint;
       console.log("nftPrice : ", this.nftPrice);
       if (this.isPresaleActive == true) {
-        this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
+        this.whiteListMaxMint = await this.contract.methods
+          .WHITELIST_MAX_MINT()
+          .call();
         this.wlClaimed = parseInt(
           await this.contract.methods.whiteListClaimed(this.accountID).call()
         );
@@ -532,7 +610,12 @@ export default {
 
 <style lang="scss">
 .page {
-  background: linear-gradient(180deg, #edbcad 1.31%, #f0d0df 27.36%, #edb8ed 56.4%);
+  background: linear-gradient(
+    180deg,
+    #edbcad 1.31%,
+    #f0d0df 27.36%,
+    #edb8ed 56.4%
+  );
 }
 
 .mint {
