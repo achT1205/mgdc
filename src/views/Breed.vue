@@ -255,6 +255,12 @@ export default {
           value: "250000000000000000",
         })
         .on("receipt", function (res) {
+           this.$store.dispatch("breed", {
+            account: this.account,
+            mgdcId: this.currentItem.mgdcId,
+            mgdcName: this.currentItem.mgdcName,
+            hasBreed: true,
+          });
           console.log("Receipt :", res);
         })
         .on("error", function (err) {
