@@ -57,10 +57,7 @@
                 >Buy a BAYC</a
               >
               ou
-              <a
-                href="https://opensea.io/assets/hapeprime"
-                target="_blank"
-                class="buy-bn"
+              <a href="https://opensea.io/assets/hapeprime" target="_blank" class="buy-bn"
                 >Buy an HAPE</a
               ></span
             >
@@ -194,20 +191,6 @@ export default {
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
-
-      this.breedContract.events
-        .TransferSingle({ filter: { operator: this.account } })
-        .on("data", function (event) {
-          const data = event.returnValues;
-          console.log(data);
-          this.$store.dispatch("breed", {
-            account: this.account,
-            mgdcId: this.currentItem.mgdcId,
-            mgdcName: this.currentItem.mgdcName,
-            hasBreed: true,
-          });
-        })
-        .on("error", console.error);
     },
     async fetchData() {
       this.hapes = [];
@@ -247,26 +230,23 @@ export default {
         this.errorMsg = `This MGDC is not listed yet`;
         return;
       }
-      this.currentItem = item;
-      await this.breedContract.methods
-        .breed(item.mgdcId)
-        .send({
+      try {
+        await this.breedContract.methods.breed(item.mgdcId).send({
           from: this.account,
           value: "250000000000000000",
-        })
-        .on("receipt", function (res) {
-           this.$store.dispatch("breed", {
-            account: this.account,
-            mgdcId: this.currentItem.mgdcId,
-            mgdcName: this.currentItem.mgdcName,
-            hasBreed: true,
-          });
-          console.log("Receipt :", res);
-        })
-        .on("error", function (err) {
-          console.log("error:" + err);
-          this.errorMsg = err;
         });
+        this.$store.dispatch("breed", {
+          account: this.account,
+          mgdcId: item.mgdcId,
+          mgdcName: item.mgdcName,
+          hasBreed: true,
+        });
+        this.$store.commit("SET_BREEDING", false);
+      } catch (err) {
+        console.log("error:", err.message);
+        this.errorMsg = err.message;
+        this.$store.commit("SET_BREEDING", false);
+      }
     },
 
     async changeSmartcontract(target) {
@@ -276,26 +256,31 @@ export default {
       this.selectepHape = hape;
     },
     async addMatch(mgdc) {
-      const owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
+      try {
+        const owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
+        if (owner !== null) {
+          await this.$store.dispatch("addMatch", {
+            from: this.account,
+            to: owner,
+            mgdcId: parseInt(mgdc.id),
+            mgdcName: mgdc.name,
+          });
 
-      if (owner !== null) {
-        await this.$store.dispatch("addMatch", {
-          from: this.account,
-          to: owner,
-          mgdcId: parseInt(mgdc.id),
-          mgdcName: mgdc.name,
-        });
-
-        const message =
-          "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
-        const conversation = {
-          action: "sendMessage",
-          chatId: this.chatId,
-          message: message,
-          from: this.account,
-          to: owner,
-        };
-        await this.sendMessage(conversation, true);
+          const message =
+            "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
+          const conversation = {
+            action: "sendMessage",
+            chatId: this.chatId,
+            message: message,
+            from: this.account,
+            to: owner,
+          };
+          await this.sendMessage(conversation, true);
+          this.$store.commit("SET_IS_MATCHIING", false);
+        }
+      } catch (error) {
+        console.log("error ==> ", error);
+        this.errorMsg = "Ce token n'a pas encore de owner, Vous pouvez choisir un autre.";
         this.$store.commit("SET_IS_MATCHIING", false);
       }
     },

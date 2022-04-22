@@ -1,10 +1,6 @@
 <template>
   <div class="sidebar">
-    <button
-      class="btn-sidebar"
-      @click.prevent="showSidebar = true"
-      v-if="!showSidebar"
-    >
+    <button class="btn-sidebar" @click.prevent="showSidebar = true" v-if="!showSidebar">
       <i class="fas fa-bars"></i>
     </button>
     <div class="backdrop" :class="showSidebar ? 'd-flex' : ''">
@@ -50,10 +46,7 @@
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
-                    <i
-                      class="fas fa-heart"
-                      :class="item.hasBreed ? 'down' : 'up'"
-                    ></i>
+                    <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
                   </div>
                   <div class="name">
                     {{ item.mgdcName }}
@@ -66,6 +59,20 @@
                     Breed now
                   </div>
                 </div>
+                <svg
+                  class="spinner"
+                  viewBox="0 0 50 50"
+                  v-if="breeding && item.mgdcId == selected"
+                >
+                  <circle
+                    class="path"
+                    cx="25"
+                    cy="25"
+                    r="20"
+                    fill="none"
+                    stroke-width="5"
+                  ></circle>
+                </svg>
               </li>
             </ul>
             <div v-else class="no-matches-yet">Pas encore de matchs !</div>
@@ -91,6 +98,7 @@ export default {
     show: false,
     showSidebar: false,
     search: "",
+    selected: null,
   }),
   mounted() {},
   watch: {
@@ -107,6 +115,7 @@ export default {
       "account",
       "conversations",
       "chatId",
+      "breeding",
     ]),
   },
   methods: {
@@ -139,12 +148,31 @@ export default {
       this.$store.commit("SET_PARTICIPANTS", participants);
     },
     onBreed(item) {
+      this.selected = item.mgdcId;
+      this.$store.commit("SET_BREEDING", true);
       this.$emit("breed", item);
     },
   },
 };
 </script>
 <style scoped lang="scss">
+.spinner {
+  animation: rotate 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 50px;
+  height: 50px;
+
+  & .path {
+    stroke: pink;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+  }
+}
+
 .sidebar {
   .btn-sidebar {
     border: 0;
@@ -185,12 +213,7 @@ export default {
     .modal-header {
       font-family: var(--font-family-acme);
       display: flex;
-      background: linear-gradient(
-        180deg,
-        #e56932 0%,
-        #ba3474 83.74%,
-        #9b3782 100%
-      );
+      background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
       color: white;
       padding: 10px 12px;
       justify-content: space-between;

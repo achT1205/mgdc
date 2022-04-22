@@ -208,7 +208,8 @@ export default new Vuex.Store({
     curremgdcid: localStorage.curremgdcid ? parseInt(localStorage.curremgdcid) : null,
     curremgdcname: localStorage.curremgdcname ? localStorage.curremgdcname : null,
     isMatching: false,
-    participants: []
+    participants: [],
+    breeding: false
 
   },
   getters: {
@@ -226,10 +227,14 @@ export default new Vuex.Store({
     curremgdcname: state => state.curremgdcname,
     isMatching: state => state.isMatching,
     participants: state => state.participants,
+    breeding: state => state.breeding
   },
   mutations: {
     SET_PARTICIPANTS(state, payload) {
       state.participants = payload
+    },
+    SET_BREEDING(state, payload) {
+      state.breeding = payload
     },
     SET_ERROR(state, payload) {
       state.error = payload
