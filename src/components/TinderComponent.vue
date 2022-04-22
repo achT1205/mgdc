@@ -62,7 +62,7 @@ export default {
     async mock(append = true) {
       const list = [];
       let count = 0;
-      
+
       if (this.source && this.source.length) {
         while (count < 5) {
           const id = this.source[this.offset].id;
