@@ -3,7 +3,8 @@
     <div class="viewContainer mint">
       <div class="switch">
         <switcher @changeSmartcontract="changeSmartcontract" />
-      </div>      <div class="mintCard">
+      </div>
+      <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
         <p class="text howMa">List your MDGC</p>
         <button class="connectButton" @click="connectWallet">
@@ -19,7 +20,7 @@
 
       <div class="breedCard" style="">
         <div class="text nbNft" style="margin-bottom: 25px">
-          Owned MGDC : {{ MGDC.length }}
+          Owned MGDC : {{ mgdcBalance }}
         </div>
         <div class="contentTeam ct2">
           <BreedCard
@@ -72,10 +73,7 @@
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
             <span v-if="mgdcBalance == 0">
-              <a
-                href="https://opensea.io/collection/mgdc"
-                target="_blank"
-                class="buy-bn"
+              <a href="https://opensea.io/collection/mgdc" target="_blank" class="buy-bn"
                 >Buy an MGDC</a
               ></span
             >
@@ -280,7 +278,7 @@ export default {
     this.socket.onopen = () => {
       console.log("Websocket connected.");
       this.connectedStatus = "Connected";
-      this.sendMessage({ action: "setOnline", address: this.account });
+      this.sendMessage({ action: "setOnline", address: this.accountID });
     };
 
     this.socket.onmessage = (event) => {
@@ -406,6 +404,8 @@ export default {
       console.log("Connect to wallet");
       const web3js = window.web3;
       if (typeof web3js !== "undefined") {
+        // eslint-disable-next-line no-debugger
+        debugger;
         this.web3 = new Web3(web3js.currentProvider);
         const accounts = await window.ethereum
           .request({
@@ -419,11 +419,11 @@ export default {
         this.mgdcBalance = await this.contractMGDC.methods
           .balanceOf(this.accountID)
           .call();
-        if (this.mgdcBalance == 0)
+        if (this.mgdcBalance == 0) {
           this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
-        else {
-          this.$store.dispatch("getMatches", this.account);
-          this.$store.dispatch("getConversations", this.account);
+        } else {
+          this.$store.dispatch("getMatches", this.accountID);
+          this.$store.dispatch("getConversations", this.accountID);
           this.$store.dispatch("getMeessages", this.chatId);
         }
 
@@ -454,9 +454,7 @@ export default {
             .call();
           console.log(token);
 
-          token = await axios.get(
-            token.replace("ipfs://", "https://ipfs.io/ipfs/")
-          );
+          token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
           console.log("token", token.data.image);
           this.MGDC[i].metadata = token.data.image.replace(
             "ipfs://",
@@ -506,9 +504,7 @@ export default {
       }
 
       this.isActive = await this.contract.methods.isActive().call();
-      this.isPresaleActive = await this.contract.methods
-        .isPresaleActive()
-        .call();
+      this.isPresaleActive = await this.contract.methods.isPresaleActive().call();
       console.log("isActive : ", this.isActive);
       console.log("isPresaleActive : ", this.isPresaleActive);
 
@@ -521,9 +517,7 @@ export default {
       const noOfTokens = this.nftsCountToMint;
       console.log("nftPrice : ", this.nftPrice);
       if (this.isPresaleActive == true) {
-        this.whiteListMaxMint = await this.contract.methods
-          .WHITELIST_MAX_MINT()
-          .call();
+        this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
         this.wlClaimed = parseInt(
           await this.contract.methods.whiteListClaimed(this.accountID).call()
         );
@@ -610,12 +604,7 @@ export default {
 
 <style lang="scss">
 .page {
-  background: linear-gradient(
-    180deg,
-    #edbcad 1.31%,
-    #f0d0df 27.36%,
-    #edb8ed 56.4%
-  );
+  background: linear-gradient(180deg, #edbcad 1.31%, #f0d0df 27.36%, #edb8ed 56.4%);
 }
 
 .mint {
