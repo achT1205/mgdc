@@ -4,6 +4,7 @@ node_modules
 
 
 # local env files
+.env
 .env.local
 .env.*.local
 
@@ -21,3 +22,15 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+out.yml
+samconfig.toml
+backend/images/*
+
+coverage
+coverage.json
+typechain
+
+#Hardhat files
+cache
+artifacts

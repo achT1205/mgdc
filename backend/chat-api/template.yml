@@ -1,0 +1,409 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: MGDC - Chat API
+
+Parameters:
+  Project:
+    Type: String
+    Description: Project name
+    Default: "Meta Gold Digger Club"
+  App:
+    Type: String
+    Description: Application environment name
+    Default: mgdc
+  Stage:
+    Type: String
+    Description: Application environment stage
+    Default: test
+    AllowedValues:
+      - dev
+      - test
+      - staging
+      - prod
+  ChatExpirationInMonth:
+    Type: Number
+    Description: Chat expiration in month
+    Default: 2
+  LogRetentionInDays:
+    Type: Number
+    Description: CloudWatch Logs retention period before deletion
+    Default: 14
+  ApiDomain:
+    Type: String
+    Description: Custom Api domain name
+    Default: api.metagolddiggerclub.com
+  WSApiDomain:
+    Type: String
+    Description: Custom for web socket Api domain name
+    Default: wsapi.metagolddiggerclub.com
+
+Globals:
+  Function:
+    Handler: index.handler
+    Runtime: nodejs14.x
+    Timeout: 30
+    Environment:
+      Variables:
+        CONNECTIONS_DB:
+          Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
+    Tags:
+      App: !Ref App
+      Stage: !Ref Stage
+      Project: !Ref Project
+
+Resources:
+  # Api
+
+  ChatWebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub ${Stage}-${App}-chat-websocket-api
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  WebSocketApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      DomainName: !Ref WSApiDomain
+      ApiId: !Ref ChatWebSocketApi
+      Stage: !Ref ApiStage
+
+  ChatApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub ${Stage}-${App}-chat-api
+      StageName: !Ref Stage
+      EndpointConfiguration:
+        Type: REGIONAL
+      Cors:
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+        MaxAge: "'3600'"
+        AllowMethods: "'OPTIONS,POST,GET,PUT,DELETE'"
+      GatewayResponses:
+        DEFAULT_4xx:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
+        DEFAULT_5xx:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Methods: "'OPTIONS,POST,GET,PUT,DELETE'"
+      Tags:
+        App: !Ref App
+        Stage: !Ref Stage
+        Project: !Ref Project
+
+  RestApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      DomainName: !Ref ApiDomain
+      ApiId: !Ref ChatApi
+      Stage: !Ref ChatApi.Stage
+      ApiMappingKey: !Sub ${Stage}/chats
+
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      OperationName: ConnectRoute
+      Target: !Sub integrations/${ConnectInteg}
+
+  ConnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnConnectFunction.Arn}/invocations
+
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: DisconnectRoute
+      Target: !Sub integrations/${DisconnectInteg}
+
+  DisconnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnDisconnectFunction.Arn}/invocations
+
+  DefaultInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      Description: Default Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DefaultFunction.Arn}/invocations
+
+  SendRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      RouteKey: sendMessage
+      AuthorizationType: NONE
+      OperationName: SendRoute
+      Target: !Sub integrations/${SendInteg}
+
+  SendInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      Description: Send Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
+
+  SetOnlineRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      RouteKey: setOnline
+      AuthorizationType: NONE
+      OperationName: SetOnlineRoute
+      Target: !Sub integrations/${SetOnlineInteg}
+
+  SetOnlineInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+      Description: Set Online Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SetOnlineFunction.Arn}/invocations
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - ConnectRoute
+      - SetOnlineRoute
+      - SendRoute
+      - DisconnectRoute
+    Properties:
+      ApiId: !Ref ChatWebSocketApi
+
+  ApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: !Ref Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref ChatWebSocketApi
+
+  # Functions
+
+  ChatsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/chats/
+      FunctionName: !Sub ${Stage}-${App}-chats
+      Environment:
+        Variables:
+          CHATS_DB:
+            Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
+      Events:
+        ChatsEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ChatApi
+            Path: /{chatId}
+            Method: GET
+
+  MyChatsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/chat-rooms/
+      FunctionName: !Sub ${Stage}-${App}-chat-rooms
+      Environment:
+        Variables:
+          CHATS_DB:
+            Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
+      Events:
+        MyChatsEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ChatApi
+            Path: /rooms/{username}
+            Method: GET
+
+  OnConnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/on-connect/
+      FunctionName: !Sub ${Stage}-${App}-on-connect
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
+
+  OnConnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ChatWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OnConnectFunction
+      Principal: apigateway.amazonaws.com
+
+  OnDisconnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/on-disconnect/
+      FunctionName: !Sub ${Stage}-${App}-on-disconnect
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
+
+  OnDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ChatWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OnDisconnectFunction
+      Principal: apigateway.amazonaws.com
+
+  DefaultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/default/
+      FunctionName: !Sub ${Stage}-${App}-default
+
+  DefaultPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ChatWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DefaultFunction
+      Principal: apigateway.amazonaws.com
+
+  SendMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/send-message/
+      FunctionName: !Sub ${Stage}-${App}-send-message
+      Environment:
+        Variables:
+          CHATS_DB:
+            Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
+          CHAT_EXPIRATION_IN_MONTH: !Ref ChatExpirationInMonth
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
+        - DynamoDBCrudPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-chats-table
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "execute-api:ManageConnections"
+              Resource:
+                - !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ChatWebSocketApi}/*"
+
+  SendMessagePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ChatWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SendMessageFunction
+      Principal: apigateway.amazonaws.com
+
+  SetOnlineFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/set-online/
+      FunctionName: !Sub ${Stage}-${App}-set-online
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-connections-table
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "execute-api:ManageConnections"
+              Resource:
+                - !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ChatWebSocketApi}/*"
+
+  SetAddresPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - ChatWebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SetOnlineFunction
+      Principal: apigateway.amazonaws.com
+
+  # Logs
+
+  ChatsFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-chats
+      RetentionInDays: !Ref LogRetentionInDays
+
+  MyMgdcFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-my-chats
+      RetentionInDays: !Ref LogRetentionInDays
+
+  OnConnectFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-on-connect
+      RetentionInDays: !Ref LogRetentionInDays
+
+  OnDisconnectFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-on-disconnect
+      RetentionInDays: !Ref LogRetentionInDays
+
+  DefaultFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-default
+      RetentionInDays: !Ref LogRetentionInDays
+
+  SetOnlineFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-set-online
+      RetentionInDays: !Ref LogRetentionInDays
+
+  SendMessageFunctionLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-send-message
+      RetentionInDays: !Ref LogRetentionInDays
+
+Outputs:
+  ChatApiDomain:
+    Description: "Chat API default base domain"
+    Value: !Sub https://${ChatApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+  ChatWebSocketURI:
+    Description: "The WSS Protocol URI to connect to"
+    Value: !Sub wss://${ChatWebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiStage}
