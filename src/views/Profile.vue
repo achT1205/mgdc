@@ -289,7 +289,8 @@ export default {
       this.socket.onopen = () => {
         console.log("Websocket connected.");
         this.connectedStatus = "Connected";
-        this.sendMessage({ action: "setOnline", address: this.accountID });
+        if (this.accountID)
+          this.sendMessage({ action: "setOnline", address: this.accountID });
       };
 
       this.socket.onmessage = (event) => {
@@ -350,12 +351,16 @@ export default {
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
 
-        window.ethereum.on("accountsChanged", async (accounts) => {
-          await this.setWallet(accounts[0]);
-
-          this.wlClaimed = await this.contract.methods
+        if (this.accountID)
+          this.wlClaimed = await this.contractMGDC.methods
             .whiteListClaimed(this.accountID)
             .call();
+
+        window.ethereum.on("accountsChanged", function () {
+          location.reload();
+        });
+        window.ethereum.on("networkChanged", function () {
+          location.reload();
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
@@ -403,6 +408,7 @@ export default {
       this.accountID = address.toLowerCase();
       this.notAllowed = false;
       this.accountBalance = await window.web3.eth.getBalance(this.accountID);
+      await this.init();
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -521,7 +527,7 @@ export default {
       if (this.isPresaleActive == true) {
         this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
         this.wlClaimed = parseInt(
-          await this.contract.methods.whiteListClaimed(this.accountID).call()
+          await this.contractMGDC.methods.whiteListClaimed(this.accountID).call()
         );
 
         if (this.wlClaimed + this.nftsCountToMint > this.whiteListMaxMint) {
