@@ -40,7 +40,6 @@
               >
                 <div class="avatar">
                   <img
-                    v-if="!profile"
                     :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
                   />
                 </div>

@@ -404,8 +404,6 @@ export default {
       console.log("Connect to wallet");
       const web3js = window.web3;
       if (typeof web3js !== "undefined") {
-        // eslint-disable-next-line no-debugger
-        debugger;
         this.web3 = new Web3(web3js.currentProvider);
         const accounts = await window.ethereum
           .request({
