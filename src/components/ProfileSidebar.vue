@@ -48,7 +48,11 @@
                     <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
                   </div>
                   <div class="name">
-                    {{ `${item.maleType}... ${item.to.substring(item.to.length - 6)} ` }}
+                    {{
+                      `${item.maleType}... ${item.owner.substring(
+                        item.owner.length - 6
+                      )} `
+                    }}
                   </div>
                 </div>
               </li>
@@ -116,8 +120,8 @@ export default {
       const conv = this.conversations.find((_) => _.chatId == this.chatId);
       if (conv)
         other = {
-          id: conv.to,
-          name: conv.to,
+          id: conv.to === this.account ? conv.owner : conv.to,
+          name: conv.to === this.account ? conv.owner : conv.to,
           imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
         };
       participants.push(me);

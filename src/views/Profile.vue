@@ -284,46 +284,43 @@ export default {
         location.reload();
       });
 
-      this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
+      if (this.account) {
+        this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
 
-      this.socket.onopen = () => {
-        console.log("Websocket connected.");
-        this.connectedStatus = "Connected";
-        if (this.accountID)
-          this.sendMessage({ action: "setOnline", address: this.accountID });
-      };
+        this.socket.onopen = () => {
+          console.log("Websocket connected.");
+          this.connectedStatus = "Connected";
+          this.sendMessage({ action: "setOnline", address: this.account });
+        };
 
-      this.socket.onmessage = (event) => {
-        let parsedMessage = JSON.parse(event.data);
-        console.log(parsedMessage);
-      };
+        this.socket.onmessage = (event) => {
+          const messageJson = JSON.parse(event.data);
+          const msg = {
+            type: "text",
+            author: messageJson.from,
+            data: { text: messageJson.message },
+          };
+          this.$store.commit("SET_MESSAGE", msg);
+        };
+      }
     },
 
-    async sendMessage(message, match) {
+    async sendMessage(message) {
       let msg = JSON.stringify(message);
       if (this.socket.readyState !== this.socket.OPEN) {
         try {
           await this.waitForOpenConnection(this.socket);
           this.socket.send(msg);
-          this.localUpdate(match, message);
+          this.localUpdate(message);
         } catch (err) {
           console.error(err);
         }
       } else {
         this.socket.send(msg);
-        this.localUpdate(match, message);
+        this.localUpdate(message);
       }
     },
-    localUpdate(match, message) {
-      if (match) {
-        const conversations = [];
-        conversations.push({
-          chatId: this.chatId,
-          to: message.to,
-        });
-        this.$store.commit("SET_MESSAGES", []);
-        this.$store.commit("SET_CONVERSAIONS", conversations);
-      }
+    localUpdate(message) {
       const msg = {
         type: "text",
         author: `me`,
@@ -406,6 +403,7 @@ export default {
     },
     async setWallet(address) {
       this.accountID = address.toLowerCase();
+      this.$store.commit("SET_ACCOUNT", address);
       this.notAllowed = false;
       this.accountBalance = await window.web3.eth.getBalance(this.accountID);
       await this.init();
