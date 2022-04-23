@@ -1,8 +1,6 @@
-/* eslint-disable no-debugger */
 import Vue from 'vue'
 import Vuex from 'vuex'
 import Web3 from 'web3'
-
 import axios from "axios";
 
 // export const config = {

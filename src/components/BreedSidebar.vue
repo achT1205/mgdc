@@ -138,8 +138,8 @@ export default {
       const conv = this.conversations.find((_) => _.chatId == this.chatId);
       if (conv)
         other = {
-          id: conv.to,
-          name: conv.to,
+          id: conv.to === this.account ? conv.owner : conv.to,
+          name: conv.to === this.account ? conv.owner : conv.to,
           imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
         };
       participants.push(me);
