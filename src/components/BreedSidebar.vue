@@ -36,7 +36,7 @@
                 v-for="(item, index) in matches"
                 :key="index"
                 :class="curremgdcid === item.mgdcId ? 'active' : ''"
-                @click.prevent="onSelect(item)"
+                @click.prevent="onSelect(item, false)"
               >
                 <div class="avatar">
                   <img
@@ -121,9 +121,9 @@ export default {
     filter() {
       this.$store.commit("SET_FILTERED_MATCHES", this.search);
     },
-    onSelect(item) {
+    onSelect(item, origine) {
       this.$store.commit("SET_CHATCH_ID", item.chatId);
-      this.$store.dispatch("getMeessages", item.chatId);
+      if (!origine) this.$store.dispatch("getMeessages", item.chatId);
       this.$store.commit("SET_MATCH_ACTIVE", item.mgdcId);
       this.$store.commit("SET_CURRENET_NAME", item.mgdcName);
       this.$store.commit("SET_IS_CHAT_OPEN", true);
