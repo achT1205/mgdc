@@ -252,7 +252,7 @@ export default new Vuex.Store({
       state.error = null
     },
     SET_ACCOUNT(state, payload) {
-      state.account = payload
+      state.account = payload.toLowerCase()
     },
     SET_MGDCS(state, payload) {
       state.mgdcs = payload

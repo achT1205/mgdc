@@ -101,7 +101,7 @@ import Moralis from "moralis";
 import axios from "axios";
 import Switcher from "../components/Switcher.vue";
 import Chat from "@/components/Chat.vue";
-import BreedSidebar from "@/components/BreedSidebar.vue";
+import BreedSidebar from "@/components/ProfileSidebar.vue";
 import { mapGetters } from "vuex";
 
 var MerkleTree = require("merkletreejs").MerkleTree;
@@ -265,26 +265,7 @@ export default {
     };
   },
   async created() {
-    await this.loadWeb3();
-    window.ethereum.on("accountsChanged", function () {
-      location.reload();
-    });
-    window.ethereum.on("networkChanged", function () {
-      location.reload();
-    });
-
-    this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
-
-    this.socket.onopen = () => {
-      console.log("Websocket connected.");
-      this.connectedStatus = "Connected";
-      this.sendMessage({ action: "setOnline", address: this.accountID });
-    };
-
-    this.socket.onmessage = (event) => {
-      let parsedMessage = JSON.parse(event.data);
-      console.log(parsedMessage);
-    };
+    await this.init();
   },
   computed: {
     ...mapGetters(["chatId", "messages", "conversations", "account"]),
@@ -292,6 +273,29 @@ export default {
   methods: {
     clearError() {
       this.errorMsg = null;
+    },
+
+    async init() {
+      await this.loadWeb3();
+      window.ethereum.on("accountsChanged", function () {
+        location.reload();
+      });
+      window.ethereum.on("networkChanged", function () {
+        location.reload();
+      });
+
+      this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
+
+      this.socket.onopen = () => {
+        console.log("Websocket connected.");
+        this.connectedStatus = "Connected";
+        this.sendMessage({ action: "setOnline", address: this.accountID });
+      };
+
+      this.socket.onmessage = (event) => {
+        let parsedMessage = JSON.parse(event.data);
+        console.log(parsedMessage);
+      };
     },
 
     async sendMessage(message, match) {
@@ -396,7 +400,7 @@ export default {
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async setWallet(address) {
-      this.accountID = address;
+      this.accountID = address.toLowerCase();
       this.notAllowed = false;
       this.accountBalance = await window.web3.eth.getBalance(this.accountID);
     },
@@ -404,8 +408,6 @@ export default {
       console.log("Connect to wallet");
       const web3js = window.web3;
       if (typeof web3js !== "undefined") {
-        // eslint-disable-next-line no-debugger
-        debugger;
         this.web3 = new Web3(web3js.currentProvider);
         const accounts = await window.ethereum
           .request({
@@ -595,8 +597,7 @@ export default {
     },
     async changeSmartcontract(target) {
       this.target = target;
-      await this.loadContractData(target);
-      await this.connectWallet();
+      await this.init();
     },
   },
 };
