@@ -279,7 +279,7 @@ export default {
             to: owner,
             mgdcId: parseInt(mgdc.id),
             mgdcName: mgdc.name,
-            male: this.maleSymbol,
+            maleType: this.maleSymbol,
           });
 
           const message =
