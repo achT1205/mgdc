@@ -58,7 +58,7 @@
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar :profile="true" />
+    <breed-sidebar :profile="true" ref="breedSidebar"/>
     <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
     <div
       id="overlay"
