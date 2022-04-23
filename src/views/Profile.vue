@@ -58,7 +58,7 @@
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar :profile="true" />
+    <breed-sidebar :profile="true" ref="breedSidebar"/>
     <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
     <div
       id="overlay"
@@ -293,8 +293,19 @@ export default {
           this.sendMessage({ action: "setOnline", address: this.account });
         };
 
-        this.socket.onmessage = (event) => {
+        this.socket.onmessage = async (event) => {
           const messageJson = JSON.parse(event.data);
+
+          if (
+            messageJson.message ===
+            "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur"
+          ) {
+            this.$store.commit("SET_MESSAGES", []);
+            await this.$store.dispatch("getBreedMgdcs", this.accountID);
+            await this.$store.dispatch("getMeessages", this.chatId);
+            await this.$refs.breedSidebar.onSelect(this.conversations[0], true);
+          }
+
           const msg = {
             type: "text",
             author: messageJson.from,
@@ -428,7 +439,7 @@ export default {
         if (this.mgdcBalance == 0) {
           this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
         } else {
-          this.$store.dispatch("getMatches", this.accountID);
+          //this.$store.dispatch("getMatches", this.accountID);
           this.$store.dispatch("getBreedMgdcs", this.accountID);
           this.$store.dispatch("getMeessages", this.chatId);
         }

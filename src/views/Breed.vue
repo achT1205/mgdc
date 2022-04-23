@@ -306,8 +306,6 @@ export default {
           this.$store.commit("SET_CONVERSAIONS", conversations);
           this.$store.commit("SET_IS_MATCHIING", false);
           await this.$refs.breedSidebar.onSelect(conversations[0], true);
-
-          //this.localUpdate(message);
         }
       } catch (error) {
         console.log("error ==> ", error);
