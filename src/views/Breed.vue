@@ -27,7 +27,7 @@
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar @breed="breed" />
+    <breed-sidebar @breed="breed" ref="breedSidebar" />
     <chat @sendMessage="sendMessage" v-if="maleBalance > 0" />
 
     <div
@@ -146,7 +146,7 @@ export default {
       };
 
       this.socket.onmessage = (event) => {
-        const  messageJson = JSON.parse(event.data)
+        const messageJson = JSON.parse(event.data);
         const msg = {
           type: "text",
           author: messageJson.from,
@@ -274,6 +274,8 @@ export default {
 
         owner = owner.toLowerCase();
         if (owner !== null) {
+          this.$store.commit("SET_MESSAGES", []);
+
           await this.$store.dispatch("addMatch", {
             from: this.account,
             to: owner,
@@ -291,8 +293,21 @@ export default {
             from: this.account,
             to: owner,
           };
-          await this.sendMessage(conversation, true);
+
+          await this.sendMessage(conversation);
+          const conversations = [];
+          conversations.push({
+            chatId: this.chatId,
+            to: owner,
+            from: this.account,
+            mgdcId: parseInt(mgdc.id),
+            mgdcName: mgdc.name,
+          });
+          this.$store.commit("SET_CONVERSAIONS", conversations);
           this.$store.commit("SET_IS_MATCHIING", false);
+          await this.$refs.breedSidebar.onSelect(conversations[0], true);
+
+          //this.localUpdate(message);
         }
       } catch (error) {
         console.log("error ==> ", error);
@@ -320,31 +335,22 @@ export default {
       });
     },
 
-    async sendMessage(message, match) {
+    async sendMessage(message) {
       let msg = JSON.stringify(message);
       if (this.socket.readyState !== this.socket.OPEN) {
         try {
           await this.waitForOpenConnection(this.socket);
           this.socket.send(msg);
-          this.localUpdate(match, message);
+          this.localUpdate(message);
         } catch (err) {
           console.error(err);
         }
       } else {
         this.socket.send(msg);
-        this.localUpdate(match, message);
+        this.localUpdate(message);
       }
     },
-    localUpdate(match, message) {
-      if (match) {
-        const conversations = [];
-        conversations.push({
-          chatId: this.chatId,
-          to: message.to,
-        });
-        this.$store.commit("SET_MESSAGES", []);
-        this.$store.commit("SET_CONVERSAIONS", conversations);
-      }
+    localUpdate(message) {
       const msg = {
         type: "text",
         author: `me`,
