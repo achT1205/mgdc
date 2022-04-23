@@ -431,7 +431,7 @@ export default {
           this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
         } else {
           this.$store.dispatch("getMatches", this.accountID);
-          this.$store.dispatch("getConversations", this.accountID);
+          this.$store.dispatch("getBreedMgdcs", this.accountID);
           this.$store.dispatch("getMeessages", this.chatId);
         }
 

@@ -366,6 +366,10 @@ export default new Vuex.Store({
     async getConversations({ commit }, payload) {
       const resp = await axios.get(`${process.env.VUE_APP_API_URL}/chats/rooms/${payload}`)
       commit("SET_CONVERSAIONS", resp.data)
+    },
+    async getBreedMgdcs({ commit }, payload) {
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/mgdc/${payload}`)
+      commit("SET_CONVERSAIONS", resp.data)
     }
   }
 })

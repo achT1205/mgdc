@@ -48,7 +48,7 @@
                     <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
                   </div>
                   <div class="name">
-                    {{ `${item.male}... ${item.to.substring(item.to.length - 6)} ` }}
+                    {{ `${item.maleType}... ${item.to.substring(item.to.length - 6)} ` }}
                   </div>
                 </div>
               </li>
