@@ -146,8 +146,13 @@ export default {
       };
 
       this.socket.onmessage = (event) => {
-        let parsedMessage = JSON.parse(event.data);
-        console.log(parsedMessage);
+        const  messageJson = JSON.parse(event.data)
+        const msg = {
+          type: "text",
+          author: messageJson.from,
+          data: { text: messageJson.message },
+        };
+        this.$store.commit("SET_MESSAGE", msg);
       };
 
       this.$store.dispatch("fetchFreeMgdcs");
