@@ -28,7 +28,7 @@
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
     <breed-sidebar @breed="breed" />
-    <chat @sendMessage="sendMessage" v-if="malBalance > 0" />
+    <chat @sendMessage="sendMessage" v-if="maleBalance > 0" />
 
     <div
       id="overlay"
@@ -49,7 +49,7 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
-            <span v-if="malBalance == 0">
+            <span v-if="maleBalance == 0">
               <a
                 href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
                 target="_blank"
@@ -96,8 +96,8 @@ export default {
     return {
       address: "",
       accountBalance: 0,
-      malContract: null,
-      malBalance: null,
+      maleContract: null,
+      maleBalance: null,
       breedContract: null,
       breedAddress: null,
       target: "BAYC",
@@ -108,6 +108,7 @@ export default {
       socket: {},
       contractMGDC: null,
       connectedStatus: "Not connected!",
+      maleSymbol: null,
     };
   },
   computed: {
@@ -120,33 +121,38 @@ export default {
       "isMatching",
     ]),
   },
-  async created() {
-    await this.loadWeb3();
-    window.ethereum.on("accountsChanged", function () {
-      location.reload();
-    });
-    window.ethereum.on("networkChanged", function () {
-      location.reload();
-    });
+  // async created() {
 
-    this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
-
-    this.socket.onopen = () => {
-      console.log("Websocket connected.");
-      this.connectedStatus = "Connected";
-      this.sendMessage({ action: "setOnline", address: this.account });
-    };
-
-    this.socket.onmessage = (event) => {
-      let parsedMessage = JSON.parse(event.data);
-      console.log(parsedMessage);
-    };
-  },
+  // },
   async mounted() {
-    this.$store.dispatch("fetchFreeMgdcs");
-    await this.connectWallet();
+    await this.init();
   },
   methods: {
+    async init() {
+      await this.loadWeb3();
+      window.ethereum.on("accountsChanged", function () {
+        location.reload();
+      });
+      window.ethereum.on("networkChanged", function () {
+        location.reload();
+      });
+
+      this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
+
+      this.socket.onopen = () => {
+        console.log("Websocket connected.");
+        this.connectedStatus = "Connected";
+        this.sendMessage({ action: "setOnline", address: this.account });
+      };
+
+      this.socket.onmessage = (event) => {
+        let parsedMessage = JSON.parse(event.data);
+        console.log(parsedMessage);
+      };
+
+      this.$store.dispatch("fetchFreeMgdcs");
+      await this.connectWallet();
+    },
     clearError() {
       this.errorMsg = null;
       this.isTinderLoading(false);
@@ -185,7 +191,7 @@ export default {
 
       this.breedContract = new web3.eth.Contract(breed, this.breedAddress);
 
-      this.malContract =
+      this.maleContract =
         this.target === "HAPE"
           ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
@@ -199,10 +205,11 @@ export default {
       this.$store.dispatch("getConversations", this.account);
       this.$store.dispatch("getMeessages", this.chatId);
       this.accountBalance = await window.web3.eth.getBalance(this.account);
-      this.malBalance = await this.malContract.methods.balanceOf(this.account).call();
-      if (this.malBalance == 0)
+      this.maleBalance = await this.maleContract.methods.balanceOf(this.account).call();
+      this.maleSymbol = await this.maleContract.methods.symbol().call();
+      if (this.maleBalance == 0)
         this.errorMsg = `Vous n'avez pas encre ni de BAYC ni de HAPE best. Vous pouvez en acheter ici :`;
-      console.log("malBalance", this.malBalance);
+      console.log("maleBalance", this.maleBalance);
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -251,19 +258,23 @@ export default {
 
     async changeSmartcontract(target) {
       this.target = target;
+      await this.init();
     },
     selectHape(hape) {
       this.selectepHape = hape;
     },
     async addMatch(mgdc) {
       try {
-        const owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
+        let owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
+
+        owner = owner.toLowerCase();
         if (owner !== null) {
           await this.$store.dispatch("addMatch", {
             from: this.account,
             to: owner,
             mgdcId: parseInt(mgdc.id),
             mgdcName: mgdc.name,
+            male: this.maleSymbol,
           });
 
           const message =
