@@ -1,7 +1,7 @@
 <template>
   <div class="switcher" @click="switcher" >
     <div class="switches">
-      <label>BAYX</label>
+      <label>BAYC</label>
       <div class="switches-byx">
         <div class="switches-round" :class="switching ? 'primary' : ''"></div>
       </div>

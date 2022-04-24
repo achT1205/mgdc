@@ -38,10 +38,11 @@
 
 <script>
 import Tinder from "vue-tinder";
+import { mapGetters } from "vuex";
 
 export default {
   name: "MGDC-TINDER",
-  props: ["source", "addMatch"],
+  props: ["source", "addMatch", "breedContract", "isTinderLoading"],
   components: { Tinder },
   data: () => ({
     queue: [],
@@ -54,16 +55,30 @@ export default {
   created() {
     this.mock();
   },
+  computed: {
+    ...mapGetters(["matches"]),
+  },
   methods: {
-    mock(count = 5, append = true) {
+    async mock(append = true) {
       const list = [];
-      for (let i = 0; i < count; i++) {
-        list.push({
-          title: this.source[this.offset].name,
-          item: this.source[this.offset],
-        });
-        this.offset++;
+      let count = 0;
+
+      if (this.source && this.source.length) {
+        while (count < 5) {
+          const id = this.source[this.offset].id;
+          const index = this.matches.findIndex((_) => _.mgdcId == id);
+          if (index === -1) {
+            list.push({
+              title: this.source[this.offset].name,
+              item: this.source[this.offset],
+            });
+            count++;
+          }
+          this.offset++;
+        }
       }
+      this.$emit("isTinderLoading", false);
+
       if (append) {
         this.queue = this.queue.concat(list);
       } else {
@@ -72,7 +87,8 @@ export default {
     },
     onSubmit({ type, key, item }) {
       if (type === "like") {
-        this.$emit("addMatch", { id: item.item.id, name: key })
+        this.$store.commit("SET_IS_MATCHIING", true);
+        this.$emit("addMatch", { id: item.item.id, name: key });
       }
       if (this.queue.length < 3) {
         this.mock();

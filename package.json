@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "vue-cli-service serve",
+    "dev": "vue-cli-service serve --port 3000 --open",
+    "eth": "vue-cli-service serve --mode eth --port 3000 --open",
+    "rinkeby": "vue-cli-service serve --mode rinkeby --port 3000 --open",
     "start": "vue-cli-service serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "build-eth": "vue-cli-service build --mode eth",
+    "build-rinkeby": "vue-cli-service build --mode rinkeby",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

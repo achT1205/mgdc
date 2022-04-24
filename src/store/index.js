@@ -1,8 +1,6 @@
-/* eslint-disable no-debugger */
 import Vue from 'vue'
 import Vuex from 'vuex'
 import Web3 from 'web3'
-
 import axios from "axios";
 
 // export const config = {
@@ -200,7 +198,17 @@ export default new Vuex.Store({
     mgdcs: null,
     isbuisy: false,
     matches: [],
-    freeMgdcs: []
+    freeMgdcs: [],
+    chatId: localStorage.chatId ? localStorage.chatId : null,
+    messages: [],
+    conversations: [],
+    isChatOpen: false,
+    curremgdcid: localStorage.curremgdcid ? parseInt(localStorage.curremgdcid) : null,
+    curremgdcname: localStorage.curremgdcname ? localStorage.curremgdcname : null,
+    isMatching: false,
+    participants: [],
+    breeding: false
+
   },
   getters: {
     account: state => state.account,
@@ -208,11 +216,32 @@ export default new Vuex.Store({
     mgdcs: state => state.balance,
     isbuisy: state => state.isbuisy,
     matches: state => state.matches,
-    freeMgdcs: state => state.freeMgdcs
+    freeMgdcs: state => state.freeMgdcs,
+    chatId: state => state.chatId,
+    messages: state => state.messages,
+    conversations: state => state.conversations,
+    isChatOpen: state => state.isChatOpen,
+    curremgdcid: state => state.curremgdcid,
+    curremgdcname: state => state.curremgdcname,
+    isMatching: state => state.isMatching,
+    participants: state => state.participants,
+    breeding: state => state.breeding
   },
   mutations: {
+    SET_PARTICIPANTS(state, payload) {
+      state.participants = payload
+    },
+    SET_BREEDING(state, payload) {
+      state.breeding = payload
+    },
     SET_ERROR(state, payload) {
       state.error = payload
+    },
+    SET_IS_MATCHIING(state, payload) {
+      state.isMatching = payload
+    },
+    SET_IS_CHAT_OPEN(state, payload) {
+      state.isChatOpen = payload
     },
     SET_IS_BUISY(state, payload) {
       state.isbuisy = payload
@@ -221,7 +250,7 @@ export default new Vuex.Store({
       state.error = null
     },
     SET_ACCOUNT(state, payload) {
-      state.account = payload
+      state.account = payload.toLowerCase()
     },
     SET_MGDCS(state, payload) {
       state.mgdcs = payload
@@ -233,14 +262,47 @@ export default new Vuex.Store({
       state.matches = payload
     },
     SET_FILTERED_MATCHES(state, payload) {
-      state.matches = state.matches.filter(_ => _.name.toLowerCase().indexOf(payload.toLowerCase()) > -1)
+      state.matches = state.matches.filter(_ => _.mgdcName.toLowerCase().indexOf(payload.toLowerCase()) > -1)
     },
-
     SET_MATCH(state, payload) {
       state.matches.push(payload)
     },
     SET_FREE_MGDCS(state, payload) {
       state.freeMgdcs = payload
+    },
+    SET_CHATCH_ID(state, payload) {
+      localStorage.chatId = payload
+      state.chatId = payload
+    },
+    SET_MESSAGES(state, payload) {
+      state.messages = []
+      payload.forEach((m) => {
+        if (m.message) {
+          state.messages.push({
+            type: "text",
+            author: m.author === state.account ? `me` : m.author,
+            data: { text: m.message },
+          });
+        }
+      });
+    },
+    SET_MESSAGE(state, payload) {
+      state.messages.push(payload)
+    },
+    SET_CONVERSAIONS(state, payload) {
+      state.conversations = payload
+    },
+    SET_MATCH_ACTIVE(state, payload) {
+      state.curremgdcid = payload
+      localStorage.curremgdcid = payload
+    },
+    SET_CURRENET_NAME(state, payload) {
+      state.curremgdcname = payload
+      localStorage.curremgdcname = payload
+    },
+    UPDATE_MATCH(state, payload) {
+      const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)
+      state.matches[index].hasBreed = true
     },
   },
   actions: {
@@ -255,7 +317,6 @@ export default new Vuex.Store({
         dispatch("getInitiumBalance")
 
       } catch (ex) {
-        console.log(ex)
         commit('SET_WALLET_CONNECTION_ERROR', ex.message)
         commit('SET_ERROR', ex)
         commit('SET_IS_BUISY', false)
@@ -275,34 +336,38 @@ export default new Vuex.Store({
       }
     },
     async fetchFreeMgdcs({ commit }) {
-      const freeMgdcs = await axios.get("https://q6o6r2cze5.execute-api.eu-west-3.amazonaws.com/dev/free-michtos");
+      const freeMgdcs = await axios.get(`${process.env.VUE_APP_API_URL}/mgdc/free`);
       commit('SET_FREE_MGDCS', freeMgdcs.data)
     },
-
-
-    getMatches({ commit }) {
-      // call the api to to get all my matches
-      const matches = []
-      commit('SET_MATCHES', matches)
-
+    async getMatches({ commit }, payload) {
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/${payload}`);
+      commit('SET_MATCHES', resp.data)
     },
-    addMatch({ commit }, payload) {
-      // call the api to a my match
-      //then 
-      commit('SET_MATCH', payload)
-
-
+    async addMatch({ commit }, payload) {
+      const resp = await axios.post(`${process.env.VUE_APP_API_URL}/breed`, payload);
+      const { chatId } = resp.data
+      localStorage.chatId = chatId
+      commit('SET_CHATCH_ID', chatId)
+      commit("SET_MATCH_ACTIVE", payload.mgdcId)
+      commit("SET_MATCH", payload)
     },
-    initiateChat({ commit }, payload) {
-      // call the api to a my match
-      //then 
-      commit('SET_MATCH', payload)
-
-
+    async breed({ commit }, payload) {
+      await axios.put(`${process.env.VUE_APP_API_URL}/breed/${payload.account}`, {
+        "mgdcId": payload.mgdcId
+      });
+      commit('UPDATE_MATCH', payload)
+    },
+    async getMeessages({ commit }, payload) {
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/chats/${payload}`)
+      commit("SET_MESSAGES", resp.data)
+    },
+    async getConversations({ commit }, payload) {
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/chats/rooms/${payload}`)
+      commit("SET_CONVERSAIONS", resp.data)
+    },
+    async getBreedMgdcs({ commit }, payload) {
+      const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/mgdc/${payload}`)
+      commit("SET_CONVERSAIONS", resp.data)
     }
-
-    //updateMatch
-
   }
-
 })

@@ -1,7 +1,9 @@
 <template>
   <div class="page">
     <div class="viewContainer mint">
-      <switcher @changeSmartcontract="changeSmartcontract" />
+      <div class="switch">
+        <switcher @changeSmartcontract="changeSmartcontract" />
+      </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
         <p class="text howMa">List your MDGC</p>
@@ -18,7 +20,7 @@
 
       <div class="breedCard" style="">
         <div class="text nbNft" style="margin-bottom: 25px">
-          Owned MGDC : {{ MGDC.length }}
+          Owned MGDC : {{ mgdcBalance }}
         </div>
         <div class="contentTeam ct2">
           <BreedCard
@@ -56,6 +58,32 @@
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
+    <breed-sidebar :profile="true" ref="breedSidebar" />
+    <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
+    <div
+      id="overlay"
+      v-show="errorMsg"
+      class="w-full no-nodes-content flex justify-center items-center"
+    >
+      <div class="warnning-notification" v-if="errorMsg">
+        <div class="warnning-notification-logo-wrapper">
+          <i class="fas fa-triangle-exclamation warnning"></i>
+        </div>
+        <div class="warnning-notification-content">
+          <h4 class="warnning-notification-title">
+            {{ errorMsg }}
+            <span v-if="mgdcBalance == 0">
+              <a href="https://opensea.io/collection/mgdc" target="_blank" class="buy-bn"
+                >Buy an MGDC</a
+              ></span
+            >
+          </h4>
+        </div>
+        <div class="warnning-notification-logo-wrapper" @click="clearError">
+          <i class="fas fa-times-circle close"></i>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -65,7 +93,6 @@ import BreedCard from "@/components/BreedCard";
 var Web3 = require("web3");
 var CryptoJS = require("crypto-js");
 import breed from "../abis/breed.json";
-import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
@@ -73,6 +100,9 @@ import address from "../address/address.json";
 import Moralis from "moralis";
 import axios from "axios";
 import Switcher from "../components/Switcher.vue";
+import Chat from "@/components/Chat.vue";
+import BreedSidebar from "@/components/ProfileSidebar.vue";
+import { mapGetters } from "vuex";
 
 var MerkleTree = require("merkletreejs").MerkleTree;
 var SHA256 = CryptoJS.SHA256;
@@ -85,9 +115,10 @@ const root = tree.getRoot().toString("hex");
 
 export default {
   name: "Profile",
-  components: { BreedCard, Switcher },
+  components: { BreedCard, Switcher, Chat, BreedSidebar },
   data() {
     return {
+      errorMsg: null,
       address: "",
       accountID: "",
       accountBalance: 0,
@@ -226,12 +257,88 @@ export default {
         // },
       ],
       contractMGDC: [],
+      breedAddress: null,
+      malContract: null,
+      mgdcBalance: null,
+      socket: {},
+      connectedStatus: "Not connected!",
     };
   },
   async created() {
-    await this.loadWeb3();
+    await this.init();
+  },
+  computed: {
+    ...mapGetters(["chatId", "messages", "conversations", "account"]),
   },
   methods: {
+    clearError() {
+      this.errorMsg = null;
+    },
+
+    async init() {
+      await this.loadWeb3();
+      window.ethereum.on("accountsChanged", function () {
+        location.reload();
+      });
+      window.ethereum.on("networkChanged", function () {
+        location.reload();
+      });
+
+      if (this.account) {
+        this.socket = await new WebSocket(process.env.VUE_APP_SW_URL);
+
+        this.socket.onopen = () => {
+          console.log("Websocket connected.");
+          this.connectedStatus = "Connected";
+          this.sendMessage({ action: "setOnline", address: this.account });
+        };
+
+        this.socket.onmessage = async (event) => {
+          const messageJson = JSON.parse(event.data);
+
+          if (
+            messageJson.message.indexOf("MGDC HAS MATCH:") > -1 ||
+            messageJson.message.indexOf("MGDC HAS BREED: ") > -1
+          ) {
+            this.$store.commit("SET_MESSAGES", []);
+            await this.$store.dispatch("getBreedMgdcs", this.accountID);
+            await this.$store.dispatch("getMeessages", this.chatId);
+            await this.$refs.breedSidebar.onSelect(this.conversations[0], true);
+          }
+          const msg = {
+            type: "text",
+            author: messageJson.from,
+            data: { text: messageJson.message },
+          };
+          this.$store.commit("SET_MESSAGE", msg);
+        };
+      }
+    },
+
+    async sendMessage(message) {
+      let msg = JSON.stringify(message);
+      if (this.socket.readyState !== this.socket.OPEN) {
+        try {
+          await this.waitForOpenConnection(this.socket);
+          this.socket.send(msg);
+          this.localUpdate(message);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        this.socket.send(msg);
+        this.localUpdate(message);
+      }
+    },
+    localUpdate(message) {
+      const msg = {
+        type: "text",
+        author: `me`,
+        data: { text: message.message },
+      };
+      this.$store.commit("SET_MESSAGE", msg);
+    },
+
     GetMerkleProof(walletAddress) {
       const leaf = walletAddress;
       return tree.getHexProof(leaf.replace("0x", "0x000000000000000000000000"));
@@ -251,19 +358,22 @@ export default {
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
 
-        window.ethereum.on("accountsChanged", async (accounts) => {
-          await this.setWallet(accounts[0]);
-
-          this.wlClaimed = await this.contract.methods
+        if (this.accountID)
+          this.wlClaimed = await this.contractMGDC.methods
             .whiteListClaimed(this.accountID)
             .call();
+
+        window.ethereum.on("accountsChanged", function () {
+          location.reload();
+        });
+        window.ethereum.on("networkChanged", function () {
+          location.reload();
         });
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
       } else {
-        window.alert(
-          "Non-Ethereum browser detected. You should consider trying MetaMask !"
-        );
+        this.errorMsg =
+          "Non-Ethereum browser detected. You should consider trying MetaMask !";
       }
 
       await this.loadContractData(this.target);
@@ -278,30 +388,35 @@ export default {
       this.nftsCountToMint = nftsCountToMint;
       console.log(this.nftsCountToMint);
     },
-    async loadContractData(target = null) {
+    async loadContractData() {
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
-
-      if (networkId !== breed.network) {
-        window.alert("Please change to ethereum mainnet.");
+      if (networkId != process.env.VUE_APP_CHAIN_ID) {
+        this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+        this.isTinderLoading(false);
         return;
       }
 
-      this.contract = new web3.eth.Contract(
-        breed.abi,
-        target === "HAPE" ? breedhape.address : breed.address
-      );
-      this.malApeContract =
-        target === "HAPE"
-          ? new web3.eth.Contract(hape, this.hapeAddress)
-          : new web3.eth.Contract(bayc, this.baycAddress);
+      this.breedAddress =
+        this.target === "HAPE"
+          ? process.env.VUE_APP_BREED_HAPE
+          : process.env.VUE_APP_BREED_BAYC;
 
-      this.contractMGDC = new web3.eth.Contract(MGDC.abi, MGDC.address);
+      this.contract = new web3.eth.Contract(breed, this.breedAddress);
+
+      this.malContract =
+        this.target === "HAPE"
+          ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
+          : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
+
+      this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async setWallet(address) {
-      this.accountID = address;
+      this.accountID = address.toLowerCase();
+      this.$store.commit("SET_ACCOUNT", address);
       this.notAllowed = false;
       this.accountBalance = await window.web3.eth.getBalance(this.accountID);
+      await this.init();
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -313,9 +428,21 @@ export default {
             method: "eth_requestAccounts",
           })
           .catch((err) => {
-            alert(err.message);
+            this.errorMsg = err.message;
           });
         await this.setWallet(accounts[0]);
+
+        this.mgdcBalance = await this.contractMGDC.methods
+          .balanceOf(this.accountID)
+          .call();
+        if (this.mgdcBalance == 0) {
+          this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
+        } else {
+          //this.$store.dispatch("getMatches", this.accountID);
+          this.$store.dispatch("getBreedMgdcs", this.accountID);
+          this.$store.dispatch("getMeessages", this.chatId);
+        }
+
         let result = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
           address: this.accountID,
@@ -354,7 +481,7 @@ export default {
         console.log("wlClaimed " + this.wlClaimed);
       } else {
         // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
-        alert("Unable to connect to Metamask");
+        this.errorMsg = "Unable to connect to Metamask";
       }
     },
     async list(token_id) {
@@ -373,7 +500,7 @@ export default {
         })
         .on("error", function (err) {
           console.log("error:" + err);
-          alert("Transaction Error");
+          this.errorMsg = "Transaction Error";
           this.isMinting = false;
         });
     },
@@ -383,12 +510,12 @@ export default {
       e.preventDefault();
 
       if (this.accountID === "") {
-        window.alert("Please connect wallet first!");
+        this.errorMsg = "Please connect wallet first!";
         this.isMinting = false;
         return;
       } else if (this.accountBalance <= this.nftPrice * this.nftsCountToMint) {
         this.isMinting = false;
-        alert(`Insufficient funds`);
+        this.errorMsg = `Insufficient funds`;
         return;
       }
 
@@ -399,7 +526,7 @@ export default {
 
       if (!this.isActive) {
         this.isMinting = false;
-        alert("Sale is not active yet!");
+        this.errorMsg = "Sale is not active yet!";
         return;
       }
 
@@ -408,11 +535,11 @@ export default {
       if (this.isPresaleActive == true) {
         this.whiteListMaxMint = await this.contract.methods.WHITELIST_MAX_MINT().call();
         this.wlClaimed = parseInt(
-          await this.contract.methods.whiteListClaimed(this.accountID).call()
+          await this.contractMGDC.methods.whiteListClaimed(this.accountID).call()
         );
 
         if (this.wlClaimed + this.nftsCountToMint > this.whiteListMaxMint) {
-          alert(`Already minted ${this.wlClaimed} but max is ${this.whiteListMaxMint}`);
+          this.errorMsg = `Already minted ${this.wlClaimed} but max is ${this.whiteListMaxMint}`;
           this.notAllowed = true;
           this.isMinting = false;
           return;
@@ -420,17 +547,17 @@ export default {
 
         console.log("whiteListMaxMint : ", this.whiteListMaxMint);
         if (noOfTokens < 1 || noOfTokens == undefined) {
-          alert("Select at least 1 NFT!");
+          this.errorMsg = "Select at least 1 NFT!";
         } else if (noOfTokens > this.whiteListMaxMint) {
-          alert("Buy limit for presale is : " + this.whiteListMaxMint);
+          this.errorMsg = "Buy limit for presale is : " + this.whiteListMaxMint;
           this.notAllowed = true;
           this.isMinting = false;
         } else if (this.totalSupply >= this.totalTokens) {
-          alert("Sold out!");
+          this.errorMsg = "Sold out!";
         } else {
           const proof = await this.GetMerkleProof(this.accountID);
           if (proof.length == 0) {
-            alert("This wallet is not whitelisted");
+            this.errorMsg = "This wallet is not whitelisted";
             this.notAllowed = true;
             this.isMinting = false;
           } else {
@@ -447,7 +574,7 @@ export default {
               })
               .on("error", function (err) {
                 console.log("error:" + err);
-                alert("Transaction Error");
+                this.errorMsg = "Transaction Error";
                 this.isMinting = false;
               });
             this.minted = true;
@@ -456,9 +583,9 @@ export default {
         }
       } else {
         if (noOfTokens < 1 || noOfTokens == undefined) {
-          alert("Select at least 1 NFT!");
+          this.errorMsg = "Select at least 1 NFT!";
         } else if (this.totalSupply >= this.currentSupply) {
-          alert("Sold out!");
+          this.errorMsg = "Sold out!";
         } else {
           const result = await this.contract.methods
             .mintNFT(noOfTokens)
@@ -473,7 +600,7 @@ export default {
             })
             .on("error", function (err) {
               console.log(err);
-              alert("Transaction Error");
+              this.errorMsg = "Transaction Error";
               this.isMinting = false;
             });
           this.minted = true;
@@ -484,8 +611,7 @@ export default {
     },
     async changeSmartcontract(target) {
       this.target = target;
-      await this.loadContractData(target);
-      await this.fetchData();
+      await this.init();
     },
   },
 };
@@ -682,5 +808,11 @@ button {
   bottom: 10%;
   width: 300px;
   left: 50px;
+}
+.switch {
+  position: fixed;
+  top: 25px;
+  right: 20px;
+  z-index: 1;
 }
 </style>

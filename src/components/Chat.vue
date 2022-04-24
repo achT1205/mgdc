@@ -1,10 +1,9 @@
 <template>
-  <div>
+  <div v-if="participants && participants.length">
     <beautiful-chat
       :participants="participants"
-      :titleImageUrl="titleImageUrl"
       :onMessageWasSent="onMessageWasSent"
-      :messageList="messageList"
+      :messageList="messages"
       :newMessagesCount="newMessagesCount"
       :isOpen="isChatOpen"
       :close="closeChat"
@@ -20,107 +19,128 @@
       :alwaysScrollToBottom="alwaysScrollToBottom"
       :messageStyling="messageStyling"
       @onType="handleOnType"
-      @edit="editMessage" />
+      @edit="editMessage"
+    >
+      <template v-slot:header>
+        <img
+          :src="`https://metagolddiggerclub.com/img/thumbnails/${curremgdcid}.png`"
+          alt=""
+          class="sc-header--img"
+        />
+        <div data-v-61edfd75="" class="sc-header--title enabled">
+          {{ curremgdcname }}
+        </div>
+      </template>
+    </beautiful-chat>
   </div>
 </template>
 <script>
-import Vue from 'vue'
-import Chat from 'vue-beautiful-chat'
+import Vue from "vue";
+import Chat from "vue-beautiful-chat";
+import { mapGetters } from "vuex";
 
-Vue.use(Chat)
+Vue.use(Chat);
 
 export default {
-  name: 'app',
+  name: "app",
+  props: ["sendMessage"],
   data() {
     return {
-      icons:{
-        open:{},
+      icons: {
+        open: {},
+        init: true,
       },
-      participants: [
-        {
-          id: 'user1',
-          name: 'Matteo',
-          imageUrl: 'https://avatars3.githubusercontent.com/u/1915989?s=230&v=4'
-        },
-        {
-          id: 'user2',
-          name: 'Support',
-          imageUrl: 'https://avatars3.githubusercontent.com/u/37018832?s=200&v=4'
-        }
-      ], // the list of all the participant of the conversation. `name` is the user name, `id` is used to establish the author of a message, `imageUrl` is supposed to be the user avatar.
-      titleImageUrl: 'https://a.slack-edge.com/66f9/img/avatars-teams/ava_0001-34.png',
-      messageList: [
-          { type: 'text', author: `me`, data: { text: `Say yes!` } },
-          { type: 'text', author: `user1`, data: { text: `No.` } }
-      ], // the list of the messages to show, can be paginated and adjusted dynamically
       newMessagesCount: 0,
-      isChatOpen: false, // to determine whether the chat window should be open or closed
-      showTypingIndicator: '', // when set to a value matching the participant.id it shows the typing indicator for the specific user
+      showTypingIndicator: "", // when set to a value matching the participant.id it shows the typing indicator for the specific user
       colors: {
         header: {
-          bg: '#993783',
-          text: '#ffffff'
+          bg: "#993783",
+          text: "#ffffff",
         },
         launcher: {
-          bg: '#993783'
+          bg: "#993783",
         },
         messageList: {
-          bg: '#ffffff'
+          bg: "#ffffff",
         },
         sentMessage: {
-          bg: '#993783',
-          text: '#ffffff'
+          bg: "#993783",
+          text: "#ffffff",
         },
         receivedMessage: {
-          bg: '#eaeaea',
-          text: '#222222'
+          bg: "#eaeaea",
+          text: "#222222",
         },
         userInput: {
-          bg: '#f4f7f9',
-          text: '#565867'
-        }
+          bg: "#f4f7f9",
+          text: "#565867",
+        },
       }, // specifies the color scheme for the component
       alwaysScrollToBottom: false, // when set to true always scrolls the chat to the bottom when new events are in (new message, user starts typing...)
-      messageStyling: true // enables *bold* /emph/ _underline_ and such (more info at github.com/mattezza/msgdown)
+      messageStyling: true, // enables *bold* /emph/ _underline_ and such (more info at github.com/mattezza/msgdown)
+    };
+  },
+  computed: {
+    ...mapGetters([
+      "chatId",
+      "messages",
+      "conversations",
+      "isChatOpen",
+      "account",
+      "curremgdcid",
+      "curremgdcname",
+      "matches",
+      "participants",
+    ]),
+  },
+  mounted() {
+    if (this.messages && this.messages.length) {
+      this.$store.commit("SET_IS_CHAT_OPEN", true);
     }
   },
   methods: {
-    sendMessage (text) {
-      if (text.length > 0) {
-        this.newMessagesCount = this.isChatOpen ? this.newMessagesCount : this.newMessagesCount + 1
-        this.onMessageWasSent({ author: 'support', type: 'text', data: { text } })
-      }
+    onMessageWasSent(message) {
+      const conversation = {
+        action: "sendMessage",
+        chatId: this.chatId,
+        message: message.data.text,
+        from: this.account,
+        to: this.participants[1].id,
+      };
+      this.$emit("sendMessage", conversation);
     },
-    onMessageWasSent (message) {
-      // called when the user sends a message
-      this.messageList = [ ...this.messageList, message ]
+    finishInit() {
+      this.init = false;
     },
-    openChat () {
+    openChat() {
       // called when the user clicks on the fab button to open the chat
-      this.isChatOpen = true
-      this.newMessagesCount = 0
+      this.$store.commit("SET_IS_CHAT_OPEN", true);
+      this.newMessagesCount = 0;
     },
-    closeChat () {
+    closeChat() {
       // called when the user clicks on the botton to close the chat
-      this.isChatOpen = false
+      this.$store.commit("SET_IS_CHAT_OPEN", false);
     },
-    handleScrollToTop () {
+    handleScrollToTop() {
       // called when the user scrolls message list to top
       // leverage pagination for loading another page of messages
     },
-    handleOnType () {
-      console.log('Emit typing event')
-    },
-    editMessage(message){
-      const m = this.messageList.find(m=>m.id === message.id);
+    handleOnType() {
+
+},
+    editMessage(message) {
+      const m = this.messageList.find((m) => m.id === message.id);
       m.isEdited = true;
       m.data.text = message.data.text;
-    }
-  }
-}
+    },
+  },
+};
 </script>
 <style lang="scss" scoped>
-.sc-chat-window{
+.sc-chat-window {
   z-index: 2;
+}
+.sc-header--img {
+  width: 70px !important;
 }
 </style>

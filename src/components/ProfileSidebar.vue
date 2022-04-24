@@ -30,13 +30,13 @@
             <ul
               class="match-list"
               :class="show ? 'with-search' : ''"
-              v-if="matches && matches.length > 0"
+              v-if="conversations && conversations.length > 0"
             >
               <li
-                v-for="(item, index) in matches"
+                v-for="(item, index) in conversations"
                 :key="index"
                 :class="curremgdcid === item.mgdcId ? 'active' : ''"
-                @click.prevent="onSelect(item, false)"
+                @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
                   <img
@@ -48,30 +48,13 @@
                     <i class="fas fa-heart" :class="item.hasBreed ? 'down' : 'up'"></i>
                   </div>
                   <div class="name">
-                    {{ item.mgdcName }}
-                  </div>
-                  <div
-                    class="join-us-on-discord2"
-                    v-if="!profile && !item.hasBreed"
-                    @click="onBreed(item)"
-                  >
-                    Breed now
+                    {{
+                      `${item.maleType}... ${item.owner.substring(
+                        item.owner.length - 6
+                      )} `
+                    }}
                   </div>
                 </div>
-                <svg
-                  class="spinner"
-                  viewBox="0 0 50 50"
-                  v-if="breeding && item.mgdcId == selected"
-                >
-                  <circle
-                    class="path"
-                    cx="25"
-                    cy="25"
-                    r="20"
-                    fill="none"
-                    stroke-width="5"
-                  ></circle>
-                </svg>
               </li>
             </ul>
             <div v-else class="no-matches-yet">Pas encore de matchs !</div>
@@ -97,7 +80,6 @@ export default {
     show: false,
     showSidebar: false,
     search: "",
-    selected: null,
   }),
   mounted() {},
   watch: {
@@ -121,9 +103,9 @@ export default {
     filter() {
       this.$store.commit("SET_FILTERED_MATCHES", this.search);
     },
-    onSelect(item, origine) {
+    onSelect(item) {
       this.$store.commit("SET_CHATCH_ID", item.chatId);
-      if (!origine) this.$store.dispatch("getMeessages", item.chatId);
+      this.$store.dispatch("getMeessages", item.chatId);
       this.$store.commit("SET_MATCH_ACTIVE", item.mgdcId);
       this.$store.commit("SET_CURRENET_NAME", item.mgdcName);
       this.$store.commit("SET_IS_CHAT_OPEN", true);
