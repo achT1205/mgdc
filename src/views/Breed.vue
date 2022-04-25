@@ -235,6 +235,8 @@ export default {
       }
     },
     async breed(item) {
+      // eslint-disable-next-line no-debugger
+      debugger;
       const listed = await this.breedContract.methods
         .MGDCisBreeding(parseInt(item.mgdcId))
         .call();
@@ -247,12 +249,23 @@ export default {
           from: this.account,
           value: "250000000000000000",
         });
-        this.$store.dispatch("breed", {
+        await this.$store.dispatch("breed", {
           account: this.account,
           mgdcId: item.mgdcId,
           mgdcName: item.mgdcName,
           hasBreed: true,
         });
+
+        const msg = `MGDC HAS BREED: Votre MGDC ${item.mgdcName} a été breedé par ${item.owner}`;
+        const conversation = {
+          action: "sendMessage",
+          chatId: item.chatId,
+          message: msg,
+          from: this.account,
+          to: item.to,
+        };
+        await this.sendMessage(conversation);
+
         this.$store.commit("SET_BREEDING", false);
       } catch (err) {
         console.log("error:", err.message);
@@ -285,7 +298,7 @@ export default {
           });
 
           const message =
-            "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
+            "MGDC HAS MATCH: Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
           const conversation = {
             action: "sendMessage",
             chatId: this.chatId,

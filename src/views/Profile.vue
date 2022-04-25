@@ -58,7 +58,7 @@
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar :profile="true" ref="breedSidebar"/>
+    <breed-sidebar :profile="true" ref="breedSidebar" />
     <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
     <div
       id="overlay"
@@ -297,15 +297,14 @@ export default {
           const messageJson = JSON.parse(event.data);
 
           if (
-            messageJson.message ===
-            "Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur"
+            messageJson.message.indexOf("MGDC HAS MATCH:") > -1 ||
+            messageJson.message.indexOf("MGDC HAS BREED: ") > -1
           ) {
             this.$store.commit("SET_MESSAGES", []);
             await this.$store.dispatch("getBreedMgdcs", this.accountID);
             await this.$store.dispatch("getMeessages", this.chatId);
             await this.$refs.breedSidebar.onSelect(this.conversations[0], true);
           }
-
           const msg = {
             type: "text",
             author: messageJson.from,
