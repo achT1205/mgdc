@@ -66,6 +66,9 @@ export default {
     display: flex;
     align-items: center;
     font-weight: bold;
+    min-width: 230px;
+    justify-content: center;
+    display: flex;
   }
 }
 
