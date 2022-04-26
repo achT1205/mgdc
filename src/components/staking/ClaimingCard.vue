@@ -1,0 +1,92 @@
+<template>
+  <div class="stak">
+    <h3>Claiming Reward</h3>
+    <div><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit</p></div>
+    <div class="pending-balance">
+      <div class="pending">42 $c01
+        <div class="labels">Pending rewards</div>
+      </div>
+      <div class="chevron-to">
+        <div class="chevron">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+      <div class="balance">42 $c01
+        <div class="labels">Balance</div>
+      </div>
+    </div>
+    <div class="d-flex stak-btn">
+      <button class="approve-stack-btn">Claim</button>
+    </div>
+  </div>
+</template>
+<script>
+export default {
+  
+}
+</script>
+<style lang="scss" scoped>
+.stak h3{
+  font-size: 22px;
+  text-transform: uppercase;
+  text-shadow: 0 0 3px #ffffff;
+  margin-bottom: 10px;
+}
+.d-flex{
+  display: flex;
+}
+.align-center{
+  align-items: center;
+}
+.pending-balance,.pending-balance-labels{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  .pending,.balance{
+    font-size: 26px;
+  }
+  .pending-label{
+    color: #eea1c5;
+    margin: 0 10px;
+  }
+}
+.stak-btn{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  button{
+    border-radius: 3px;
+    border: 1px solid #eea1c5;
+    padding: 8px 25px;
+    background: #6d0234;
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+}
+
+.chevron{
+  background: #6d0234;
+  border-radius: 100%;
+  font-size: 22px;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff;
+  margin: 10px 40px;
+}
+
+.labels{
+  position: relative;
+  font-size: 12px;
+  color: #e9c7d7;
+  top: 10px;
+}
+</style>
