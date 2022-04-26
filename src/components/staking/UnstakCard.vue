@@ -4,12 +4,12 @@
       <h3>Unstack</h3>
       <div class="d-flex checkeboxes">
         <button class="btn-check ml-2" :class="{active: stack === 'c-01'}">
-          <input id="c-01" type="radio" name="stack" v-model="stack" value="c-01" />
-          <label for="c-01"> c-01</label>
+          <input id="uc-01" type="radio" name="unstack" v-model="stack" value="c-01" />
+          <label for="uc-01">c-01</label>
         </button>
         <button class="btn-check ml-2" :class="{active: stack === 'c-02'}">
-          <input id="c-02" type="radio" name="stack" v-model="stack" value="c-02" />
-          <label for="c-02">c-02</label>
+          <input id="uc-02" type="radio" name="unstack" v-model="stack" value="c-02" />
+          <label for="uc-02">c-02</label>
         </button>
       </div>
     </div>
@@ -81,6 +81,7 @@ export default {
   cursor: pointer;
   label{
     cursor: pointer;
+    display: block;
   }
 }
 .mt-1{
@@ -162,7 +163,7 @@ export default {
     display: flex;
     align-items: center;
     font-weight: bold;
-    min-width: 200px;
+    min-width: 230px;
     text-align: center;
     display: flex;
     justify-content: center;

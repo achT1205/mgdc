@@ -70,6 +70,7 @@ export default {
   cursor: pointer;
   label{
     cursor: pointer;
+    display: block;
   }
 }
 .btn-check.active{
@@ -125,7 +126,7 @@ export default {
     display: flex;
     align-items: center;
     font-weight: bold;
-    min-width: 200px;
+    min-width: 230px;
     text-align: center;
     display: flex;
     justify-content: center;
