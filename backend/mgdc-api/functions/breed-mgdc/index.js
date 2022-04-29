@@ -5,8 +5,8 @@ const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
   console.log("Event", event);
-  const record = event.Records[0];
-  const breed = JSON.parse(record.body);
+  const detail = event.detail;
+  const breed = JSON.parse(detail);
 
   const { mgdcId } = breed;
 

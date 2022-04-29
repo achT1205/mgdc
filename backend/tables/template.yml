@@ -61,11 +61,22 @@ Resources:
           AttributeType: S
         - AttributeName: mgdcId
           AttributeType: N
+        - AttributeName: to
+          AttributeType: S
       KeySchema:
         - AttributeName: owner
           KeyType: HASH
         - AttributeName: mgdcId
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: to-mgdcId-index
+          KeySchema:
+            - AttributeName: to
+              KeyType: HASH
+            - AttributeName: mgdcId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: PAY_PER_REQUEST
       Tags:
         - Key: App

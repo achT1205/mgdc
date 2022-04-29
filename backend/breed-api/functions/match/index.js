@@ -17,7 +17,7 @@ exports.handler = async (event) => {
 
   const data = JSON.parse(event.body);
   const tscreated = new Date().getTime();
-  const { from, to, mgdcId, mgdcName } = data;
+  const { from, to, mgdcId, mgdcName, maleType } = data;
   if (!from || !mgdcId || !to) {
     console.error("Bad request: owner address or mgdc id are required");
     return {
@@ -26,8 +26,6 @@ exports.handler = async (event) => {
     };
   }
   try {
-    const chatId = await createChat(from, to);
-
     const hasBreed = await isBreed(from, mgdcId);
     if (hasBreed) {
       console.error("MGDC with %s is already breed", mgdcId);
@@ -37,6 +35,8 @@ exports.handler = async (event) => {
       };
     }
 
+    const chatId = await createChat(from, to, mgdcId, mgdcName, maleType);
+
     const params = {
       TableName: BREED_DB,
       Item: {
@@ -45,12 +45,14 @@ exports.handler = async (event) => {
         chatId: chatId,
         hasBreed: false,
         owner: from,
+        to,
+        maleType,
         mgdcId: mgdcId,
         mgdcName: mgdcName,
       },
     };
 
-    console.log("Adding %s items...", params);
+    console.log("Adding %s items in breed db", JSON.stringify(params));
     await clientdb.put(params).promise();
     console.log("Add successfully");
     const rslt = JSON.stringify({ chatId: chatId });
@@ -89,17 +91,22 @@ const isBreed = async (owner, mgdcId) => {
   }
 };
 
-const createChat = async (from, to) => {
+const createChat = async (from, to, mgdcId, mgdcName, maleType) => {
   try {
-    const chat = await searchChat(from, to);
-    if (chat) {
+    const chats = await searchChat(from, to, mgdcId);
+    if (chats) {
       // Found some chats
-      if (chat.length > 1) {
+      if (chats.length > 1) {
+        console.error(
+          `Bad state, More than one chat is found for users ${from} and ${to}`,
+          JSON.stringify(chats)
+        );
         throw new Error(
           `Bad state, More than one chat is found for users ${from} and ${to}. Please contact adminastrator`
         );
       } else {
-        return chat[0].chatId;
+        console.log("Chat room already exit with id", chats[0].chatId);
+        return chats[0].chatId;
       }
     }
     // Chat does not exist
@@ -112,13 +119,18 @@ const createChat = async (from, to) => {
         tscreated: tscreated,
         chatSortKey: `member_${from}`,
         to: to,
+        mgdcId: mgdcId,
+        mgdcName: mgdcName,
       },
     };
 
     // Store the chat for user from and to so that it can be retreived from both side
+    console.log(`Store chat room for user ${from}`, JSON.stringify(params));
     await clientdb.put(params).promise();
     params.Item.chatSortKey = `member_${to}`;
     params.Item.to = from;
+    params.Item.maleType = maleType;
+    console.log(`Store chat room for user ${to}`, JSON.stringify(params));
     await clientdb.put(params).promise();
     return chatId;
   } catch (err) {
@@ -127,21 +139,24 @@ const createChat = async (from, to) => {
   }
 };
 
-const searchChat = async (from, to) => {
+const searchChat = async (from, to, mgdcId) => {
   const params = {
     TableName: CHATS_DB,
     IndexName: "chat-sort-key-to-index",
     KeyConditionExpression: "#chat = :from and #t = :to",
+    FilterExpression: "#m = :mgdcId",
     ExpressionAttributeNames: {
       "#chat": "chatSortKey",
       "#t": "to",
+      "#m": "mgdcId",
     },
     ExpressionAttributeValues: {
       ":from": `member_${from}`,
       ":to": to,
+      ":mgdcId": mgdcId,
     },
-    Limit: 1,
   };
+  console.log("Query for searching chat", JSON.stringify(params));
   const result = await clientdb.query(params).promise();
   return result.Items.length > 0 ? result.Items : null;
 };
