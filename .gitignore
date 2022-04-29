@@ -25,6 +25,7 @@ pnpm-debug.log*
 
 out.yml
 samconfig.toml
+samconfig.*.toml
 backend/images/*
 
 coverage
