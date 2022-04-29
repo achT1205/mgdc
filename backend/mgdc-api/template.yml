@@ -162,14 +162,15 @@ Resources:
         - DynamoDBWritePolicy:
             TableName:
               Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
-        - SQSPollerPolicy:
-            QueueName: !GetAtt BreedQueue.QueueName
       Events:
-        BreedEvent:
-          Type: SQS
+        BreedMgdc:
+          Type: CloudWatchEvent
           Properties:
-            Queue: !GetAtt BreedQueue.Arn
-            BatchSize: 1
+            Pattern:
+              source:
+                - !Sub ${Stage}.${App}.mdgc.breed
+              detail-type:
+                - MGDC Breed
 
   # Queue
 

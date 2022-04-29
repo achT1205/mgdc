@@ -68,6 +68,7 @@ Resources:
       DomainName: !Ref WSApiDomain
       ApiId: !Ref ChatWebSocketApi
       Stage: !Ref ApiStage
+      ApiMappingKey: !Ref Stage
 
   ChatApi:
     Type: AWS::Serverless::Api
@@ -224,7 +225,7 @@ Resources:
             Path: /{chatId}
             Method: GET
 
-  MyChatsFunction:
+  ChatRoomsFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: functions/chat-rooms/
@@ -364,10 +365,10 @@ Resources:
       LogGroupName: !Sub /aws/lambda/${Stage}-${App}-chats
       RetentionInDays: !Ref LogRetentionInDays
 
-  MyMgdcFunctionLog:
+  ChatRoomsFunctionLog:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-my-chats
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-chat-rooms
       RetentionInDays: !Ref LogRetentionInDays
 
   OnConnectFunctionLog:

@@ -4,6 +4,7 @@ const { CHATS_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
+  console.log("Event", JSON.stringify(event));
   const { chatId } = event.pathParameters;
   const params = {
     TableName: CHATS_DB,
@@ -14,7 +15,7 @@ exports.handler = async (event) => {
     },
     Limit: 1000,
   };
-
+  console.log("Get chats by chat ID query", JSON.stringify(params));
   try {
     const result = await clientdb.query(params).promise();
     return {

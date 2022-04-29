@@ -1,20 +1,22 @@
 const AWS = require("aws-sdk");
 
-const { CHATS_DB } = process.env;
+const { BREED_DB } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-  console.log("Event", JSON.stringify(event));
-  const { username } = event.pathParameters;
+  console.log("Event", event);
+  const { to } = event.pathParameters;
   const params = {
-    TableName: CHATS_DB,
-    IndexName: "chat-sort-key-index",
-    KeyConditionExpression: "chatSortKey = :user",
+    TableName: BREED_DB,
+    IndexName: "to-mgdcId-index",
+    KeyConditionExpression: "#to = :to and #mgdcId > :rkey",
+    ExpressionAttributeNames: { "#to": "to", "#mgdcId": "mgdcId" },
     ExpressionAttributeValues: {
-      ":user": `member_${username}`,
+      ":to": to,
+      ":rkey": 0,
     },
   };
-  console.log("Get chat rooms by username query", JSON.stringify(params));
+  console.log("Get list of MGDC breed query", JSON.stringify(params));
   try {
     const result = await clientdb.query(params).promise();
     return {
@@ -26,7 +28,7 @@ exports.handler = async (event) => {
       body: JSON.stringify(result.Items),
     };
   } catch (err) {
-    console.error("Failed to load my mgdc chats", err);
+    console.error("Failed to load MGDC breed", err);
     return {
       statusCode: 500,
       body: err,
