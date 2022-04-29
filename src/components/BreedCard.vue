@@ -6,6 +6,7 @@
       Is Listed to breed: {{ localmgdc.isListed ? "Yes" : "No" }}
     </p>
     <div class="picContainer">
+      <div class="img-blc">
       <img
         class="pic"
         :src="`https://metagolddiggerclub.com/img/thumbnails/${localmgdc.token_id}.png`"
@@ -16,6 +17,7 @@
         </a>
         <span class="tooltiptext">Edit biography</span>
       </div>
+      </div>
     </div>
     <button class="connectButton" @click="list(localmgdc)">
       {{ localmgdc.isListed ? "Already Listed" : "List on Tinder-Ape" }}
@@ -25,9 +27,11 @@
         <a title="Close" class="modal-close" @click="show = false">
           <i class="fas fa-times-circle close"></i>
         </a>
-        <h4>Biography :</h4>
+        <div class="form-group">
+        <label>Biography :</label>
         <textarea v-model="biography" placeholder="type your biography here "></textarea>
-        <button @click="save">Save</button>
+        </div>
+        <button class="btn-save" @click="save">Save</button>
       </div>
     </div>
   </div>
@@ -115,6 +119,47 @@ export default {
   font-family: Jumble;
 }
 
+.btn-save{
+  border: 1px solid #821246;
+  background: #821246;
+  padding: 5px 30px;
+}
+
+.form-group{
+  text-align: left;
+  label{
+    text-align: left;
+  }
+}
+
+textarea{
+    margin-top: 15px;
+    width: 100%;
+    border: 1px solid #821246;
+    background: #821246;
+    padding: 7px;
+    outline: none;
+    color: white;
+    resize: none;
+    height: 150px;
+    margin-bottom: 15px;
+}
+
+::placeholder{
+  color: white;
+  font-family: var(--font-family-acme);
+}
+.img-blc{
+  max-width: 200px;
+  height: 200px;
+  margin: auto;
+  position: relative;
+  .tooltip{
+    position: absolute;
+    top: -5px;
+    right: -5px;
+  }
+}
 .pic {
   width: 200px;
   height: 200px;
@@ -144,6 +189,10 @@ export default {
     margin-bottom: 50px;
     margin-left: -10px;
     margin-right: -10px;
+  }
+  .img-blc{
+    max-width: 150px;
+    height: 150px;
   }
   .pic {
     width: 150px;
@@ -211,20 +260,24 @@ export default {
 
 .modal-close {
   color: #aaa;
-  line-height: 50px;
   font-size: 80%;
   position: absolute;
-  right: 0;
+  right: -24px;
   text-align: center;
-  top: 0;
+  top: -10px;
   width: 70px;
   text-decoration: none;
+  cursor: pointer;
   &:hover {
     color: black;
+  }
+  .close{
+    color: white;
   }
 }
 
 .modal-window {
+  z-index: 1000;
   & > div {
     border-radius: 1rem;
   }
@@ -237,12 +290,16 @@ export default {
 .tooltip {
   position: relative;
   display: inline-block;
+  z-index: 999;
+  a{
+    cursor: pointer;
+  }
 }
 
 .tooltip .tooltiptext {
   visibility: hidden;
   width: 120px;
-  background-color: black;
+  background-color: #aa3c75;
   color: #fff;
   text-align: center;
   border-radius: 6px;

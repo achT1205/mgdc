@@ -19,7 +19,7 @@
       </div>
 
       <div class="breedCard" style="">
-        <div class="text nbNft" style="margin-bottom: 25px">
+        <div class="text nbNft">
           Owned MGDC : {{ mgdcBalance }}
         </div>
         <div class="contentTeam ct2">
@@ -532,10 +532,10 @@ export default {
   width: 50%;
   max-width: 1200px;
   max-height: 960px;
-  overflow: scroll;
+  overflow: auto;
   margin: auto;
   margin-top: 100px;
-  padding-top: 50px;
+  padding: 25px 0;
   background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
   box-shadow: 0 0 20px #e56932;
   //border: 5px solid #e56932;
@@ -603,7 +603,7 @@ button {
   .connectButton {
     margin-top: 25px;
     padding: 10px 20px;
-    font-size: 20px;
+    font-size: 16px;
     border-radius: 15px;
     border: 4px solid pink;
   }
