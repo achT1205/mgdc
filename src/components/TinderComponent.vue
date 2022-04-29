@@ -17,6 +17,7 @@
         >
           <div class="info">
             <h3 class="title">{{ scope.data.item.name }}</h3>
+            <p>{{scope.data.item.biography}}</p>
           </div>
         </div>
       </template>

@@ -75,7 +75,7 @@
 import { mapGetters } from "vuex";
 
 export default {
-  props: ["breed", "profile"],
+  props: ["malContractAddress"],
   data: () => ({
     show: false,
     showSidebar: false,
@@ -128,10 +128,12 @@ export default {
       if (other) participants.push(other);
       this.$store.commit("SET_PARTICIPANTS", participants);
     },
-    onBreed(item) {
-      this.selected = item.mgdcId;
-      this.$store.commit("SET_BREEDING", true);
-      this.$emit("breed", item);
+    async getHape(conversation) {
+      const resp = await this.$store.dispatch("getHapes", {
+        owner: conversation.owner,
+        contract: this.malContractAddress,
+      });
+      if (resp.data && resp.data.length > 0) resp.data[0].image_url;
     },
   },
 };

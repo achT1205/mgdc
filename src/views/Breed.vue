@@ -212,9 +212,11 @@ export default {
       this.accountBalance = await window.web3.eth.getBalance(this.account);
       this.maleBalance = await this.maleContract.methods.balanceOf(this.account).call();
       this.maleSymbol = await this.maleContract.methods.symbol().call();
-      if (this.maleBalance == 0)
-        this.errorMsg = `Vous n'avez pas encre ni de BAYC ni de HAPE best. Vous pouvez en acheter ici :`;
+      if (this.maleBalance == 0) {
+        this.errorMsg = `You do not have neither BAYC nor Hapebeast yet. You can buy one here:`;
+      }
       console.log("maleBalance", this.maleBalance);
+      this.isTinderLoading(false);
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -235,8 +237,13 @@ export default {
       }
     },
     async breed(item) {
-      // eslint-disable-next-line no-debugger
-      debugger;
+      if (this.target === "HAPE") {
+        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        this.$store.commit("SET_BREEDING", false);
+        return;
+      }
+
       const listed = await this.breedContract.methods
         .MGDCisBreeding(parseInt(item.mgdcId))
         .call();
@@ -256,7 +263,7 @@ export default {
           hasBreed: true,
         });
 
-        const msg = `MGDC HAS BREED: Votre MGDC ${item.mgdcName} a été breedé par ${item.owner}`;
+        const msg = `MGDC HAS BREED: Your MGDC ${item.mgdcName} has been breeded by ${item.owner}`;
         const conversation = {
           action: "sendMessage",
           chatId: item.chatId,
@@ -276,12 +283,35 @@ export default {
 
     async changeSmartcontract(target) {
       this.target = target;
+      if (target === "HAPE") {
+        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        return;
+      }
       await this.init();
     },
     selectHape(hape) {
       this.selectepHape = hape;
     },
     async addMatch(mgdc) {
+      const web3 = window.web3;
+      const networkId = await web3.eth.net.getId();
+      if (networkId != process.env.VUE_APP_CHAIN_ID) {
+        this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        return;
+      }
+
+      if (this.target === "HAPE") {
+        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        return;
+      }
+
+      if (this.maleBalance == 0) {
+        this.errorMsg = `You do not have neither BAYC nor Hapebeast yet. You can buy one here:`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        return;
+      }
       try {
         let owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
 
@@ -297,8 +327,7 @@ export default {
             maleType: this.maleSymbol,
           });
 
-          const message =
-            "MGDC HAS MATCH: Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
+          const message = `MGDC HAS MATCH: You have a new match, you can start a conversation in order to know more about your "ape soeur"`;
           const conversation = {
             action: "sendMessage",
             chatId: this.chatId,
@@ -322,7 +351,7 @@ export default {
         }
       } catch (error) {
         console.log("error ==> ", error);
-        this.errorMsg = "Ce token n'a pas encore de owner, Vous pouvez choisir un autre.";
+        this.errorMsg = "This token does not have an owner yet, you can choose another.";
         this.$store.commit("SET_IS_MATCHIING", false);
       }
     },
