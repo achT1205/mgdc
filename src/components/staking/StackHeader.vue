@@ -2,7 +2,7 @@
   <div class="topbar-container">
     <div class="topbar staking">
       <img class="logo-png-transparent" :src="require(`@/assets/imgs/mdgc-logo.png`)" @click="goToExternal('https://discord.com/invite/9mxyH2eDr3')" />
-      <button class="btn-wallet">
+      <button class="btn-wallet" @click="$emit('connect')">
           <span>
           {{
             account === null || !account
@@ -17,12 +17,18 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   name: "TopBar",
+  props:["connect"],
   data() {
     return {
-      account: null,
+
     };
+  },
+    computed: {
+    ...mapGetters(["account"]),
   },
   mounted() {
     window.addEventListener("resize", this.onresize);

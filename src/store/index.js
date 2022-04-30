@@ -5,6 +5,9 @@ import Web3 from 'web3'
 import axios from "axios";
 import Moralis from "moralis";
 
+// eslint-disable-next-line no-unused-vars
+import mgdcstake from "../abis/mgdcstake.json";
+
 const serverUrl = process.env.VUE_APP_MORALIS_SERVER
 const appId = process.env.VUE_APP_MORALIS_APP_ID
 Moralis.start({ serverUrl, appId });
@@ -202,7 +205,8 @@ export default new Vuex.Store({
     participants: [],
     breeding: false,
     hapes: null,
-    curremgdc: null
+    curremgdc: null,
+    stakeds:null
   },
   getters: {
     account: state => state.account,
@@ -221,7 +225,8 @@ export default new Vuex.Store({
     participants: state => state.participants,
     breeding: state => state.breeding,
     hapes: state => state.hapes,
-    curremgdc: state => state.curremgdc
+    curremgdc: state => state.curremgdc,
+    stakeds: state => state.stakeds
   },
   mutations: {
     SET_PARTICIPANTS(state, payload) {
@@ -306,9 +311,12 @@ export default new Vuex.Store({
       const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)
       state.matches[index].hasBreed = true
     },
+    SET_STAKES(state, payload) {
+      state.stakeds = payload
+    }
   },
   actions: {
-    async connect({ commit, dispatch }) {
+    async connect({ commit }) {
       commit('SET_IS_BUISY', true)
       try {
         const accounts = await web3.eth.requestAccounts()
@@ -316,8 +324,6 @@ export default new Vuex.Store({
           commit('SET_ACCOUNT', accounts[0])
           commit('CLEAN_ERROR')
         }
-        dispatch("getInitiumBalance")
-
       } catch (ex) {
         commit('SET_WALLET_CONNECTION_ERROR', ex.message)
         commit('SET_ERROR', ex)
@@ -371,6 +377,41 @@ export default new Vuex.Store({
       const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/mgdc/${payload}`)
       commit("SET_CONVERSAIONS", resp.data)
     },
+    async getStakeds({ commit }, payload) {
+      console.log(payload)
+      // const contractMGDCStake = new web3.eth.Contract(mgdcstake, process.env.VUE_APP_MGDC_STAKE);
+      // let stakeds = await contractMGDCStake.methods.getMGDCStaked(payload).call();
+    let  stakeds = [10, 11, 24]
+      const mgdcs = []
+      stakeds.forEach(element => {
+        mgdcs.push({
+          id: element,
+          selected: false
+        })
+      });
+      commit("SET_STAKES", mgdcs)
+    },
+    async getmgdcsForStake({ commit }, payload) {
+      const resp = await Moralis.Web3API.account.getNFTsForContract({
+        chain: "Eth",
+        address: payload,
+        token_address: process.env.VUE_APP_MGDC,
+      });
+      //const contractMGDCStake = new web3.eth.Contract(mgdcstake, process.env.VUE_APP_MGDC_STAKE);
+      //const staked = await contractMGDCStake.methods.getMGDCStaked(payload).call();
+      let staked = []
+      const mgdcs = []
+      resp.result.forEach(mgdc => {
+        if (staked.findIndex(_ => _ == mgdc.token_id) === -1) {
+          mgdc.id = mgdc.token_id
+          mgdc.selected = false
+          mgdcs.push(mgdc)
+        }
+
+      });
+      commit("SET_MGDCS", mgdcs)
+
+    },
     async getmgdcs({ commit }, payload) {
 
       const resp = await Moralis.Web3API.account.getNFTsForContract({
@@ -405,7 +446,7 @@ export default new Vuex.Store({
       // commit("SET_HAPES", resp.data)
     },
     // eslint-disable-next-line no-empty-pattern
-    async upadeteMgdc({}, payload) {
+    async upadeteMgdc({ }, payload) {
       debugger
       await axios.put(`${process.env.VUE_APP_API_URL}/mgdc/${payload.id}`, {
         "biography": payload.biography
