@@ -102,6 +102,23 @@ Resources:
             Path: /
             Method: POST
 
+  UpdateMgdc:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/update-mgdc/
+      FunctionName: !Sub ${Stage}-${App}-update-mgdc
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MgdcApi
+            Path: /{id}
+            Method: PUT
+
   GetMgdc:
     Type: AWS::Serverless::Function
     Properties:
@@ -162,43 +179,15 @@ Resources:
         - DynamoDBWritePolicy:
             TableName:
               Fn::ImportValue: !Sub ${Stage}-${App}-mgdc-table
-        - SQSPollerPolicy:
-            QueueName: !GetAtt BreedQueue.QueueName
       Events:
-        BreedEvent:
-          Type: SQS
+        BreedMgdc:
+          Type: CloudWatchEvent
           Properties:
-            Queue: !GetAtt BreedQueue.Arn
-            BatchSize: 1
-
-  # Queue
-
-  BreedQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${Stage}-${App}-breed-mgdc
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt BreedDLQueue.Arn
-        maxReceiveCount: 2
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Stage
-          Value: !Ref Stage
-        - Key: Project
-          Value: !Ref Project
-
-  BreedDLQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${Stage}-${App}-breed-mgdc-dl
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Stage
-          Value: !Ref Stage
-        - Key: Project
-          Value: !Ref Project
+            Pattern:
+              source:
+                - !Sub ${Stage}.${App}.mdgc.breed
+              detail-type:
+                - MGDC Breed
 
   # Logs
 
@@ -206,6 +195,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${Stage}-${App}-add-mgdc
+      RetentionInDays: !Ref LogRetentionInDays
+
+  UpdateMgdcLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-update-mgdc
       RetentionInDays: !Ref LogRetentionInDays
 
   GetMgdcLog:
@@ -236,13 +231,3 @@ Outputs:
   MgdcApiDomain:
     Description: "Mgdc API default base domain"
     Value: !Sub https://${MgdcApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
-  BreedQueueName:
-    Description: "Breed queue name"
-    Value: !GetAtt BreedQueue.QueueName
-    Export:
-      Name: !Sub ${Stage}-${App}-breed-queue
-  BreedQueueUrl:
-    Description: "Breed queue url"
-    Value: !Ref BreedQueue
-    Export:
-      Name: !Sub ${Stage}-${App}-breed-queue-url

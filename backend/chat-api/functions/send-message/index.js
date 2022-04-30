@@ -16,7 +16,8 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body);
   const { chatId, from, to, message } = body;
   try {
-    const status = await sendPrivate(apigwManagementApi, message, to);
+    console.log("Body", JSON.stringify(body));
+    const status = await sendPrivate(apigwManagementApi, body, to);
     await storeMessage(chatId, from, to, message, status);
   } catch (e) {
     console.error("Failed to send message", e);
@@ -83,7 +84,7 @@ const storeMessage = async (chatId, from, to, message, status) => {
       chatId: chatId,
       chatSortKey: `message_${tscreated}_${randomBytes(8).toString("hex")}`,
       tscreated: tscreated,
-      expdate: expiration,
+      expdate: expiration.getTime(),
       message: message,
       author: from,
       to,

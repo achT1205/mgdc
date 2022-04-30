@@ -92,15 +92,13 @@ Resources:
       FunctionName: !Sub ${Stage}-${App}-breed
       Environment:
         Variables:
-          BREED_MGDC_QUEUE_URL:
-            Fn::ImportValue: !Sub ${Stage}-${App}-breed-queue-url
+          BREED_PREFIX_SOURCE: !Sub ${Stage}.${App}
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
               Fn::ImportValue: !Sub ${Stage}-${App}-breed-table
-        - SQSSendMessagePolicy:
-            QueueName:
-              Fn::ImportValue: !Sub ${Stage}-${App}-breed-queue
+        - EventBridgePutEventsPolicy:
+            EventBusName: default
       Events:
         BreedEvent:
           Type: Api
@@ -150,6 +148,23 @@ Resources:
             Path: /{owner}
             Method: GET
 
+  ListMgdcBreedFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/list-mgdc-breed/
+      FunctionName: !Sub ${Stage}-${App}-list-mgdc-breed
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue: !Sub ${Stage}-${App}-breed-table
+      Events:
+        ListBreedEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BreedApi
+            Path: /mgdc/{to}
+            Method: GET
+
   # Logs
 
   BreedLog:
@@ -168,6 +183,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${Stage}-${App}-list-breed
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ListMgdcBreedLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Stage}-${App}-list-mgdc-breed
       RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:

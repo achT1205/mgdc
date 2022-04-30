@@ -1,8 +1,8 @@
 const AWS = require("aws-sdk");
 
-const { BREED_DB, BREED_MGDC_QUEUE_URL } = process.env;
+const { BREED_DB, BREED_PREFIX_SOURCE } = process.env;
 const clientdb = new AWS.DynamoDB.DocumentClient();
-const sqs = new AWS.SQS();
+const ebClient = new AWS.EventBridge();
 
 exports.handler = async (event) => {
   console.log("Event", event);
@@ -34,11 +34,13 @@ exports.handler = async (event) => {
       ":breed": true,
       ":tschanged": new Date().getTime(),
     },
+    ReturnValues: "ALL_NEW",
   };
 
   try {
-    await clientdb.update(params).promise();
-    await sendBreedEvent(mgdcId);
+    const result = await clientdb.update(params).promise();
+    console.log("Result", result);
+    await sendBreedEvent(owner, mgdcId);
     console.log("Update successfully");
     return {
       statusCode: 200,
@@ -74,20 +76,22 @@ const isBreed = async (owner, mgdcId) => {
   }
 };
 
-const sendBreedEvent = async (mgdcId) => {
+const sendBreedEvent = async (owner, mgdcId) => {
   try {
-    const body = JSON.stringify({ mgdcId });
+    const body = JSON.stringify({ owner, mgdcId });
+
     const params = {
-      MessageBody: body,
-      QueueUrl: BREED_MGDC_QUEUE_URL,
+      Entries: [
+        {
+          Detail: body,
+          DetailType: "MGDC Breed",
+          Source: `${BREED_PREFIX_SOURCE}.mdgc.breed`,
+        },
+      ],
     };
-    await sqs.sendMessage(params).promise();
-    console.log(
-      "Send event %s succesfully to the queue %s",
-      body,
-      BREED_MGDC_QUEUE_URL
-    );
+    const result = await ebClient.putEvents(params).promise();
+    console.log("Event send successfully - requestID", result);
   } catch (err) {
-    console.error("Failed to send breed event to queue", err);
+    console.error("Failed to send breed event", err);
   }
 };
