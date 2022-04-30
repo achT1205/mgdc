@@ -272,7 +272,7 @@ export default {
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async setWallet(address) {
-      address = "0x9Bb1AC18EdAFCcAb38109133Fdb4f2de1347F235";
+      // address = "0x9Bb1AC18EdAFCcAb38109133Fdb4f2de1347F235";
       this.accountID = address.toLowerCase();
       this.$store.commit("SET_ACCOUNT", address);
       this.notAllowed = false;

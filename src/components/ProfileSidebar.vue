@@ -39,9 +39,7 @@
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
-                  <img
-                    :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
-                  />
+                  <img :src="`${item.image_url}`" />
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
@@ -74,18 +72,51 @@
 <script>
 import { mapGetters } from "vuex";
 
+import Moralis from "moralis";
+
+const serverUrl = process.env.VUE_APP_MORALIS_SERVER;
+const appId = process.env.VUE_APP_MORALIS_APP_ID;
+Moralis.start({ serverUrl, appId });
+
 export default {
   props: ["malContractAddress"],
   data: () => ({
     show: false,
     showSidebar: false,
     search: "",
+    localconversations: null,
   }),
   mounted() {},
   watch: {
     show(val) {
       if (val === true) {
         this.$refs.search.focus();
+      }
+    },
+    conversations(val, old) {
+      if (val != old && val) {
+        this.localconversations = val;
+        this.localconversations.forEach((element) => {
+          const maleContract =
+            element.maleType === "BAYC"
+              ? process.env.VUE_APP_BAYC
+              : process.env.VUE_APP_HAPE;
+
+              console.log(maleContract)
+
+          Moralis.Web3API.account
+            .getNFTsForContract({
+              chain: "Eth",
+              address:"0xf7801B8115f3Fe46AC55f8c0Fdb5243726bdb66A" ,//element.owner,
+              token_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'//maleContract,
+            })
+            .then((resp) => {
+              if (resp && resp.result.length) {
+                element.token_id = resp.result[0].token_id;
+                element.image_url = resp.result[0].token_uri;
+              }
+            });
+        });
       }
     },
   },
