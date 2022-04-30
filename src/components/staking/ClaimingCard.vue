@@ -3,7 +3,7 @@
     <h3>Claiming Reward</h3>
     <div><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit</p></div>
     <div class="pending-balance">
-      <div class="pending">42 $c01
+      <div class="pending">42 $mgdc
         <div class="labels">Pending rewards</div>
       </div>
       <div class="chevron-to">
@@ -11,7 +11,7 @@
           <i class="fas fa-arrow-right"></i>
         </div>
       </div>
-      <div class="balance">42 $c01
+      <div class="balance">42 $mgdc
         <div class="labels">Balance</div>
       </div>
     </div>

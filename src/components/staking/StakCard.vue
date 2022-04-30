@@ -58,7 +58,7 @@
       </div>
       <div class="reward-per-day d-flex">
         <p>mgdc reward increase</p>
-        <div class="increase-per-day">+ 65 c01 / day</div>
+        <div class="increase-per-day">+ 65 mgdc / day</div>
       </div>
     </div>
     <div class="d-flex stak-btn">
