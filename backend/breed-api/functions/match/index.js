@@ -17,7 +17,7 @@ exports.handler = async (event) => {
 
   const data = JSON.parse(event.body);
   const tscreated = new Date().getTime();
-  const { from, to, mgdcId, mgdcName, maleType } = data;
+  const { from, to, mgdcId, mgdcName, maleType, maleId, maleUrl } = data;
   if (!from || !mgdcId || !to) {
     console.error("Bad request: owner address or mgdc id are required");
     return {
@@ -35,7 +35,15 @@ exports.handler = async (event) => {
       };
     }
 
-    const chatId = await createChat(from, to, mgdcId, mgdcName, maleType);
+    const chatId = await createChat(
+      from,
+      to,
+      mgdcId,
+      mgdcName,
+      maleType,
+      maleId,
+      maleUrl
+    );
 
     const params = {
       TableName: BREED_DB,
@@ -47,7 +55,9 @@ exports.handler = async (event) => {
         owner: from,
         to,
         maleType,
-        mgdcId: mgdcId,
+        maleId,
+        maleUrl,
+        mgdcId,
         mgdcName: mgdcName,
       },
     };
@@ -91,7 +101,15 @@ const isBreed = async (owner, mgdcId) => {
   }
 };
 
-const createChat = async (from, to, mgdcId, mgdcName, maleType) => {
+const createChat = async (
+  from,
+  to,
+  mgdcId,
+  mgdcName,
+  maleType,
+  maleId,
+  maleUrl
+) => {
   try {
     const chats = await searchChat(from, to, mgdcId);
     if (chats) {
@@ -130,6 +148,8 @@ const createChat = async (from, to, mgdcId, mgdcName, maleType) => {
     params.Item.chatSortKey = `member_${to}`;
     params.Item.to = from;
     params.Item.maleType = maleType;
+    params.Item.maleId = maleId;
+    params.Item.maleUrl = maleUrl;
     console.log(`Store chat room for user ${to}`, JSON.stringify(params));
     await clientdb.put(params).promise();
     return chatId;
