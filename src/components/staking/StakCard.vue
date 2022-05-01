@@ -80,21 +80,22 @@
       </div>
     </div>
     <div class="d-flex stak-btn">
-      <button class="approve-stack-btn" @click="appveAndStake">Approve && staking</button>
+      <button class="approve-stack-btn" @click="appveAndStake">Approve & staking</button>
+      <button class="approve-stack-btn" @click="stakeAll">Approve & Astake all</button>
     </div>
   </div>
 </template>
 <script>
 import { mapGetters } from "vuex";
 export default {
-  props: ["balance", "stakecontract", "mgdccontract", "approved", "fetchStakeds"],
+  props: ["balance", "stakecontract", "mgdccontract", "approved"],
   data: () => ({
     stack: "mgdc",
     localmgdcs: [],
     mgdcBalance: null,
   }),
   async mounted() {
-    await this.init();
+    if (this.stakecontract.methods) await this.init();
   },
   computed: {
     ...mapGetters(["account"]),
@@ -123,22 +124,60 @@ export default {
       this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
     async appveAndStake() {
-      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       const ids = this.localmgdcs.filter((_) => _.selected).map((_) => parseInt(_.id));
+      if (!ids || ids.length == 0) {
+        return;
+      }
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       if (!this.approved) {
         await this.mgdccontract.methods
           .setApprovalForAll(process.env.VUE_APP_MGDC_STAKE, true)
           .send({ from: this.account });
       }
 
-      const approved = await this.mgdccontract.methods
-        .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
-        .call();
+      try {
+        const approved = await this.mgdccontract.methods
+          .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
+          .call();
 
-      if (approved) {
-        await this.stakecontract.methods.stakeMGDCByIds(ids).send({ from: this.account });
-        await this.init();
-        this.$emit("fetchStakeds", "unstake");
+        if (approved) {
+          await this.stakecontract.methods
+            .stakeMGDCByIds(ids)
+            .send({ from: this.account });
+          location.reload();
+        }
+      } catch (err) {
+        console.log(err);
+        this.$store.commit("SET_PROFILE_IS_LOADING", false);
+      }
+    },
+
+    async stakeAll() {
+      const ids = this.localmgdcs.map((_) => parseInt(_.id));
+      if (!ids || ids.length == 0) {
+        return;
+      }
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
+
+      if (!this.approved) {
+        await this.mgdccontract.methods
+          .setApprovalForAll(process.env.VUE_APP_MGDC_STAKE, true)
+          .send({ from: this.account });
+      }
+
+      try {
+        const approved = await this.mgdccontract.methods
+          .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
+          .call();
+
+        if (approved) {
+          await this.stakecontract.methods
+            .stakeMGDCByIds(ids)
+            .send({ from: this.account });
+          location.reload();
+        }
+      } catch (err) {
+        console.log(err);
         this.$store.commit("SET_PROFILE_IS_LOADING", false);
       }
     },
@@ -233,6 +272,7 @@ export default {
     text-align: center;
     display: flex;
     justify-content: center;
+    margin: 2px;
   }
 }
 

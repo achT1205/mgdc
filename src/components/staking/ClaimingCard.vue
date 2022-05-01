@@ -1,7 +1,7 @@
 <template>
   <div class="stak">
     <h3>Claiming Reward</h3>
-    <div><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit</p></div>
+    <div><p>You will be able to claim your tokens after the marketplace launch.</p></div>
     <div class="pending-balance">
       <div class="pending">
         {{ rewards ? rewards.substring(0, 6) : "" }} $mgdc
@@ -13,7 +13,7 @@
         </div>
       </div>
       <div class="balance">
-        {{ rewards ? rewards.substring(0, 6) : "" }} $mgdc
+        {{ balance ? balance.substring(0, 6) : "" }} $mgdc
         <div class="labels">Balance</div>
       </div>
     </div>
@@ -34,25 +34,32 @@ export default {
   data() {
     return {
       rewards: 0,
+      balance: 0,
     };
   },
   async mounted() {
-    await this.fetch();
-    setInterval(await this.fetch(), 500);
+    if (this.stakecontract.methods) {
+      await this.fetch();
+      setInterval(await this.fetch(), 500);
+    }
   },
   methods: {
     async fetch() {
       const rewards = await this.stakecontract.methods.getAllRewards(this.account).call();
-
       const eth = Web3.utils.fromWei(rewards, "ether");
-
       this.rewards = eth.toString(18);
+
+      const balance = await this.stakecontract.methods.balanceOf(this.account).call();
+      const balanceeth = Web3.utils.fromWei(balance, "ether");
+      this.balance = balanceeth.toString(18);
     },
     async claim() {
+      if (!this.rewards || this.rewards == 0) {
+        return;
+      }
       this.$store.commit("SET_PROFILE_IS_LOADING", true);
       await this.stakecontract.methods.claimAll().send({ from: this.account });
-      await this.fetch();
-      this.$store.commit("SET_PROFILE_IS_LOADING", false);
+      location.reload();
     },
   },
 };
