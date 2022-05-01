@@ -209,7 +209,9 @@ export default new Vuex.Store({
     hapes: null,
     curremgdc: null,
     stakeds: null,
-    profileIsLoading:false
+    profileIsLoading: false,
+    profile: null,
+    profiles: null
   },
   getters: {
     account: state => state.account,
@@ -229,9 +231,17 @@ export default new Vuex.Store({
     breeding: state => state.breeding,
     hapes: state => state.hapes,
     curremgdc: state => state.curremgdc,
-    profileIsLoading : state => state.profileIsLoading
+    profileIsLoading: state => state.profileIsLoading,
+    profile: state => state.profile,
+    profiles: state => state.profiles
   },
   mutations: {
+    SET_PROFILE(state, payload) {
+      state.profile = payload
+    },
+    SET_PROFILES(state, payload) {
+      state.profiles = payload
+    },
     SET_PROFILE_IS_LOADING(state, payload) {
       state.profileIsLoading = payload
     },
@@ -380,37 +390,8 @@ export default new Vuex.Store({
       commit("SET_PROFILE_IS_LOADING", true)
       const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/mgdc/${payload}`)
       const conversations = resp.data
-
-      conversations.forEach(async (element) => {
-
-        if (element.maleType === "BAYC") {
-          const malContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
-          element.maleId = await malContract.methods
-            .tokenOfOwnerByIndex(element.owner, 0).call();
-          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${element.maleId}`)
-          element.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
-          console.log("element.url", element.url)
-
-        } else {
-          // Moralis.Web3API.account
-          //   .getNFTsForContract({
-          //     chain: "Eth",
-          //     address: element.owner,
-          //     token_address: maleContract,
-          //   })
-          //   .then((resp) => {
-          //     if (resp && resp.result.length) {
-          //       element.id = resp.result[0].token_id;
-          //       element.url = resp.result[0].token_uri;
-          //     }
-          //   });
-        }
-
-        commit("SET_PROFILE_IS_LOADING", false)
-      });
-
-
       commit("SET_CONVERSAIONS", conversations)
+      commit("SET_PROFILE_IS_LOADING", false)
     },
     async getmgdcs({ commit }, payload) {
       const resp = await Moralis.Web3API.account.getNFTsForContract({
@@ -453,6 +434,37 @@ export default new Vuex.Store({
     async getMgdc({ commit }, payload) {
       const resp = await axios.get(`${process.env.VUE_APP_API_URL}/mgdc/${payload}`);
       commit("SET_CURRENT_MGDC", resp.data)
+    },
+    async getProfile({ commit }, payload) {
+      if (payload.maleType === "BAYC") {
+        const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
+        const profile = {}
+        profile.maleId = await maleContract.methods
+          .tokenOfOwnerByIndex(payload.account, 0).call();
+        const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
+        profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+        profile.id = parseInt(profile.maleId)
+        commit("SET_PROFILE", profile)
+      }
+    },
+    async getProfiles({ commit }, payload) {
+      const profiles = []
+      if (payload.maleType === "BAYC") {
+        const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
+        const maleBalance = await maleContract.methods.balanceOf(payload.account).call();
+
+        for (let index = 0; index < maleBalance; index++) {
+          const profile = {}
+          profile.maleId = await maleContract.methods
+            .tokenOfOwnerByIndex(payload.account, index).call();
+          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
+          profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+          profile.id = parseInt(profile.maleId)
+          profile.selected = false
+          profiles.push(profile)
+        }
+      }
+      commit("SET_PROFILES", profiles)
     }
   }
 })

@@ -12,9 +12,7 @@
             :stakecontract="contractMGDCStake"
             :mgdccontract="contractMGDC"
             :approved="approvedForall"
-            @fetchStakeds="fetchStakeds"
             class="stak-card"
-            ref="stake"
           />
         </div>
         <div class="col-6">
@@ -22,9 +20,7 @@
             :stakecontract="contractMGDCStake"
             :mgdccontract="contractMGDC"
             :approved="approvedForall"
-            @fetchStakeds="fetchStakeds"
             class="stak-card"
-            ref="unstake"
           />
         </div>
       </div>
@@ -52,6 +48,11 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
+            <span v-if="mgdcBalance == 0">
+              <a href="https://opensea.io/collection/mgdc" target="_blank" class="buy-bn"
+                >Buy an MGDC</a
+              ></span
+            >
           </h4>
         </div>
         <div class="warnning-notification-logo-wrapper" @click="clearError">
@@ -80,7 +81,7 @@ export default {
   },
   data() {
     return {
-      mgdcBalance: null,
+      mgdcBalance: 0,
       contractMGDC: null,
       contractMGDCStake: null,
       approvedForall: false,
@@ -100,14 +101,15 @@ export default {
     });
   },
   methods: {
-    fetchStakeds(target) {
-      if (target === "unstake") this.$refs.unstake.init();
-      else this.$refs.stake.focus();
+    clearError() {
+      this.errorMsg = null;
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
     async web3Check() {
       if (this.account) return;
       const ethereum = window.ethereum;
       if (!ethereum || !ethereum.on) {
+        this.mgdcBalance = null;
         this.errorMsg = "This App requires MetaMask, Please Install MetaMask";
       } else {
         const web3 = new Web3(window.ethereum);
@@ -125,10 +127,16 @@ export default {
           this.mgdcBalance = await this.contractMGDC.methods
             .balanceOf(this.account)
             .call();
-          if (this.mgdcBalance > 0) {
+
+          const stakedCount = await this.contractMGDCStake.methods
+            .getStakedCount(this.account)
+            .call();
+          if (this.mgdcBalance > 0 || stakedCount > 0) {
             this.approvedForall = await this.contractMGDC.methods
               .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
               .call();
+          } else {
+            this.errorMsg = `You do not have MGDC yet. You can buy it here:`;
           }
         }
       }

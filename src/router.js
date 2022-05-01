@@ -37,8 +37,8 @@ export default new Router({
       component: Breed,
     },
     {
-      path: "/staking",
-      name: "Staking",
+      path: "/stake",
+      name: "Stake",
       component: Staking,
     }
 

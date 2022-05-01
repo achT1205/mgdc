@@ -5,12 +5,23 @@
       <div class="d-flex checkeboxes">
         <button class="btn-check ml-2" :class="{ active: stack === 'mgdc' }">
           <input id="umgdc" type="radio" name="unstack" v-model="stack" value="mgdc" />
-          <label for="umgdc">mgdc</label>
+          <label for="umgdc">mgdc({{ stakedCount }})</label>
         </button>
-        <!-- <button class="btn-check ml-2" :class="{active: stack === 'c-02'}">
-          <input id="uc-02" type="radio" name="unstack" v-model="stack" value="c-02" />
-          <label for="uc-02">c-02</label>
-        </button> -->
+        <div class="tooltip">
+          <button class="btn-check ml-2">
+            <input id="brred-bayc" type="radio" name="stack" />
+            <label for="brred-bayc">Breed BAYC</label>
+          </button>
+          <span class="tooltiptext">Coming soon</span>
+        </div>
+
+        <div class="tooltip">
+          <button class="btn-check ml-2">
+            <input id="brred-hape" type="radio" name="stack" />
+            <label for="brred-hape">Breed Hape</label>
+          </button>
+          <span class="tooltiptext">Coming soon</span>
+        </div>
       </div>
     </div>
     <div class="d-flex texts">
@@ -66,22 +77,23 @@
     </div>
     <div class="d-flex stak-btn">
       <button class="approve-stack-btn" @click="appveAndUnstake">
-        Approve && Unstaking
+        Approve & Unstaking
       </button>
+      <button class="approve-stack-btn" @click="unstakeAll">Unstaking all</button>
     </div>
   </div>
 </template>
 <script>
 import { mapGetters } from "vuex";
 export default {
-  props: ["balance", "stakecontract", "mgdccontract", "approved", "fetchStakeds"],
+  props: ["balance", "stakecontract", "mgdccontract", "approved"],
   data: () => ({
     stack: "mgdc",
     localmgdcs: [],
     stakedCount: 0,
   }),
   async mounted() {
-    await this.init();
+    if (this.stakecontract.methods) await this.init();
   },
   computed: {
     ...mapGetters(["account"]),
@@ -94,38 +106,38 @@ export default {
 
   methods: {
     async init() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       this.stakedCount = await this.stakecontract.methods
         .getStakedCount(this.account)
         .call();
-      if (this.stakedCount > 0) {
-        for (let index = 0; index < this.stakedCount; index++) {
+      const mgdcs = await this.stakecontract.methods.getMGDCStaked(this.account).call();
+      if (mgdcs && mgdcs.length) {
+        mgdcs.forEach((id) => {
           const mgdc = {
             selected: false,
+            id: id,
           };
-          mgdc.id = await this.mgdccontract.methods
-            .tokenOfOwnerByIndex(this.account, index)
-            .call();
-
           this.localmgdcs.push(mgdc);
-        }
+        });
       }
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
     async appveAndUnstake() {
       const ids = this.localmgdcs.filter((_) => _.selected).map((_) => parseInt(_.id));
-
-      // const approved = await this.mgdccontract.methods
-      //   .isApprovedForAll(process.env.VUE_APP_MGDC_STAKE, this.account)
-      //   .call();
-
-      // if (!approved) {
-      //   await this.mgdccontract.methods
-      //     .setApprovalForAll(this.account, true)
-      //     .send({ from: process.env.VUE_APP_MGDC_STAKE });
-      // }
-
+      if (!ids || ids.length == 0) {
+        return;
+      }
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       await this.stakecontract.methods.unstakeMGDCByIds(ids).send({ from: this.account });
-      await this.init();
-      this.$emit("fetchStakeds", "stake");
+      location.reload();
+    },
+    async unstakeAll() {
+      if (!this.localmgdcs || this.localmgdcs.length == 0) {
+        return;
+      }
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
+      await this.stakecontract.methods.unstakeAll().send({ from: this.account });
+      location.reload();
     },
   },
 };
@@ -244,12 +256,8 @@ export default {
     text-align: center;
     display: flex;
     justify-content: center;
+    margin: 2px;
   }
-}
-
-.chip :active {
-  border: 1px solid #eea1c5;
-  border-radius: 3px;
 }
 
 .chip {
@@ -329,5 +337,35 @@ export default {
 
 .active-chip {
   border: 1px solid #eea1c5 !important;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  z-index: 999;
+  a {
+    cursor: pointer;
+  }
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #aa3c75;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -60px;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  margin-top: 20px;
 }
 </style>
