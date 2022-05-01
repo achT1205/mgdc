@@ -39,7 +39,7 @@
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
-                  <img :src="`${item.image_url}`" />
+                  <img :src="`${item.url}`" />
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
@@ -52,6 +52,7 @@
                       )} `
                     }}
                   </div>
+                  <div class="mt-2">#{{ item.maleId }}</div>
                 </div>
               </li>
             </ul>
@@ -79,7 +80,7 @@ const appId = process.env.VUE_APP_MORALIS_APP_ID;
 Moralis.start({ serverUrl, appId });
 
 export default {
-  props: ["malContractAddress"],
+  props: ["malContractAddress", "malContract"],
   data: () => ({
     show: false,
     showSidebar: false,
@@ -91,32 +92,6 @@ export default {
     show(val) {
       if (val === true) {
         this.$refs.search.focus();
-      }
-    },
-    conversations(val, old) {
-      if (val != old && val) {
-        this.localconversations = val;
-        this.localconversations.forEach((element) => {
-          const maleContract =
-            element.maleType === "BAYC"
-              ? process.env.VUE_APP_BAYC
-              : process.env.VUE_APP_HAPE;
-
-              console.log(maleContract)
-
-          Moralis.Web3API.account
-            .getNFTsForContract({
-              chain: "Eth",
-              address:"0xf7801B8115f3Fe46AC55f8c0Fdb5243726bdb66A" ,//element.owner,
-              token_address: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'//maleContract,
-            })
-            .then((resp) => {
-              if (resp && resp.result.length) {
-                element.token_id = resp.result[0].token_id;
-                element.image_url = resp.result[0].token_uri;
-              }
-            });
-        });
       }
     },
   },
@@ -314,6 +289,7 @@ export default {
         }
       }
       .name {
+        margin-bottom: 5px;
         padding: 0 10px;
       }
     }

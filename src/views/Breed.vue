@@ -49,17 +49,18 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
-            <span v-if="maleBalance == 0">
+            <span v-if="maleBalance == 0 && target==='BAYC'">
               <a
                 href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
                 target="_blank"
                 class="buy-bn"
-                >Buy a BAYC</a
+                >Buy BAYC</a
               >
-              ou
+              <!-- or
               <a href="https://opensea.io/assets/hapeprime" target="_blank" class="buy-bn"
                 >Buy an HAPE</a
-              ></span
+              > -->
+              </span
             >
           </h4>
         </div>
@@ -254,7 +255,7 @@ export default {
       try {
         await this.breedContract.methods.breed(item.mgdcId).send({
           from: this.account,
-          value: "250000000000000000",
+          value: "25000000000",
         });
         await this.$store.dispatch("breed", {
           account: this.account,

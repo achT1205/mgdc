@@ -8,6 +8,8 @@ import Moralis from "moralis";
 // eslint-disable-next-line no-unused-vars
 import mgdcstake from "../abis/mgdcstake.json";
 
+import bayc from "../abis/bayc.json";
+
 const serverUrl = process.env.VUE_APP_MORALIS_SERVER
 const appId = process.env.VUE_APP_MORALIS_APP_ID
 Moralis.start({ serverUrl, appId });
@@ -206,7 +208,8 @@ export default new Vuex.Store({
     breeding: false,
     hapes: null,
     curremgdc: null,
-    stakeds:null
+    stakeds: null,
+    profileIsLoading:false
   },
   getters: {
     account: state => state.account,
@@ -226,9 +229,12 @@ export default new Vuex.Store({
     breeding: state => state.breeding,
     hapes: state => state.hapes,
     curremgdc: state => state.curremgdc,
-    stakeds: state => state.stakeds
+    profileIsLoading : state => state.profileIsLoading
   },
   mutations: {
+    SET_PROFILE_IS_LOADING(state, payload) {
+      state.profileIsLoading = payload
+    },
     SET_PARTICIPANTS(state, payload) {
       state.participants = payload
     },
@@ -311,9 +317,6 @@ export default new Vuex.Store({
       const index = state.matches.findIndex(_ => _.mgdcId === payload.mgdcId)
       state.matches[index].hasBreed = true
     },
-    SET_STAKES(state, payload) {
-      state.stakeds = payload
-    }
   },
   actions: {
     async connect({ commit }) {
@@ -374,46 +377,42 @@ export default new Vuex.Store({
       commit("SET_CONVERSAIONS", resp.data)
     },
     async getBreedMgdcs({ commit }, payload) {
+      commit("SET_PROFILE_IS_LOADING", true)
       const resp = await axios.get(`${process.env.VUE_APP_API_URL}/breed/mgdc/${payload}`)
-      commit("SET_CONVERSAIONS", resp.data)
-    },
-    async getStakeds({ commit }, payload) {
-      console.log(payload)
-      // const contractMGDCStake = new web3.eth.Contract(mgdcstake, process.env.VUE_APP_MGDC_STAKE);
-      // let stakeds = await contractMGDCStake.methods.getMGDCStaked(payload).call();
-    let  stakeds = [10, 11, 24]
-      const mgdcs = []
-      stakeds.forEach(element => {
-        mgdcs.push({
-          id: element,
-          selected: false
-        })
-      });
-      commit("SET_STAKES", mgdcs)
-    },
-    async getmgdcsForStake({ commit }, payload) {
-      const resp = await Moralis.Web3API.account.getNFTsForContract({
-        chain: "Eth",
-        address: payload,
-        token_address: process.env.VUE_APP_MGDC,
-      });
-      //const contractMGDCStake = new web3.eth.Contract(mgdcstake, process.env.VUE_APP_MGDC_STAKE);
-      //const staked = await contractMGDCStake.methods.getMGDCStaked(payload).call();
-      let staked = []
-      const mgdcs = []
-      resp.result.forEach(mgdc => {
-        if (staked.findIndex(_ => _ == mgdc.token_id) === -1) {
-          mgdc.id = mgdc.token_id
-          mgdc.selected = false
-          mgdcs.push(mgdc)
+      const conversations = resp.data
+
+      conversations.forEach(async (element) => {
+
+        if (element.maleType === "BAYC") {
+          const malContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
+          element.maleId = await malContract.methods
+            .tokenOfOwnerByIndex(element.owner, 0).call();
+          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${element.maleId}`)
+          element.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+          console.log("element.url", element.url)
+
+        } else {
+          // Moralis.Web3API.account
+          //   .getNFTsForContract({
+          //     chain: "Eth",
+          //     address: element.owner,
+          //     token_address: maleContract,
+          //   })
+          //   .then((resp) => {
+          //     if (resp && resp.result.length) {
+          //       element.id = resp.result[0].token_id;
+          //       element.url = resp.result[0].token_uri;
+          //     }
+          //   });
         }
 
+        commit("SET_PROFILE_IS_LOADING", false)
       });
-      commit("SET_MGDCS", mgdcs)
 
+
+      commit("SET_CONVERSAIONS", conversations)
     },
     async getmgdcs({ commit }, payload) {
-
       const resp = await Moralis.Web3API.account.getNFTsForContract({
         chain: "Eth",
         address: payload,
@@ -447,7 +446,6 @@ export default new Vuex.Store({
     },
     // eslint-disable-next-line no-empty-pattern
     async upadeteMgdc({ }, payload) {
-      debugger
       await axios.put(`${process.env.VUE_APP_API_URL}/mgdc/${payload.id}`, {
         "biography": payload.biography
       });

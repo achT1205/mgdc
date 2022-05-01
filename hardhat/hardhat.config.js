@@ -1,7 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-web3");
 const fs = require('fs')
-const projectId = '9c4c48140895481fb26831f5a6dc3d19'
+const projectId = '06a79e4c7952462ab713a26cf06b51fe'
 const privateKey = fs.readFileSync(".secret").toString()
 module.exports = {
   networks: {
@@ -18,6 +18,10 @@ module.exports = {
     },
     mainnet: {
       url: `https://polygon-mainnet.infura.io/v3/${projectId}`,
+      accounts: [privateKey]
+    },
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${projectId}`,
       accounts: [privateKey]
     }
   },

@@ -1,35 +1,38 @@
 <template>
-  <div class="teamMember" v-if="localmgdc && localmgdc.token_id">
-    <p class="text name">ID: {{ localmgdc.token_id }}</p>
+  <div class="teamMember" v-if="localmgdc && localmgdc.id">
+    <p class="text name">ID: {{ localmgdc.id }}</p>
     <p class="text name">Has breeded: {{ localmgdc.hasBreed ? "Yes" : "No" }}</p>
     <p class="text name" style="margin-bottom: 10px">
       Is Listed to breed: {{ localmgdc.isListed ? "Yes" : "No" }}
     </p>
     <div class="picContainer">
       <div class="img-blc">
-      <img
-        class="pic"
-        :src="`https://metagolddiggerclub.com/img/thumbnails/${localmgdc.token_id}.png`"
-      />
-      <div class="tooltip">
-        <a @click="toggle">
-          <i class="fas fa-pencil"></i>
-        </a>
-        <span class="tooltiptext">Edit biography</span>
-      </div>
+        <img
+          class="pic"
+          :src="`https://metagolddiggerclub.com/img/thumbnails/${localmgdc.id}.png`"
+        />
+        <div class="tooltip">
+          <a @click="toggle">
+            <i class="fas fa-pencil"></i>
+          </a>
+          <span class="tooltiptext">Edit biography</span>
+        </div>
       </div>
     </div>
     <button class="connectButton" @click="list(localmgdc)">
       {{ localmgdc.isListed ? "Already Listed" : "List on Tinder-Ape" }}
     </button>
-    <div  class="modal-window" v-show="show">
+    <div class="modal-window" v-show="show">
       <div>
         <a title="Close" class="modal-close" @click="show = false">
           <i class="fas fa-times-circle close"></i>
         </a>
         <div class="form-group">
-        <label>Biography :</label>
-        <textarea v-model="biography" placeholder="type your biography here "></textarea>
+          <label>Biography :</label>
+          <textarea
+            v-model="biography"
+            placeholder="type your biography here "
+          ></textarea>
         </div>
         <button class="btn-save" @click="save">Save</button>
       </div>
@@ -42,7 +45,7 @@ import { mapGetters } from "vuex";
 
 export default {
   name: "BreedCard",
-  props: ["mgdc", "contract"],
+  props: ["mgdc", "contract", "toggleLoading"],
   computed: {
     ...mapGetters(["curremgdc"]),
   },
@@ -63,24 +66,21 @@ export default {
   },
   async mounted() {
     this.localmgdc = { ...this.mgdc };
-    this.localmgdc.hasBreed = await this.contract.methods
-      .hasBreed(this.localmgdc.token_id)
-      .call();
-
-    this.localmgdc.isListed = await this.contract.methods
-      .MGDCisBreeding(this.localmgdc.token_id)
-      .call();
   },
   methods: {
     async toggle() {
-      await this.$store.dispatch("getMgdc", this.localmgdc.token_id);
-      this.show = true
+      this.$store.commit("SET_PROFILE_IS_LOADING", true)
+      await this.$store.dispatch("getMgdc", this.localmgdc.id);
+      this.show = true;
+      this.$store.commit("SET_PROFILE_IS_LOADING", false)
     },
     async save() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true)
       await this.$store.dispatch("upadeteMgdc", {
         biography: this.biography,
-        id: this.localmgdc.token_id,
+        id: this.localmgdc.id,
       });
+      this.$store.commit("SET_PROFILE_IS_LOADING", false)
       this.show = false;
     },
     goToExternal(url) {
@@ -88,7 +88,7 @@ export default {
     },
     list(mgdc) {
       if (mgdc.isListed) return;
-      this.$parent.list(mgdc.token_id);
+      this.$parent.list(mgdc.id);
     },
   },
 };
@@ -119,42 +119,42 @@ export default {
   font-family: Jumble;
 }
 
-.btn-save{
+.btn-save {
   border: 1px solid #821246;
   background: #821246;
   padding: 5px 30px;
 }
 
-.form-group{
+.form-group {
   text-align: left;
-  label{
+  label {
     text-align: left;
   }
 }
 
-textarea{
-    margin-top: 15px;
-    width: 100%;
-    border: 1px solid #821246;
-    background: #821246;
-    padding: 7px;
-    outline: none;
-    color: white;
-    resize: none;
-    height: 150px;
-    margin-bottom: 15px;
+textarea {
+  margin-top: 15px;
+  width: 100%;
+  border: 1px solid #821246;
+  background: #821246;
+  padding: 7px;
+  outline: none;
+  color: white;
+  resize: none;
+  height: 150px;
+  margin-bottom: 15px;
 }
 
-::placeholder{
+::placeholder {
   color: white;
   font-family: var(--font-family-acme);
 }
-.img-blc{
+.img-blc {
   max-width: 200px;
   height: 200px;
   margin: auto;
   position: relative;
-  .tooltip{
+  .tooltip {
     position: absolute;
     top: -5px;
     right: -5px;
@@ -190,7 +190,7 @@ textarea{
     margin-left: -10px;
     margin-right: -10px;
   }
-  .img-blc{
+  .img-blc {
     max-width: 150px;
     height: 150px;
   }
@@ -271,7 +271,7 @@ textarea{
   &:hover {
     color: black;
   }
-  .close{
+  .close {
     color: white;
   }
 }
@@ -291,7 +291,7 @@ textarea{
   position: relative;
   display: inline-block;
   z-index: 999;
-  a{
+  a {
     cursor: pointer;
   }
 }

@@ -7,19 +7,56 @@
           <h1>STAKING</h1>
         </div>
         <div class="col-6">
-          <stak-card 
-          :balance="mgdcBalance"
-          :stakecontract="contractMGDCStake"
-          :mgdccontract="contractMGDC"
-          :approved="approvedForall"
-           class="stak-card" />
+          <stak-card
+            :balance="mgdcBalance"
+            :stakecontract="contractMGDCStake"
+            :mgdccontract="contractMGDC"
+            :approved="approvedForall"
+            @fetchStakeds="fetchStakeds"
+            class="stak-card"
+            ref="stake"
+          />
         </div>
         <div class="col-6">
-          <unstak-card class="stak-card" />
+          <unstak-card
+            :stakecontract="contractMGDCStake"
+            :mgdccontract="contractMGDC"
+            :approved="approvedForall"
+            @fetchStakeds="fetchStakeds"
+            class="stak-card"
+            ref="unstake"
+          />
         </div>
       </div>
       <div class="staking-content mt-3">
-        <claiming-card class="stak-card" />
+        <claiming-card
+          :stakecontract="contractMGDCStake"
+          :approved="approvedForall"
+          class="stak-card"
+        />
+      </div>
+    </div>
+
+    <div
+      id="overlay"
+      v-show="errorMsg || profileIsLoading"
+      class="w-full no-nodes-content flex justify-center items-center"
+    >
+      <svg class="spinner" viewBox="0 0 50 50" v-if="!errorMsg && profileIsLoading">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
+      <div class="warnning-notification" v-if="errorMsg">
+        <div class="warnning-notification-logo-wrapper">
+          <i class="fas fa-triangle-exclamation warnning"></i>
+        </div>
+        <div class="warnning-notification-content">
+          <h4 class="warnning-notification-title">
+            {{ errorMsg }}
+          </h4>
+        </div>
+        <div class="warnning-notification-logo-wrapper" @click="clearError">
+          <i class="fas fa-times-circle close"></i>
+        </div>
       </div>
     </div>
   </div>
@@ -45,12 +82,13 @@ export default {
     return {
       mgdcBalance: null,
       contractMGDC: null,
-      contractMGDCStake:null,
-      approvedForall:false
+      contractMGDCStake: null,
+      approvedForall: false,
+      errorMsg: null,
     };
   },
   computed: {
-    ...mapGetters(["account"]),
+    ...mapGetters(["account", "profileIsLoading"]),
   },
   async mounted() {
     await this.web3Check();
@@ -62,15 +100,23 @@ export default {
     });
   },
   methods: {
+    fetchStakeds(target) {
+      if (target === "unstake") this.$refs.unstake.init();
+      else this.$refs.stake.focus();
+    },
     async web3Check() {
+      if (this.account) return;
       const ethereum = window.ethereum;
       if (!ethereum || !ethereum.on) {
         this.errorMsg = "This App requires MetaMask, Please Install MetaMask";
       } else {
         const web3 = new Web3(window.ethereum);
         this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
-         this.contractMGDCStake = new web3.eth.Contract(mgdcstake, process.env.VUE_APP_MGDC_STAKE);
-        
+        this.contractMGDCStake = new web3.eth.Contract(
+          mgdcstake,
+          process.env.VUE_APP_MGDC_STAKE
+        );
+
         const networkId = await web3.eth.net.getId();
         if (networkId != process.env.VUE_APP_CHAIN_ID) {
           this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
@@ -79,8 +125,10 @@ export default {
           this.mgdcBalance = await this.contractMGDC.methods
             .balanceOf(this.account)
             .call();
-          if(this.mgdcBalance>0){
-            this.approvedForall = await this.contractMGDC.methods.isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
+          if (this.mgdcBalance > 0) {
+            this.approvedForall = await this.contractMGDC.methods
+              .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
+              .call();
           }
         }
       }

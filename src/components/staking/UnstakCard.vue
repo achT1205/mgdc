@@ -19,32 +19,41 @@
     <div class="d-flex stak-ids">
       <div class="form-group">
         <label>MGDCs :</label>
-        <div
-          class="chip"
-          v-for="mgdc in localmgdcs"
-          :key="mgdc.id"
-          @click="select(mgdc.id)"
-        >
-          <div class="chip-head">
-            <img :src="`https://metagolddiggerclub.com/img/thumbnails/${mgdc.id}.png`" />
-          </div>
-          <div class="chip-content">#{{ mgdc.id }}</div>
-          <div class="chip-close">
-            <svg
-              @click="remove(mgdc.id)"
-              v-show="mgdc.selected"
-              class="chip-svg"
-              focusable="false"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 512 512"
-            >
-              <path
-                d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+        <label v-for="mgdc in localmgdcs" :key="mgdc.id">
+          <input
+            type="checkbox"
+            :id="'staked' + mgdc.id"
+            :name="mgdc.id"
+            v-model="mgdc.selected"
+            hidden="true"
+          />
+          <label
+            class="chip"
+            :class="mgdc.selected ? 'active-chip' : ''"
+            :for="'staked' + mgdc.id"
+          >
+            <div class="chip-head">
+              <img
+                :src="`https://metagolddiggerclub.com/img/thumbnails/${mgdc.id}.png`"
               />
-            </svg>
-          </div>
-        </div>
+            </div>
+            <div class="chip-content">#{{ mgdc.id }}</div>
+            <div class="chip-close">
+              <svg
+                v-show="mgdc.selected"
+                class="chip-svg"
+                focusable="false"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 512 512"
+              >
+                <path
+                  d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                />
+              </svg>
+            </div>
+          </label>
+        </label>
       </div>
       <div class="qty d-flex">
         <p>Quantity</p>
@@ -56,35 +65,26 @@
       </div>
     </div>
     <div class="d-flex stak-btn">
-      <button class="approve-stack-btn">Approve Unstaking</button>
+      <button class="approve-stack-btn" @click="appveAndUnstake">
+        Approve && Unstaking
+      </button>
     </div>
   </div>
 </template>
 <script>
 import { mapGetters } from "vuex";
 export default {
-  props: ["balance", "stakecontract", "mgdccontract", "approved"],
+  props: ["balance", "stakecontract", "mgdccontract", "approved", "fetchStakeds"],
   data: () => ({
     stack: "mgdc",
-    localmgdcs: null,
-    ids: "",
-    staks: ["997", "881", "335"],
+    localmgdcs: [],
+    stakedCount: 0,
   }),
   async mounted() {
-    await this.$store.dispatch(
-      "getStakeds",
-      "0x6bc1aE69f3D7eBa3e80c2465c3195fb6d42Cd29d" /*this.account*/
-    );
-  },
-  watch: {
-    stakeds(val, old) {
-      if (val != old && val) {
-        this.localmgdcs = val;
-      }
-    },
+    await this.init();
   },
   computed: {
-    ...mapGetters(["account", "stakeds"]),
+    ...mapGetters(["account"]),
     quantity() {
       if (this.localmgdcs && this.localmgdcs.length)
         return this.localmgdcs.filter((_) => _.selected).length;
@@ -93,27 +93,39 @@ export default {
   },
 
   methods: {
-    remove(id) {
-      const index = this.localmgdcs.findIndex((_) => _.id == id);
-      if (index > -1) {
-        this.localmgdcs[index].selected = false;
-      }
-    },
-    select(id) {
-      const index = this.localmgdcs.findIndex((_) => _.id == id);
-      if (index > -1) {
-        this.localmgdcs[index].selected = true;
+    async init() {
+      this.stakedCount = await this.stakecontract.methods
+        .getStakedCount(this.account)
+        .call();
+      if (this.stakedCount > 0) {
+        for (let index = 0; index < this.stakedCount; index++) {
+          const mgdc = {
+            selected: false,
+          };
+          mgdc.id = await this.mgdccontract.methods
+            .tokenOfOwnerByIndex(this.account, index)
+            .call();
+
+          this.localmgdcs.push(mgdc);
+        }
       }
     },
     async appveAndUnstake() {
-      const ids = this.localmgdcs.filter((_) => _.selected).map((_) => _.id);
-      if (!this.approved)
-        this.approved = await this.mgdccontract.methods
-          .setApprovalForAll(this.account, this.stakecontract)
-          .sen({ from: this.account });
+      const ids = this.localmgdcs.filter((_) => _.selected).map((_) => parseInt(_.id));
 
-      if (this.approved)
-        this.stakecontract.methods.unstakeMGDCByIds(ids).sen({ from: this.account });
+      // const approved = await this.mgdccontract.methods
+      //   .isApprovedForAll(process.env.VUE_APP_MGDC_STAKE, this.account)
+      //   .call();
+
+      // if (!approved) {
+      //   await this.mgdccontract.methods
+      //     .setApprovalForAll(this.account, true)
+      //     .send({ from: process.env.VUE_APP_MGDC_STAKE });
+      // }
+
+      await this.stakecontract.methods.unstakeMGDCByIds(ids).send({ from: this.account });
+      await this.init();
+      this.$emit("fetchStakeds", "stake");
     },
   },
 };
@@ -235,10 +247,15 @@ export default {
   }
 }
 
+.chip :active {
+  border: 1px solid #eea1c5;
+  border-radius: 3px;
+}
+
 .chip {
   display: inline-flex;
   flex-direction: row;
-  background-color: #e5e5e5;
+  background: rgba(130, 18, 70, 0.8);
   border: none;
   cursor: default;
   height: 36px;
@@ -281,7 +298,7 @@ export default {
   padding-right: 12px;
 }
 .chip-svg {
-  color: #999999;
+  color: pink;
   cursor: pointer;
   height: auto;
   margin: 4px 4px 0 -8px;
@@ -308,5 +325,9 @@ export default {
   height: 40px;
   width: 46px;
   border-radius: 50%;
+}
+
+.active-chip {
+  border: 1px solid #eea1c5 !important;
 }
 </style>

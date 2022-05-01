@@ -60,7 +60,7 @@ describe("Tests", function () {
 
   it("Should mint 3 BAYC for addr1", async function () {
     await boredApeYachtClub.connect(addr1).mintApe(3, {
-      value: ethers.utils.parseEther("0.000006"),
+      value: ethers.utils.parseEther("0.00000006"),
     });
     const balance = await boredApeYachtClub.connect(addr1).balanceOf(addr1.address);
     console.log("balance BAYC: ==>", balance)
@@ -81,33 +81,33 @@ describe("Tests", function () {
 
   it("addr1 should list token number 0", async function () {
     await mGDCbreedBAYC.connect(addr1).listBreeding(1, {
-      value: ethers.utils.parseEther("0.000025"),
+      value: ethers.utils.parseEther("0.000000025"),
     });
   });
 
   it("addr2 should list token number 0", async function () {
     await mGDCbreedBAYC.connect(addr2).listBreeding(2, {
-      value: ethers.utils.parseEther("0.000025"),
+      value: ethers.utils.parseEther("0.000000025"),
     });
   });
 
   it("addr3 should list token number 0", async function () {
     await mGDCbreedBAYC.connect(addr3).listBreeding(3, {
-      value: ethers.utils.parseEther("0.000025"),
+      value: ethers.utils.parseEther("0.000000025"),
     });
   });
 
 
   it("addr1[token 0] shoud breed addr2[token 1]", async function () {
     await mGDCbreedBAYC.connect(addr1).breed(2, {
-      value: ethers.utils.parseEther("0.000025"),
+      value: ethers.utils.parseEther("0.000000025"),
     });
   });
 
 
   it("addr1[token 0] shoud breed addr3[token 1]", async function () {
     await mGDCbreedBAYC.connect(addr1).breed(3, {
-      value: ethers.utils.parseEther("0.000025"),
+      value: ethers.utils.parseEther("0.000000025"),
     });
   });
 

@@ -1607,6 +1607,21 @@ contract MGDC is ERC721("Meta Gold Digger Club", "MGDC"), ERC721Enumerable, Owna
         _safeMint(_to, _tokenId);
     }
 
+
+    function mintByOwner(
+        address _to,
+        uint256[] memory _tokenId
+    )
+        public
+        onlyOwner
+    {
+        for(uint256 i = 0; i < _tokenId.length; i++){
+            _safeMint(_to, _tokenId[i]);
+            giveawayCount = giveawayCount.add(1);
+        }
+    }
+
+
     /*
      * Function to mint all NFTs for giveaway and partnerships
     */

@@ -1897,7 +1897,7 @@ contract BoredApeYachtClub is ERC721, Ownable {
 
     uint256 public startingIndex;
 
-    uint256 public constant apePrice = 20000000000; //0.000002 ETH
+    uint256 public constant apePrice = 200000000; //0.000002 ETH
 
     uint public constant maxApePurchase = 20;
 
@@ -1957,6 +1957,23 @@ contract BoredApeYachtClub is ERC721, Ownable {
     /**
     * Mints Bored Apes
     */
+
+    function mintApeByOwner(address to, uint numberOfTokens) public onlyOwner {
+        for(uint i = 0; i < numberOfTokens; i++) {
+            uint mintIndex = totalSupply();
+            if (totalSupply() < MAX_APES) {
+                _safeMint(to, mintIndex);
+            }
+        }
+
+        // If we haven't set the starting index and this is either 1) the last saleable token or 2) the first token to be sold after
+        // the end of pre-sale, set the starting index block
+        if (startingIndexBlock == 0 && (totalSupply() == MAX_APES || block.timestamp >= REVEAL_TIMESTAMP)) {
+            startingIndexBlock = block.number;
+        }
+    }
+
+
     function mintApe(uint numberOfTokens) public payable {
         require(saleIsActive, "Sale must be active to mint Ape");
         require(numberOfTokens <= maxApePurchase, "Can only mint 20 tokens at a time");

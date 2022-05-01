@@ -19,13 +19,11 @@
       </div>
 
       <div class="breedCard" style="">
-        <div class="text nbNft">
-          Owned MGDC : {{ mgdcBalance }}
-        </div>
+        <div class="text nbNft">Owned MGDC : {{ mgdcBalance }}</div>
         <div class="contentTeam ct2">
           <BreedCard
             v-for="mgdc in mgdcs"
-            :key="mgdc.token_id"
+            :key="mgdc.id"
             :mgdc="mgdc"
             :contract="contract"
           />
@@ -34,13 +32,21 @@
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar ref="breedSidebar" :mal-contract="malContractAddress" />
-    <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
+    <breed-sidebar
+      ref="breedSidebar"
+      :mal-contract="malContractAddress"
+      :malContract="malContract"
+      v-if="target === 'BAYC'"
+    />
+    <chat @sendMessage="sendMessage" v-if="target === 'BAYC' && mgdcBalance > 0" />
     <div
       id="overlay"
-      v-show="errorMsg"
+      v-show="errorMsg || profileIsLoading"
       class="w-full no-nodes-content flex justify-center items-center"
     >
+      <svg class="spinner" viewBox="0 0 50 50" v-if="!errorMsg && profileIsLoading">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
       <div class="warnning-notification" v-if="errorMsg">
         <div class="warnning-notification-logo-wrapper">
           <i class="fas fa-triangle-exclamation warnning"></i>
@@ -113,7 +119,7 @@ export default {
       nftsCountToMint: 2,
       minted: false,
       isMinting: false,
-      target: null,
+      target: "BAYC",
       malContractAddress: null,
       contractMGDC: [],
       breedAddress: null,
@@ -127,7 +133,14 @@ export default {
     await this.init();
   },
   computed: {
-    ...mapGetters(["chatId", "messages", "conversations", "account", "mgdcs"]),
+    ...mapGetters([
+      "chatId",
+      "messages",
+      "conversations",
+      "account",
+      "mgdcs",
+      "profileIsLoading",
+    ]),
   },
   methods: {
     clearError() {
@@ -212,6 +225,7 @@ export default {
       return `0x${root}`;
     },
     async loadWeb3() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
 
@@ -226,9 +240,11 @@ export default {
         window.ethereum.on("networkChanged", function () {
           location.reload();
         });
+        this.$store.commit("SET_PROFILE_IS_LOADING", false);
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
       } else {
+        this.$store.commit("SET_PROFILE_IS_LOADING", false);
         this.errorMsg =
           "Non-Ethereum browser detected. You should consider trying MetaMask !";
       }
@@ -280,6 +296,7 @@ export default {
       await this.init();
     },
     async connectWallet() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       console.log("Connect to wallet");
       const web3js = window.web3;
       if (typeof web3js !== "undefined") {
@@ -298,10 +315,26 @@ export default {
           .call();
         if (this.mgdcBalance == 0) {
           this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
+          this.$store.commit("SET_PROFILE_IS_LOADING", false);
         } else {
-          this.$store.dispatch("getmgdcs", this.accountID);
-          this.$store.dispatch("getBreedMgdcs", this.accountID);
-          this.$store.dispatch("getMeessages", this.chatId);
+          const mgdcs = [];
+          for (let index = 0; index < this.mgdcBalance; index++) {
+            const id = await this.contractMGDC.methods
+              .tokenOfOwnerByIndex(this.accountID, index)
+              .call();
+
+            if (id) {
+              const mgdc = {};
+              mgdc.id = id;
+              mgdc.hasBreed = await this.contract.methods.hasBreed(id).call();
+
+              mgdc.isListed = await this.contract.methods.MGDCisBreeding(id).call();
+              mgdcs.push(mgdc);
+              this.$store.commit("SET_MGDCS", mgdcs);
+            }
+          }
+          await this.$store.dispatch("getBreedMgdcs", this.accountID);
+          await this.$store.dispatch("getMeessages", this.chatId);
         }
 
         console.log("wlClaimed " + this.wlClaimed);
@@ -652,5 +685,22 @@ button {
   top: 25px;
   right: 20px;
   z-index: 1;
+}
+
+.spinner {
+  animation: rotate 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 50px;
+  height: 50px;
+
+  & .path {
+    stroke: pink;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+  }
 }
 </style>
