@@ -314,7 +314,7 @@ export default {
           .balanceOf(this.accountID)
           .call();
         if (this.mgdcBalance == 0) {
-          this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
+          this.errorMsg = `You don't have MGDC ink. You can buy it here:`;
           this.$store.commit("SET_PROFILE_IS_LOADING", false);
         } else {
           const mgdcs = [];

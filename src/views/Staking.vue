@@ -52,6 +52,11 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
+            <span v-if="mgdcBalance == 0">
+              <a href="https://opensea.io/collection/mgdc" target="_blank" class="buy-bn"
+                >Buy an MGDC</a
+              ></span
+            >
           </h4>
         </div>
         <div class="warnning-notification-logo-wrapper" @click="clearError">
@@ -80,7 +85,7 @@ export default {
   },
   data() {
     return {
-      mgdcBalance: null,
+      mgdcBalance: 0,
       contractMGDC: null,
       contractMGDCStake: null,
       approvedForall: false,
@@ -129,6 +134,8 @@ export default {
             this.approvedForall = await this.contractMGDC.methods
               .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
               .call();
+          } else {
+            this.errorMsg = `You don't have MGDC ink. You can buy it here:`;
           }
         }
       }
