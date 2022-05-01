@@ -42,7 +42,6 @@ export default {
   },
   methods: {
     async fetch() {
-
       const rewards = await this.stakecontract.methods.getAllRewards(this.account).call();
 
       const eth = Web3.utils.fromWei(rewards, "ether");
@@ -50,8 +49,10 @@ export default {
       this.rewards = eth.toString(18);
     },
     async claim() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       await this.stakecontract.methods.claimAll().send({ from: this.account });
       await this.fetch();
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
   },
 };

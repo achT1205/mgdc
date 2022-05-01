@@ -94,6 +94,7 @@ export default {
 
   methods: {
     async init() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       this.stakedCount = await this.stakecontract.methods
         .getStakedCount(this.account)
         .call();
@@ -109,8 +110,10 @@ export default {
           this.localmgdcs.push(mgdc);
         }
       }
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
     async appveAndUnstake() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       const ids = this.localmgdcs.filter((_) => _.selected).map((_) => parseInt(_.id));
 
       // const approved = await this.mgdccontract.methods
@@ -126,6 +129,7 @@ export default {
       await this.stakecontract.methods.unstakeMGDCByIds(ids).send({ from: this.account });
       await this.init();
       this.$emit("fetchStakeds", "stake");
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
   },
 };

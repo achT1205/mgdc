@@ -138,8 +138,8 @@ export default {
       if (approved) {
         await this.stakecontract.methods.stakeMGDCByIds(ids).send({ from: this.account });
         await this.init();
+        this.$emit("fetchStakeds", "unstake");
         this.$store.commit("SET_PROFILE_IS_LOADING", false);
-        this.$emit("fetchStakeds","unstake")
       }
     },
   },
@@ -315,7 +315,6 @@ export default {
   border-radius: 50%;
 }
 
-
 .tooltip {
   position: relative;
   display: inline-block;
@@ -343,6 +342,6 @@ export default {
 
 .tooltip:hover .tooltiptext {
   visibility: visible;
-    margin-top: 20px;
+  margin-top: 20px;
 }
 </style>
