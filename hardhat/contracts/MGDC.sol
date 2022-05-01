@@ -4,7 +4,7 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.7;
+pragma solidity 0.8.4;
 
 // File @openzeppelin/contracts/utils/introspection/IERC165.sol@v4.3.0
 
@@ -1445,7 +1445,7 @@ contract MGDC is ERC721("Meta Gold Digger Club", "MGDC"), ERC721Enumerable, Owna
     uint256 public constant BUY_LIMIT_PER_TX = 10;
     uint256 public constant MAX_NFT_PUBLIC = 4969;
     uint256 private constant MAX_NFT = 5369;
-    uint256 public NFTPrice = 25000000000000;  // 0.000025 ETH
+    uint256 public NFTPrice = 250000000000;  // 0.00000025 ETH
     bool public reveal;
     bool public isActive;
     bool public isPresaleActive;
@@ -1607,6 +1607,21 @@ contract MGDC is ERC721("Meta Gold Digger Club", "MGDC"), ERC721Enumerable, Owna
         _safeMint(_to, _tokenId);
     }
 
+
+    function mintByOwner(
+        address _to,
+        uint256[] memory _tokenId
+    )
+        public
+        onlyOwner
+    {
+        for(uint256 i = 0; i < _tokenId.length; i++){
+            _safeMint(_to, _tokenId[i]);
+            giveawayCount = giveawayCount.add(1);
+        }
+    }
+
+
     /*
      * Function to mint all NFTs for giveaway and partnerships
     */
@@ -1619,8 +1634,8 @@ contract MGDC is ERC721("Meta Gold Digger Club", "MGDC"), ERC721Enumerable, Owna
     {
         require(_to.length == _tokenId.length, "Should have same length");
         for(uint256 i = 0; i < _to.length; i++){
-            require(_tokenId[i] >= MAX_NFT_PUBLIC, "Tokens number to mint must exceed number of public tokens");
-            require(_tokenId[i] < MAX_NFT, "Tokens number to mint cannot exceed number of MAX tokens");
+            // require(_tokenId[i] >= MAX_NFT_PUBLIC, "Tokens number to mint must exceed number of public tokens");
+            // require(_tokenId[i] < MAX_NFT, "Tokens number to mint cannot exceed number of MAX tokens");
             _safeMint(_to[i], _tokenId[i]);
             giveawayCount = giveawayCount.add(1);
         }

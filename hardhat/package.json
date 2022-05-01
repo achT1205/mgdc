@@ -12,9 +12,12 @@
     "dev": "npx hardhat run scripts/deploy.js --network localhost",
     "mumbai": "npx hardhat run scripts/deploy.js --network mumbai",
     "rinkeby": "npx hardhat run scripts/deploy.js --network rinkeby",
+    "ropsten": "npx hardhat run scripts/deploy.js --network ropsten",
+    "output": "npx hardhat flatten contracts/BAYC.sol > contracts/Output-EBAYC.sol && npx hardhat flatten contracts/MGDC.sol > contracts/Output-MGDC.sol && npx hardhat flatten contracts/MGDCBreedBAYC.sol> contracts/Output-MGDCBreedBAYC.sol && npx hardhat flatten contracts/MGDCStake.sol> contracts/Output-EMGDCStake.sol ",
     "test": "npx hardhat test"
   },
   "dependencies": {
-    "@nomiclabs/hardhat-web3": "^2.0.0"
+    "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@openzeppelin/contracts": "^4.6.0"
   }
 }

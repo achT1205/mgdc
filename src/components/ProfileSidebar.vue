@@ -39,9 +39,7 @@
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
-                  <img
-                    :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
-                  />
+                  <img :src="`${item.url}`" />
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
@@ -54,6 +52,7 @@
                       )} `
                     }}
                   </div>
+                  <div class="mt-2">#{{ item.maleId }}</div>
                 </div>
               </li>
             </ul>
@@ -74,12 +73,19 @@
 <script>
 import { mapGetters } from "vuex";
 
+import Moralis from "moralis";
+
+const serverUrl = process.env.VUE_APP_MORALIS_SERVER;
+const appId = process.env.VUE_APP_MORALIS_APP_ID;
+Moralis.start({ serverUrl, appId });
+
 export default {
-  props: ["breed", "profile"],
+  props: ["malContractAddress", "malContract"],
   data: () => ({
     show: false,
     showSidebar: false,
     search: "",
+    localconversations: null,
   }),
   mounted() {},
   watch: {
@@ -128,10 +134,12 @@ export default {
       if (other) participants.push(other);
       this.$store.commit("SET_PARTICIPANTS", participants);
     },
-    onBreed(item) {
-      this.selected = item.mgdcId;
-      this.$store.commit("SET_BREEDING", true);
-      this.$emit("breed", item);
+    async getHape(conversation) {
+      const resp = await this.$store.dispatch("getHapes", {
+        owner: conversation.owner,
+        contract: this.malContractAddress,
+      });
+      if (resp.data && resp.data.length > 0) resp.data[0].image_url;
     },
   },
 };
@@ -281,6 +289,7 @@ export default {
         }
       }
       .name {
+        margin-bottom: 5px;
         padding: 0 10px;
       }
     }

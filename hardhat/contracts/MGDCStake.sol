@@ -10,17 +10,17 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 contract MGDCStake is ERC20Burnable, Ownable {
     uint256 public constant MAX_WALLET_Staked = 30;
     uint256 public constant MGDC_EMISSIONS_RATE = 34722222222222; // 3 per day
-    address public constant MGDC_ADDRESS = 0x0191c41dbceb20a612b25137133ca719e84f7933;
+    // address public MGDC_ADDRESS = 0x0191c41dbceb20a612b25137133ca719e84f7933;
     bool public stakingLive = false;
 
     mapping(uint256 => uint256) internal MGDCTokenIdTimeStaked;
     mapping(uint256 => address) internal MGDCTokenIdTostaker;
     mapping(address => uint256[]) internal stakerToMGDCTokenIds;
     
-    
-    IERC721Enumerable private constant _MGDCIERC721Enumerable = IERC721Enumerable(MGDC_ADDRESS);
+    IERC721Enumerable private _MGDCIERC721Enumerable; // = IERC721Enumerable(MGDC_ADDRESS);
 
-    constructor() ERC20("MGDC", "MGDC") {
+    constructor( address mgdc) ERC20("MGDC", "MGDC") {
+        _MGDCIERC721Enumerable = IERC721Enumerable(mgdc);
     }
 
     modifier stakingEnabled {

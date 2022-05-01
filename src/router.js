@@ -5,6 +5,7 @@ import Mint from "./views/Mint.vue";
 import Breed from "./views/Breed.vue";
 import Mint2 from "./views/Mint2.vue";
 import Profile from "./views/Profile.vue";
+import Staking from "./views/Staking.vue";
 
 Vue.use(Router);
 
@@ -35,6 +36,11 @@ export default new Router({
       name: "Breed",
       component: Breed,
     },
+    {
+      path: "/staking",
+      name: "Staking",
+      component: Staking,
+    }
 
   ],
 });
