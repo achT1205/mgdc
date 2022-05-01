@@ -39,7 +39,7 @@
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
-                  <img :src="`${item.url}`" />
+                  <img :src="item.maleUrl" />
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
@@ -128,18 +128,11 @@ export default {
         other = {
           id: conv.to === this.account ? conv.owner : conv.to,
           name: conv.to === this.account ? conv.owner : conv.to,
-          imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
+          imageUrl: conv.maleUrl,
         };
       participants.push(me);
       if (other) participants.push(other);
       this.$store.commit("SET_PARTICIPANTS", participants);
-    },
-    async getHape(conversation) {
-      const resp = await this.$store.dispatch("getHapes", {
-        owner: conversation.owner,
-        contract: this.malContractAddress,
-      });
-      if (resp.data && resp.data.length > 0) resp.data[0].image_url;
     },
   },
 };

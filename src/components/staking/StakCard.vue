@@ -29,14 +29,7 @@
     </div>
     <div class="d-flex stak-ids">
       <div class="form-group">
-        <label>MGDC :</label>
-        <!-- <div class="mt-1">
-          <div class="stak-id" v-for="id in ids" :key="id" @click="select(id)">
-            ID: {{ id }} <i class="fas fa-times" @click="remove(id)"></i>
-          </div>
-        </div> -->
-        <!-- <input type="number" :max="balance" class="input-field" v-model="ids" /> -->
-
+        <label>MGDCs :</label>
         <label v-for="mgdc in localmgdcs" :key="mgdc.id">
           <input
             type="checkbox"
