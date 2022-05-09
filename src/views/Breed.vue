@@ -68,7 +68,7 @@
           </button>
         </p>
         <div class="modal-body">
-          <div class="search" :class="showSearch ? 'show' : ''">
+          <div class="search-mgdc" :class="showSearch ? 'show' : ''">
             <label>Search</label>
             <input
               type="text"
@@ -131,7 +131,10 @@
                 >Buy BAYC</a
               >
               or
-              <a href="https://opensea.io/collection/hapeprime" target="_blank" class="buy-bn"
+              <a
+                href="https://opensea.io/collection/hapeprime"
+                target="_blank"
+                class="buy-bn"
                 >Buy an HAPE</a
               >
             </span>
@@ -996,7 +999,7 @@ button {
 .modal-body {
   width: 100%;
   color: #000000;
-  .search {
+  .search-mgdc {
     border-radius: 18px;
     margin-left: 25%;
     width: 50%;
@@ -1011,7 +1014,8 @@ button {
       left: 21px;
       padding: 0 5px;
     }
-    input {
+    input,
+    input:focus {
       border: 1px solid #a0367f;
       height: 35px;
       border-radius: 3px;
@@ -1019,7 +1023,7 @@ button {
       background: transparent;
     }
   }
-  .search.show {
+  .search-mgdc.show {
     display: block;
   }
   .clean-search {
