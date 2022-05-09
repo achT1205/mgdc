@@ -39,9 +39,7 @@
                 @click.prevent="onSelect(item)"
               >
                 <div class="avatar">
-                  <img
-                    :src="`https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`"
-                  />
+                  <img :src="item.maleUrl" />
                 </div>
                 <div class="breed-content">
                   <div class="has-breed">
@@ -54,6 +52,7 @@
                       )} `
                     }}
                   </div>
+                  <div class="mt-2">#{{ item.maleId }}</div>
                 </div>
               </li>
             </ul>
@@ -75,11 +74,11 @@
 import { mapGetters } from "vuex";
 
 export default {
-  props: ["breed", "profile"],
   data: () => ({
     show: false,
     showSidebar: false,
     search: "",
+    localconversations: null,
   }),
   mounted() {},
   watch: {
@@ -122,16 +121,11 @@ export default {
         other = {
           id: conv.to === this.account ? conv.owner : conv.to,
           name: conv.to === this.account ? conv.owner : conv.to,
-          imageUrl: `https://metagolddiggerclub.com/img/thumbnails/${item.mgdcId}.png`,
+          imageUrl: conv.maleUrl,
         };
       participants.push(me);
       if (other) participants.push(other);
       this.$store.commit("SET_PARTICIPANTS", participants);
-    },
-    onBreed(item) {
-      this.selected = item.mgdcId;
-      this.$store.commit("SET_BREEDING", true);
-      this.$emit("breed", item);
     },
   },
 };
@@ -281,6 +275,7 @@ export default {
         }
       }
       .name {
+        margin-bottom: 5px;
         padding: 0 10px;
       }
     }

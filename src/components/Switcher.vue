@@ -1,5 +1,5 @@
 <template>
-  <div class="switcher" @click="switcher" >
+  <div class="switcher" @click="switcher">
     <div class="switches">
       <label>BAYC</label>
       <div class="switches-byx">
@@ -16,13 +16,21 @@ export default {
     cryptoType: "BAYC",
     switching: false,
   }),
+  mounted() {
+    if (!this.$route.query.target || this.$route.query.target === "BAYC")
+      this.switching = false;
+    if (this.$route.query.target && this.$route.query.target === "HAPE")
+      this.switching = true;
+  },
   methods: {
     switcher() {
       this.switching = !this.switching;
       if (this.switching) {
-        this.$emit("changeSmartcontract", "HAPE");
+        this.$router.replace({ query: { target: "HAPE" } });
+        location.reload()
       } else {
-        this.$emit("changeSmartcontract", "BAYC");
+        this.$router.replace({ query: { target: "BAYC" } });
+        location.reload()
       }
     },
   },

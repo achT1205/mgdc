@@ -2,7 +2,57 @@
   <div class="page">
     <div class="viewContainer mint mt-5">
       <div class="switch">
-        <switcher @changeSmartcontract="changeSmartcontract" />
+        <switcher />
+      </div>
+      <div class="profile-avatar" v-if="profile" @click="showprofiles">
+        <img :src="profile.url" />
+      </div>
+      <div class="profile-modal" v-show="show">
+        <div>
+          <a title="Close" class="modal-close" @click="show = false">
+            <i class="fas fa-times-circle close"></i>
+          </a>
+          <div class="form-group">
+            <h4>Select a profile :</h4>
+            <br />
+            <div>
+              <label v-for="item in profiles" :key="item.id">
+                <input
+                  type="radio"
+                  :id="'id_' + item.id"
+                  name="profiles"
+                  :value="item.id"
+                  @click="selectProfile(item)"
+                  hidden="true"
+                />
+                <label
+                  class="chip"
+                  :for="'id_' + item.id"
+                  :class="item.id == profile.id ? 'active-chip' : ''"
+                >
+                  <div class="chip-head">
+                    <img :src="item.url" />
+                  </div>
+                  <div class="chip-content">#{{ item.id }}</div>
+                  <div class="chip-close">
+                    <svg
+                      v-show="profile.id == item.id"
+                      class="chip-svg"
+                      focusable="false"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                      />
+                    </svg>
+                  </div>
+                </label>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC breed</p>
@@ -49,18 +99,18 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
-            <span v-if="maleBalance == 0">
+            <span v-if="maleBalance == 0 && target === 'BAYC'">
               <a
                 href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
                 target="_blank"
                 class="buy-bn"
-                >Buy a BAYC</a
+                >Buy BAYC</a
               >
-              ou
+              or
               <a href="https://opensea.io/assets/hapeprime" target="_blank" class="buy-bn"
                 >Buy an HAPE</a
-              ></span
-            >
+              >
+            </span>
           </h4>
         </div>
         <div class="warnning-notification-logo-wrapper" @click="clearError">
@@ -101,7 +151,6 @@ export default {
       breedContract: null,
       breedAddress: null,
       target: "BAYC",
-      hapes: [],
       selectepHape: null,
       isLoading: false,
       errorMsg: null,
@@ -109,6 +158,7 @@ export default {
       contractMGDC: null,
       connectedStatus: "Not connected!",
       maleSymbol: null,
+      show: false,
     };
   },
   computed: {
@@ -119,12 +169,12 @@ export default {
       "conversations",
       "account",
       "isMatching",
+      "profile",
+      "profiles",
     ]),
   },
-  // async created() {
-
-  // },
   async mounted() {
+    this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
     await this.init();
   },
   methods: {
@@ -157,6 +207,12 @@ export default {
 
       this.$store.dispatch("fetchFreeMgdcs");
       await this.connectWallet();
+    },
+    showprofiles() {
+      if (this.profiles && this.profiles.length) this.show = true;
+    },
+    selectProfile(profile) {
+      this.$store.commit("SET_PROFILE", profile);
     },
     clearError() {
       this.errorMsg = null;
@@ -204,17 +260,26 @@ export default {
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async fetchData() {
-      this.hapes = [];
       this.notAllowed = false;
       this.$store.dispatch("getMatches", this.account);
       this.$store.dispatch("getConversations", this.account);
       this.$store.dispatch("getMeessages", this.chatId);
+      this.$store.dispatch("getProfile", {
+        account: this.account,
+        maleType: this.target,
+      });
+      this.$store.dispatch("getProfiles", {
+        account: this.account,
+        maleType: this.target,
+      });
       this.accountBalance = await window.web3.eth.getBalance(this.account);
       this.maleBalance = await this.maleContract.methods.balanceOf(this.account).call();
       this.maleSymbol = await this.maleContract.methods.symbol().call();
-      if (this.maleBalance == 0)
-        this.errorMsg = `Vous n'avez pas encre ni de BAYC ni de HAPE best. Vous pouvez en acheter ici :`;
+      if (this.maleBalance == 0) {
+        this.errorMsg = `You do not have neither BAYC nor Hapebeast yet. You can buy one here:`;
+      }
       console.log("maleBalance", this.maleBalance);
+      this.isTinderLoading(false);
     },
     async connectWallet() {
       console.log("Connect to wallet");
@@ -235,8 +300,13 @@ export default {
       }
     },
     async breed(item) {
-      // eslint-disable-next-line no-debugger
-      debugger;
+      if (this.target === "HAPE") {
+        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        this.$store.commit("SET_BREEDING", false);
+        return;
+      }
+
       const listed = await this.breedContract.methods
         .MGDCisBreeding(parseInt(item.mgdcId))
         .call();
@@ -256,7 +326,7 @@ export default {
           hasBreed: true,
         });
 
-        const msg = `MGDC HAS BREED: Votre MGDC ${item.mgdcName} a été breedé par ${item.owner}`;
+        const msg = `MGDC HAS BREED: Your MGDC ${item.mgdcName} has been breeded by ${item.owner}`;
         const conversation = {
           action: "sendMessage",
           chatId: item.chatId,
@@ -273,15 +343,22 @@ export default {
         this.$store.commit("SET_BREEDING", false);
       }
     },
-
-    async changeSmartcontract(target) {
-      this.target = target;
-      await this.init();
-    },
     selectHape(hape) {
       this.selectepHape = hape;
     },
     async addMatch(mgdc) {
+      const web3 = window.web3;
+      const networkId = await web3.eth.net.getId();
+      if (networkId != process.env.VUE_APP_CHAIN_ID) {
+        this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        return;
+      }
+      if (this.maleBalance == 0) {
+        this.errorMsg = `You do not have neither BAYC nor Hapebeast yet. You can buy one here:`;
+        this.$store.commit("SET_IS_MATCHIING", false);
+        return;
+      }
       try {
         let owner = await this.contractMGDC.methods.ownerOf(parseInt(mgdc.id)).call();
 
@@ -295,10 +372,11 @@ export default {
             mgdcId: parseInt(mgdc.id),
             mgdcName: mgdc.name,
             maleType: this.maleSymbol,
+            maleUrl: this.profile.url,
+            maleId: this.profile.id,
           });
 
-          const message =
-            "MGDC HAS MATCH: Vous avez un nouveau match, vous pouvez lancer une conversation afin d’en savoir plus sur votre ape soeur";
+          const message = `MGDC HAS MATCH: You have a new match, you can start a conversation in order to know more about your "ape soeur"`;
           const conversation = {
             action: "sendMessage",
             chatId: this.chatId,
@@ -322,7 +400,7 @@ export default {
         }
       } catch (error) {
         console.log("error ==> ", error);
-        this.errorMsg = "Ce token n'a pas encore de owner, Vous pouvez choisir un autre.";
+        this.errorMsg = "This token does not have an owner yet, you can choose another.";
         this.$store.commit("SET_IS_MATCHIING", false);
       }
     },
@@ -377,14 +455,178 @@ export default {
 };
 </script>
 
-<style lang="scss">
-.page {
-  background: linear-gradient(180deg, #edbcad 1.31%, #f0d0df 27.36%, #edb8ed 56.4%);
+<style scoped lang="scss">
+.active-chip {
+  border: 1px solid #eea1c5 !important;
+}
+
+.chip {
+  display: inline-flex;
+  flex-direction: row;
+  background: rgba(130, 18, 70, 0.8);
+  border: none;
+  cursor: default;
+  height: 36px;
+  outline: none;
+  padding: 0;
+  font-size: 14px;
+  font-color: #333333;
+  font-family: "Open Sans", sans-serif;
+  white-space: nowrap;
+  align-items: center;
+  border-radius: 16px;
+  vertical-align: middle;
+  text-decoration: none;
+  justify-content: center;
+}
+.chip-head {
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  background-color: #32c5d2;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  user-select: none;
+  border-radius: 50%;
+  justify-content: center;
+  width: 36px;
+  color: #fff;
+  height: 36px;
+  font-size: 20px;
+  margin-right: -4px;
+}
+.chip-content {
+  cursor: inherit;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  white-space: nowrap;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.chip-svg {
+  color: pink;
+  cursor: pointer;
+  height: auto;
+  margin: 4px 4px 0 -8px;
+  fill: currentColor;
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  font-size: 24px;
+  transition: fill 200ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  user-select: none;
+  flex-shrink: 0;
+}
+.chip-svg:hover {
+  color: #666666;
+}
+
+.chip-close {
+  margin-top: 10px;
+}
+
+.chip img {
+  float: left;
+  margin: 0;
+  height: 40px;
+  width: 46px;
+  border-radius: 50%;
 }
 
 .switch {
   position: fixed;
-  top: 25px;
+  top: 20px;
+  right: 85px;
+  z-index: 1;
+}
+
+.profile-modal {
+  position: fixed;
+  background-color: rgba(255, 255, 255, 0.25);
+  top: 140px;
+  right: 162px;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  & > div {
+    width: 300px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 10px;
+    background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
+    box-shadow: 0 0 20px #e56932;
+  }
+  header {
+    font-weight: bold;
+  }
+  h1 {
+    font-size: 150%;
+    margin: 0 0 15px;
+  }
+}
+
+.form-group {
+  & > div {
+    height: 100px;
+    overflow: scroll;
+  }
+}
+
+.modal-close {
+  color: #aaa;
+  font-size: 80%;
+  position: absolute;
+  right: -24px;
+  text-align: center;
+  top: -10px;
+  width: 70px;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover {
+    color: black;
+  }
+  .close {
+    color: white;
+  }
+}
+
+.profile-modal {
+  z-index: 1000;
+  & > div {
+    border-radius: 1rem;
+  }
+}
+</style>
+
+<style lang="scss">
+.profile-avatar {
+  max-width: 50px;
+  width: 100%;
+  border-radius: 100%;
+  border: 2px solid #edf4f6;
+  img {
+    max-width: 50px;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 100%;
+  }
+}
+.page {
+  background: linear-gradient(180deg, #edbcad 1.31%, #f0d0df 27.36%, #edb8ed 56.4%);
+}
+
+.profile-avatar {
+  position: fixed;
+  top: 5px;
   right: 20px;
   z-index: 1;
 }

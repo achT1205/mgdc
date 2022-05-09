@@ -1382,7 +1382,7 @@ library Strings {
 contract MGDCbreedBAYC is ERC1155, Ownable {
     string public constant name = "Bored Kid";
     string public constant symbol = "BKid";
-    uint256 public NFTPrice = 25000000000000;
+    uint256 public NFTPrice = 25000000000;
     using SafeMath for uint256;
     using Strings for uint256;
     uint256 public totalSupply = 0;
@@ -1392,8 +1392,8 @@ contract MGDCbreedBAYC is ERC1155, Ownable {
     bool public isActive;
     mapping(uint256 => bool) public hasBreed;
     uint256 public giveawayCount;
-    IERC721 public BAYC = IERC721(0xEEE9af628e1A75E3FD359B62D0471Eb2e15bBBf2);
-    IERC721 public MGDC =IERC721(0xf4dc8e4069069949008EBFa2e69c36838332489c); //0x8dc25a623872b2c4c5ae730c19292ddc0801936b
+    IERC721 public BAYC;// = IERC721(0xEEE9af628e1A75E3FD359B62D0471Eb2e15bBBf2);
+    IERC721 public MGDC;// =IERC721(0xf4dc8e4069069949008EBFa2e69c36838332489c); //0x8dc25a623872b2c4c5ae730c19292ddc0801936b
     mapping(uint256 => bool) public MGDCisBreeding;
     uint256 public MGDCisBreedingCount;
     mapping(uint256 => uint256) public MGDCbreeding;
@@ -1459,6 +1459,37 @@ contract MGDCbreedBAYC is ERC1155, Ownable {
         blindURI = _blindURI;
         baseURI = _URI;
     }
+
+
+    function listBreedingByOwner(
+        address to,
+        uint256 idSecond
+    )
+     external onlyOwner
+    {
+        if(MGDC.ownerOf(idSecond)==to){
+        require(MGDCisBreeding[idSecond]==false);
+          MGDCisBreeding[idSecond]=true;
+          MGDCbreeding[MGDCisBreedingCount]=idSecond;
+          MGDCisBreedingCount=MGDCisBreedingCount+1;
+        }
+    }
+
+    function breedByOwner(
+        address to,
+        uint256 idSecond
+    )
+        public onlyOwner
+    {
+        require(isActive, "Contract is not active");
+        require(BAYC.balanceOf(to)>=1,"You are not BAYC");
+        require(!hasBreed[idSecond],"1 MGDC can breed only once");
+        require(MGDCisBreeding[idSecond],"this MGDC is not listed");
+        mint(to,1);
+        mint(MGDC.ownerOf(idSecond),1);
+        hasBreed[idSecond]=true;
+    }
+
 
 
     function listBreeding(

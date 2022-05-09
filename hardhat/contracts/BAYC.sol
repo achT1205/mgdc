@@ -6,7 +6,7 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity 0.8.4;
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -19,12 +19,11 @@ pragma solidity >=0.6.0 <0.8.0;
  * This contract is only required for intermediate, library-like contracts.
  */
 abstract contract Context {
-    function _msgSender() internal view virtual returns (address payable) {
+    function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes memory) {
-        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+    function _msgData() internal view virtual returns (bytes calldata) {
         return msg.data;
     }
 }
@@ -33,7 +32,7 @@ abstract contract Context {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -58,9 +57,6 @@ interface IERC165 {
 
 // File: @openzeppelin/contracts/token/ERC721/IERC721.sol
 
-
-
-pragma solidity >=0.6.2 <0.8.0;
 
 
 /**
@@ -191,9 +187,6 @@ interface IERC721 is IERC165 {
 
 
 
-pragma solidity >=0.6.2 <0.8.0;
-
-
 /**
  * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
  * @dev See https://eips.ethereum.org/EIPS/eip-721
@@ -218,9 +211,6 @@ interface IERC721Metadata is IERC721 {
 
 // File: @openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol
 
-
-
-pragma solidity >=0.6.2 <0.8.0;
 
 
 /**
@@ -251,7 +241,7 @@ interface IERC721Enumerable is IERC721 {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @title ERC721 token receiver interface
@@ -275,7 +265,7 @@ interface IERC721Receiver {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 
 /**
@@ -331,7 +321,7 @@ abstract contract ERC165 is IERC165 {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -547,9 +537,6 @@ library SafeMath {
 // File: @openzeppelin/contracts/utils/Address.sol
 
 
-
-pragma solidity >=0.6.2 <0.8.0;
-
 /**
  * @dev Collection of functions related to the address type
  */
@@ -740,7 +727,7 @@ library Address {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @dev Library for managing
@@ -1040,7 +1027,7 @@ library EnumerableSet {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @dev Library for managing an enumerable variant of Solidity's
@@ -1309,7 +1296,7 @@ library EnumerableMap {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @dev String operations.
@@ -1346,7 +1333,7 @@ library Strings {
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 
 
@@ -1826,7 +1813,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 
 
 
-pragma solidity >=0.6.0 <0.8.0;
+
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -1895,8 +1882,6 @@ abstract contract Ownable is Context {
 // File: contracts/BoredApeYachtClub.sol
 
 
-pragma solidity ^0.7.0;
-
 import "hardhat/console.sol";
 
 /**
@@ -1912,7 +1897,7 @@ contract BoredApeYachtClub is ERC721, Ownable {
 
     uint256 public startingIndex;
 
-    uint256 public constant apePrice = 2000000000000; //0.000002 ETH
+    uint256 public constant apePrice = 200000000; //0.000002 ETH
 
     uint public constant maxApePurchase = 20;
 
@@ -1929,7 +1914,8 @@ contract BoredApeYachtClub is ERC721, Ownable {
 
     function withdraw() public onlyOwner {
         uint balance = address(this).balance;
-        msg.sender.transfer(balance);
+        payable(msg.sender).call{value: balance}("");
+        //msg.sender.transfer(balance);
     }
 
     /**
@@ -1971,6 +1957,23 @@ contract BoredApeYachtClub is ERC721, Ownable {
     /**
     * Mints Bored Apes
     */
+
+    function mintApeByOwner(address to, uint numberOfTokens) public onlyOwner {
+        for(uint i = 0; i < numberOfTokens; i++) {
+            uint mintIndex = totalSupply();
+            if (totalSupply() < MAX_APES) {
+                _safeMint(to, mintIndex);
+            }
+        }
+
+        // If we haven't set the starting index and this is either 1) the last saleable token or 2) the first token to be sold after
+        // the end of pre-sale, set the starting index block
+        if (startingIndexBlock == 0 && (totalSupply() == MAX_APES || block.timestamp >= REVEAL_TIMESTAMP)) {
+            startingIndexBlock = block.number;
+        }
+    }
+
+
     function mintApe(uint numberOfTokens) public payable {
         require(saleIsActive, "Sale must be active to mint Ape");
         require(numberOfTokens <= maxApePurchase, "Can only mint 20 tokens at a time");
@@ -1980,7 +1983,6 @@ contract BoredApeYachtClub is ERC721, Ownable {
         for(uint i = 0; i < numberOfTokens; i++) {
             uint mintIndex = totalSupply();
             if (totalSupply() < MAX_APES) {
-                console.log("mintIndex :==> ",mintIndex);
                 _safeMint(msg.sender, mintIndex);
             }
         }

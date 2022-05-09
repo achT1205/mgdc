@@ -2,7 +2,7 @@
   <div class="page">
     <div class="viewContainer mint">
       <div class="switch">
-        <switcher @changeSmartcontract="changeSmartcontract" />
+        <switcher />
       </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
@@ -19,52 +19,30 @@
       </div>
 
       <div class="breedCard" style="">
-        <div class="text nbNft" style="margin-bottom: 25px">
-          Owned MGDC : {{ mgdcBalance }}
-        </div>
+        <div class="text nbNft">Owned MGDC : {{ mgdcBalance }}</div>
         <div class="contentTeam ct2">
           <BreedCard
-            v-for="(item, i) in MGDC"
-            :key="'b' + i"
-            :profOrBreed="'prof'"
-            :id="item.token_id"
-            :breed="item.hasBreed"
-            :listed="item.isListed"
-            :pic="item.metadata ? item.metadata : ''"
-            :token="item.token_id"
+            v-for="mgdc in mgdcs"
+            :key="mgdc.id"
+            :mgdc="mgdc"
+            :contract="contract"
+            @listMgdc="list"
           />
         </div>
       </div>
-
-      <!-- <div class="mintCard">
-        <div class="viewContainer team" v-for="item in MGDC" :key="item.token_id">
-          ID : {{ item.token_id }}
-          <br />
-          <br />
-          Has breeded : {{ item.hasBreed ? "true" : "false" }}
-          <br />
-          <br />
-          Is Listed to breed : {{ item.isListed ? "true" : "false" }}
-          <br />
-          <br />
-          <div class="teamMember">
-            <div class="picContainer"><img class="pic" data-v-16dd8cbd :src="item.metadata ? item.metadata : ''" /></div>
-            <button class="connectButton" @click="list(item.token_id)">{{ item.isListed ? "Already Listed" : "List on Tinder-Ape" }}</button>
-          </div>
-          <br />
-          <br />
-        </div>
-      </div> -->
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar :profile="true" ref="breedSidebar" />
-    <chat @sendMessage="sendMessage" v-if="mgdcBalance > 0" />
+    <breed-sidebar ref="breedSidebar" />
+    <chat @sendMessage="sendMessage" v-if="target === 'BAYC' && mgdcBalance > 0" />
     <div
       id="overlay"
-      v-show="errorMsg"
+      v-show="errorMsg || profileIsLoading"
       class="w-full no-nodes-content flex justify-center items-center"
     >
+      <svg class="spinner" viewBox="0 0 50 50" v-if="!errorMsg && profileIsLoading">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
       <div class="warnning-notification" v-if="errorMsg">
         <div class="warnning-notification-logo-wrapper">
           <i class="fas fa-triangle-exclamation warnning"></i>
@@ -97,8 +75,6 @@ import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
 import address from "../address/address.json";
-import Moralis from "moralis";
-import axios from "axios";
 import Switcher from "../components/Switcher.vue";
 import Chat from "@/components/Chat.vue";
 import BreedSidebar from "@/components/ProfileSidebar.vue";
@@ -139,123 +115,8 @@ export default {
       nftsCountToMint: 2,
       minted: false,
       isMinting: false,
-      target: null,
-      MGDC: [
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "4969",
-        //   block_number_minted: "14074267",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14074267",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: null,
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: null,
-        //   is_valid: 0,
-        //   syncing: 1,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "2",
-        //   block_number_minted: "14075098",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075098",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:47:40.635Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "1",
-        //   block_number_minted: "14075078",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075078",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:43:02.374Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "4969",
-        //   block_number_minted: "14074267",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14074267",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: null,
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: null,
-        //   is_valid: 0,
-        //   syncing: 1,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "2",
-        //   block_number_minted: "14075098",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075098",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:47:40.635Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-        // {
-        //   token_address: "0x0191c41dbceb20a612b25137133ca719e84f7933",
-        //   token_id: "1",
-        //   block_number_minted: "14075078",
-        //   owner_of: "0x71523b03385e24fca2671413b409e394fc5364ae",
-        //   block_number: "14075078",
-        //   amount: "1",
-        //   contract_type: "ERC721",
-        //   name: "Meta Gold Digger Club",
-        //   symbol: "MGDC",
-        //   token_uri: "https://ipfs.moralis.io:2053/ipfs/QmcftsHG5MnNNoAYrHtg93YdgmChCjh35o9yXyoJaBurBR",
-        //   metadata: "https://ipfs.io/ipfs/QmTfwEP88ENMUvMjgBqJq1wHUXPcvjKRNsu7fpryrVAWtA",
-        //   synced_at: "2022-01-25T13:43:02.374Z",
-        //   is_valid: 1,
-        //   syncing: 2,
-        //   frozen: 0,
-        //   hasBreed: false,
-        //   isListed: false,
-        // },
-      ],
+      target: "BAYC",
+      malContractAddress: null,
       contractMGDC: [],
       breedAddress: null,
       malContract: null,
@@ -264,11 +125,20 @@ export default {
       connectedStatus: "Not connected!",
     };
   },
-  async created() {
+  async mounted() {
+    this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
     await this.init();
+    await this.connectWallet();
   },
   computed: {
-    ...mapGetters(["chatId", "messages", "conversations", "account"]),
+    ...mapGetters([
+      "chatId",
+      "messages",
+      "conversations",
+      "account",
+      "mgdcs",
+      "profileIsLoading",
+    ]),
   },
   methods: {
     clearError() {
@@ -297,8 +167,10 @@ export default {
           const messageJson = JSON.parse(event.data);
 
           if (
-            messageJson.message.indexOf("MGDC HAS MATCH:") > -1 ||
-            messageJson.message.indexOf("MGDC HAS BREED: ") > -1
+            messageJson &&
+            messageJson.message &&
+            (messageJson.message.indexOf("MGDC HAS MATCH:") > -1 ||
+              messageJson.message.indexOf("MGDC HAS BREED: ")) > -1
           ) {
             this.$store.commit("SET_MESSAGES", []);
             await this.$store.dispatch("getBreedMgdcs", this.accountID);
@@ -351,10 +223,7 @@ export default {
       return `0x${root}`;
     },
     async loadWeb3() {
-      const serverUrl = "https://jscrvqk2kalm.usemoralis.com:2053/server"; //'https://ttbvxxqntz1v.usemoralis.com:2053/server';
-      const appId = "000zXI8oQpWQybSDy0eXKh7OVMYOl6I91SxMetpQ"; //'D8jmxu2Y96KWnah4acDrAKNrxfky8MJ08QKFK9f9';
-      Moralis.start({ serverUrl, appId });
-
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
 
@@ -369,17 +238,19 @@ export default {
         window.ethereum.on("networkChanged", function () {
           location.reload();
         });
+        this.$store.commit("SET_PROFILE_IS_LOADING", false);
       } else if (window.web3) {
         window.web3 = new Web3(window.web3.currentProvider);
       } else {
+        this.$store.commit("SET_PROFILE_IS_LOADING", false);
         this.errorMsg =
           "Non-Ethereum browser detected. You should consider trying MetaMask !";
       }
 
-      await this.loadContractData(this.target);
+      await this.loadContractData();
       setInterval(
         function () {
-          this.loadContractData(this.target);
+          this.loadContractData();
         }.bind(this),
         1000
       );
@@ -409,6 +280,9 @@ export default {
           ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
+      this.malContractAddress =
+        this.target === "HAPE" ? process.env.VUE_APP_HAPE : process.env.VUE_APP_BAYC;
+
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async setWallet(address) {
@@ -419,6 +293,7 @@ export default {
       await this.init();
     },
     async connectWallet() {
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       console.log("Connect to wallet");
       const web3js = window.web3;
       if (typeof web3js !== "undefined") {
@@ -436,48 +311,30 @@ export default {
           .balanceOf(this.accountID)
           .call();
         if (this.mgdcBalance == 0) {
-          this.errorMsg = `Vous n'avez pas encre de MGDC. Vous pouvez en acheter ici :`;
+          this.errorMsg = `You do not have MGDC yet. You can buy it here:`;
+          this.$store.commit("SET_PROFILE_IS_LOADING", false);
         } else {
-          //this.$store.dispatch("getMatches", this.accountID);
-          this.$store.dispatch("getBreedMgdcs", this.accountID);
-          this.$store.dispatch("getMeessages", this.chatId);
+          const mgdcs = [];
+          for (let index = 0; index < this.mgdcBalance; index++) {
+            const id = await this.contractMGDC.methods
+              .tokenOfOwnerByIndex(this.accountID, index)
+              .call();
+
+            if (id) {
+              const mgdc = {};
+              mgdc.id = id;
+              if (this.target === "BAYC") {
+                mgdc.hasBreed = await this.contract.methods.hasBreed(id).call();
+                mgdc.isListed = await this.contract.methods.MGDCisBreeding(id).call();
+              }
+              mgdcs.push(mgdc);
+              this.$store.commit("SET_MGDCS", mgdcs);
+            }
+          }
+          await this.$store.dispatch("getBreedMgdcs", this.accountID);
+          await this.$store.dispatch("getMeessages", this.chatId);
         }
 
-        let result = await Moralis.Web3API.account.getNFTsForContract({
-          chain: "Eth",
-          address: this.accountID,
-          token_address: "0x0191c41DBceB20a612b25137133ca719E84f7933", //change for contract address
-        });
-
-        this.MGDC = result.result;
-
-        this.MGDC = this.MGDC.map((e) => {
-          if (e.metadata == null) return e;
-          e.metadata = JSON.parse(e.metadata).image;
-
-          return e;
-        });
-
-        for (var i = 0; i < this.MGDC.length; i++) {
-          this.MGDC[i].hasBreed = await this.contract.methods
-            .hasBreed(this.MGDC[i].token_id)
-            .call();
-          this.MGDC[i].isListed = await this.contract.methods
-            .MGDCisBreeding(this.MGDC[i].token_id)
-            .call();
-          let token = await this.contractMGDC.methods
-            .tokenURI(this.MGDC[i].token_id)
-            .call();
-          console.log(token);
-
-          token = await axios.get(token.replace("ipfs://", "https://ipfs.io/ipfs/"));
-          console.log("token", token.data.image);
-          this.MGDC[i].metadata = token.data.image.replace(
-            "ipfs://",
-            "https://ipfs.io/ipfs/"
-          );
-        }
-        console.log(this.MGDC);
         console.log("wlClaimed " + this.wlClaimed);
       } else {
         // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
@@ -485,26 +342,32 @@ export default {
       }
     },
     async list(token_id) {
-      console.log(token_id);
+      const web3 = window.web3;
+      const networkId = await web3.eth.net.getId();
+      if (networkId != process.env.VUE_APP_CHAIN_ID) {
+        this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+        return;
+      }
 
-      await this.contract.methods
-        .listBreeding(token_id)
-        .send({
+      if (this.target === "HAPE") {
+        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        return;
+      }
+
+      try {
+        await this.contract.methods.listBreeding(token_id).send({
           from: this.accountID,
           value: "250000000000000000",
-        })
-        .on("receipt", function (res) {
-          this.minted = true;
-          this.isMinting = false;
-          console.log("Receipt :", res);
-        })
-        .on("error", function (err) {
-          console.log("error:" + err);
-          this.errorMsg = "Transaction Error";
-          this.isMinting = false;
         });
+
+        this.minted = true;
+        this.isMinting = false;
+      } catch (err) {
+        console.log("error:", err.message);
+        this.errorMsg = err.message;
+        this.isMinting = false;
+      }
     },
-    //Minting Functionality
     async mint(e) {
       this.isMinting = true;
       e.preventDefault();
@@ -609,10 +472,6 @@ export default {
       }
       this.isMinting = false;
     },
-    async changeSmartcontract(target) {
-      this.target = target;
-      await this.init();
-    },
   },
 };
 </script>
@@ -695,9 +554,11 @@ export default {
   border-radius: 50px;
   width: 50%;
   max-width: 1200px;
+  max-height: 960px;
+  overflow: auto;
   margin: auto;
   margin-top: 100px;
-  padding-top: 50px;
+  padding: 25px 0;
   background: linear-gradient(180deg, #e56932 0%, #ba3474 83.74%, #9b3782 100%);
   box-shadow: 0 0 20px #e56932;
   //border: 5px solid #e56932;
@@ -765,7 +626,7 @@ button {
   .connectButton {
     margin-top: 25px;
     padding: 10px 20px;
-    font-size: 20px;
+    font-size: 16px;
     border-radius: 15px;
     border: 4px solid pink;
   }
@@ -814,5 +675,22 @@ button {
   top: 25px;
   right: 20px;
   z-index: 1;
+}
+
+.spinner {
+  animation: rotate 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 50px;
+  height: 50px;
+
+  & .path {
+    stroke: pink;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+  }
 }
 </style>

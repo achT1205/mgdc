@@ -11,6 +11,7 @@ async function main() {
   let boredApeYachtClub;
   let mgdc;
   let mGDCbreedBAYC;
+  let mGDCStake;
   [owner, addr1, addr2, addr3, ...addrs] = await hre.ethers.getSigners();
 
   console.log(owner, addr1, addr2, addr3,addrs)
@@ -18,43 +19,32 @@ async function main() {
   const BoredApeYachtClub = await hre.ethers.getContractFactory("BoredApeYachtClub");
   boredApeYachtClub = await BoredApeYachtClub.deploy("BoredApeYachtClub", "BAYC", 50000, 1650479190);
   await boredApeYachtClub.deployed();
-  console.log("BoredApeYachtClub deployed to:", boredApeYachtClub.address);
-
+ 
   const MGDC = await hre.ethers.getContractFactory("MGDC");
   mgdc = await MGDC.deploy();
   await mgdc.deployed();
-  console.log("mgdc deployed to:", mgdc.address);
 
 
   const MGDCbreedBAYC = await hre.ethers.getContractFactory("MGDCbreedBAYC");
   mGDCbreedBAYC = await MGDCbreedBAYC.deploy(boredApeYachtClub.address, mgdc.address);
   await mGDCbreedBAYC.deployed();
-  console.log("MGDCbreedBAYC deployed to:", mGDCbreedBAYC.address);
   boredApeYachtClub.flipSaleState()
+
+  const MGDCStake = await hre.ethers.getContractFactory("MGDCStake");
+  mGDCStake = await MGDCStake.deploy(mgdc.address);
+  await mGDCStake.deployed();
+
+
+
+  console.log("BoredApeYachtClub deployed to:", boredApeYachtClub.address);
+  console.log("mgdc deployed to:", mgdc.address);
+  console.log("MGDCbreedBAYC deployed to:", mGDCbreedBAYC.address);
+  console.log("MGDCStake deployed to:", mGDCStake.address);
 
   // mgdc.setPresaleActive(false)
   // mgdc.setIsActive(true)
   // mGDCbreedBAYC.setIsActive(true)
-
-
-  // await boredApeYachtClub.connect(addr1).mintApe(3, {
-  //   value: hre.ethers.utils.parseEther("0.000006"),
-  // });
-  // let balance = await boredApeYachtClub.connect(addr1).balanceOf(addr1.address);
-  // console.log("balance BAYC: ==>", balance)
-
-
-
-  // await mgdc.connect(owner).mintMultipleByOwner([5529,1168,5021], {
-  //   value: hre.ethers.utils.parseEther("0.000075"),
-  // });
-  //  balance = await mgdc.connect(owner).balanceOf(owner.address);
-  // console.log("balance MGDC: ==>", balance)
-
-
-  // await mGDCbreedBAYC.connect(addr2).listBreeding(0, {
-  //   value: ethers.utils.parseEther("0.000025"),
-  // });
+  // mGDCStake.toggle()
 
 }
 
