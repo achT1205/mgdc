@@ -106,38 +106,45 @@ export default {
       this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
     async web3Check() {
-      if (this.account) return;
-      const ethereum = window.ethereum;
-      if (!ethereum || !ethereum.on) {
-        this.mgdcBalance = null;
-        this.errorMsg = "This App requires MetaMask, Please Install MetaMask";
+      const web3js = window.web3;
+      if (typeof web3js !== "undefined") {
+        this.web3 = new Web3(web3js.currentProvider);
+        const accounts = await window.ethereum
+          .request({
+            method: "eth_requestAccounts",
+          })
+          .catch((err) => {
+            this.errorMsg = err.message;
+          });
+        this.$store.commit("SET_ACCOUNT", accounts[0]);
+        await this.fetchData();
       } else {
-        const web3 = new Web3(window.ethereum);
-        this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
-        this.contractMGDCStake = new web3.eth.Contract(
-          mgdcstake,
-          process.env.VUE_APP_MGDC_STAKE
-        );
+        this.errorMsg = "Unable to connect to Metamask";
+      }
+    },
+    async fetchData() {
+      this.contractMGDC = new this.web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
+      this.contractMGDCStake = new this.web3.eth.Contract(
+        mgdcstake,
+        process.env.VUE_APP_MGDC_STAKE
+      );
 
-        const networkId = await web3.eth.net.getId();
-        if (networkId != process.env.VUE_APP_CHAIN_ID) {
-          this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+      const networkId = await this.web3.eth.net.getId();
+      if (networkId != process.env.VUE_APP_CHAIN_ID) {
+        this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
+      } else {
+        await this.$store.dispatch("connect");
+        this.mgdcBalance = await this.contractMGDC.methods.balanceOf(this.account).call();
+
+        const stakedCount = await this.contractMGDCStake.methods
+          .getStakedCount(this.account)
+          .call();
+        if (this.mgdcBalance > 0 || stakedCount > 0) {
+          this.approvedForall = await this.contractMGDC.methods
+            .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
+            .call();
         } else {
-          await this.$store.dispatch("connect");
-          this.mgdcBalance = await this.contractMGDC.methods
-            .balanceOf(this.account)
-            .call();
-
-          const stakedCount = await this.contractMGDCStake.methods
-            .getStakedCount(this.account)
-            .call();
-          if (this.mgdcBalance > 0 || stakedCount > 0) {
-            this.approvedForall = await this.contractMGDC.methods
-              .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
-              .call();
-          } else {
-            this.errorMsg = `You do not have MGDC yet. You can buy it here:`;
-          }
+          this.errorMsg = `You do not have MGDC yet. You can buy it here:`;
         }
       }
     },

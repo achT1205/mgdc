@@ -408,20 +408,22 @@ export default new Vuex.Store({
         const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
         profile.maleId = await maleContract.methods
           .tokenOfOwnerByIndex(payload.account, 0).call();
-        const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
-        profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
-        profile.id = parseInt(profile.maleId)
-        commit("SET_PROFILE", profile)
+        if (profile.maleId) {
+          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
+          profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+          profile.id = parseInt(profile.maleId)
+          commit("SET_PROFILE", profile)
+        }
       } else {
         const resp = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
-          address: "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD",//payload.owner,
-          token_address: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af"//payload.contract,
+          address: payload.owner,
+          token_address: payload.contract,
         });
         if (resp.result && resp.result.length > 0) {
           profile = {
             id: resp.result[0].token_id,
-            url: `https://meta.hapeprime.com/${resp.result[0].token_id}.png`, //metadada.image,
+            url: `https://meta.hapeprime.com/${resp.result[0].token_id}.png`,
             selected: false,
             maleId: resp.result[0].token_id
           }
@@ -434,23 +436,23 @@ export default new Vuex.Store({
       if (payload.maleType === "BAYC") {
         const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
         const maleBalance = await maleContract.methods.balanceOf(payload.account).call();
-
-        for (let index = 0; index < maleBalance; index++) {
-          const profile = {}
-          profile.maleId = await maleContract.methods
-            .tokenOfOwnerByIndex(payload.account, index).call();
-          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
-          profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
-          profile.id = parseInt(profile.maleId)
-          profile.selected = false
-          profiles.push(profile)
-        }
+        if (maleBalance > 0)
+          for (let index = 0; index < maleBalance; index++) {
+            const profile = {}
+            profile.maleId = await maleContract.methods
+              .tokenOfOwnerByIndex(payload.account, index).call();
+            const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
+            profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+            profile.id = parseInt(profile.maleId)
+            profile.selected = false
+            profiles.push(profile)
+          }
       }
       else {
         const resp = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
-          address: "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD",//payload.owner,
-          token_address: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af"//payload.contract,
+          address: payload.owner,
+          token_address: payload.contract,
         });
         if (resp.result && resp.result.length > 0) {
           console.log("resp.result : => ", resp.result)
