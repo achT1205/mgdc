@@ -2,7 +2,7 @@
   <div class="page">
     <div class="viewContainer mint">
       <div class="switch">
-        <switcher @changeSmartcontract="changeSmartcontract" />
+        <switcher />
       </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC profile</p>
@@ -26,18 +26,14 @@
             :key="mgdc.id"
             :mgdc="mgdc"
             :contract="contract"
+            @listMgdc="list"
           />
         </div>
       </div>
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar
-      ref="breedSidebar"
-      :mal-contract="malContractAddress"
-      :malContract="malContract"
-      v-if="target === 'BAYC'"
-    />
+    <breed-sidebar ref="breedSidebar" />
     <chat @sendMessage="sendMessage" v-if="target === 'BAYC' && mgdcBalance > 0" />
     <div
       id="overlay"
@@ -129,8 +125,10 @@ export default {
       connectedStatus: "Not connected!",
     };
   },
-  async created() {
+  async mounted() {
+    this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
     await this.init();
+    await this.connectWallet();
   },
   computed: {
     ...mapGetters([
@@ -288,7 +286,6 @@ export default {
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async setWallet(address) {
-      // address = "0x9Bb1AC18EdAFCcAb38109133Fdb4f2de1347F235";
       this.accountID = address.toLowerCase();
       this.$store.commit("SET_ACCOUNT", address);
       this.notAllowed = false;
@@ -326,9 +323,10 @@ export default {
             if (id) {
               const mgdc = {};
               mgdc.id = id;
-              mgdc.hasBreed = await this.contract.methods.hasBreed(id).call();
-
-              mgdc.isListed = await this.contract.methods.MGDCisBreeding(id).call();
+              if (this.target === "BAYC") {
+                mgdc.hasBreed = await this.contract.methods.hasBreed(id).call();
+                mgdc.isListed = await this.contract.methods.MGDCisBreeding(id).call();
+              }
               mgdcs.push(mgdc);
               this.$store.commit("SET_MGDCS", mgdcs);
             }
@@ -473,14 +471,6 @@ export default {
         }
       }
       this.isMinting = false;
-    },
-    async changeSmartcontract(target) {
-      this.target = target;
-      if (target === "HAPE") {
-        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        return;
-      }
-      await this.init();
     },
   },
 };

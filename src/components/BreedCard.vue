@@ -45,7 +45,7 @@ import { mapGetters } from "vuex";
 
 export default {
   name: "BreedCard",
-  props: ["mgdc", "contract", "toggleLoading"],
+  props: ["mgdc", "contract", "toggleLoading", "listMgdc"],
   computed: {
     ...mapGetters(["curremgdc"]),
   },
@@ -69,18 +69,18 @@ export default {
   },
   methods: {
     async toggle() {
-      this.$store.commit("SET_PROFILE_IS_LOADING", true)
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       await this.$store.dispatch("getMgdc", this.localmgdc.id);
       this.show = true;
-      this.$store.commit("SET_PROFILE_IS_LOADING", false)
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
     async save() {
-      this.$store.commit("SET_PROFILE_IS_LOADING", true)
+      this.$store.commit("SET_PROFILE_IS_LOADING", true);
       await this.$store.dispatch("upadeteMgdc", {
         biography: this.biography,
         id: this.localmgdc.id,
       });
-      this.$store.commit("SET_PROFILE_IS_LOADING", false)
+      this.$store.commit("SET_PROFILE_IS_LOADING", false);
       this.show = false;
     },
     goToExternal(url) {
@@ -88,7 +88,7 @@ export default {
     },
     list(mgdc) {
       if (mgdc.isListed) return;
-      this.$parent.list(mgdc.id);
+      this.$emit("listMgdc", mgdc.id);
     },
   },
 };

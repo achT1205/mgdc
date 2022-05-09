@@ -2,7 +2,7 @@
   <div class="page">
     <div class="viewContainer mint mt-5">
       <div class="switch">
-        <switcher @changeSmartcontract="changeSmartcontract" />
+        <switcher />
       </div>
       <div class="profile-avatar" v-if="profile" @click="showprofiles">
         <img :src="profile.url" />
@@ -15,40 +15,42 @@
           <div class="form-group">
             <h4>Select a profile :</h4>
             <br />
-            <label v-for="item in profiles" :key="item.id">
-              <input
-                type="radio"
-                :id="'id_' + item.id"
-                name="profiles"
-                :value="item.id"
-                @click="selectProfile(item)"
-                hidden="true"
-              />
-              <label
-                class="chip"
-                :for="'id_' + item.id"
-                :class="item.id == profile.id ? 'active-chip' : ''"
-              >
-                <div class="chip-head">
-                  <img :src="item.url" />
-                </div>
-                <div class="chip-content">#{{ item.id }}</div>
-                <div class="chip-close">
-                  <svg
-                    v-show="profile.id == item.id"
-                    class="chip-svg"
-                    focusable="false"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 512 512"
-                  >
-                    <path
-                      d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
-                    />
-                  </svg>
-                </div>
+            <div>
+              <label v-for="item in profiles" :key="item.id">
+                <input
+                  type="radio"
+                  :id="'id_' + item.id"
+                  name="profiles"
+                  :value="item.id"
+                  @click="selectProfile(item)"
+                  hidden="true"
+                />
+                <label
+                  class="chip"
+                  :for="'id_' + item.id"
+                  :class="item.id == profile.id ? 'active-chip' : ''"
+                >
+                  <div class="chip-head">
+                    <img :src="item.url" />
+                  </div>
+                  <div class="chip-content">#{{ item.id }}</div>
+                  <div class="chip-close">
+                    <svg
+                      v-show="profile.id == item.id"
+                      class="chip-svg"
+                      focusable="false"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                      />
+                    </svg>
+                  </div>
+                </label>
               </label>
-            </label>
+            </div>
           </div>
         </div>
       </div>
@@ -104,10 +106,10 @@
                 class="buy-bn"
                 >Buy BAYC</a
               >
-              <!-- or
+              or
               <a href="https://opensea.io/assets/hapeprime" target="_blank" class="buy-bn"
                 >Buy an HAPE</a
-              > -->
+              >
             </span>
           </h4>
         </div>
@@ -149,7 +151,6 @@ export default {
       breedContract: null,
       breedAddress: null,
       target: "BAYC",
-      hapes: [],
       selectepHape: null,
       isLoading: false,
       errorMsg: null,
@@ -173,6 +174,7 @@ export default {
     ]),
   },
   async mounted() {
+    this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
     await this.init();
   },
   methods: {
@@ -258,7 +260,6 @@ export default {
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async fetchData() {
-      this.hapes = [];
       this.notAllowed = false;
       this.$store.dispatch("getMatches", this.account);
       this.$store.dispatch("getConversations", this.account);
@@ -342,15 +343,6 @@ export default {
         this.$store.commit("SET_BREEDING", false);
       }
     },
-
-    async changeSmartcontract(target) {
-      this.target = target;
-      if (target === "HAPE") {
-        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        return;
-      }
-      await this.init();
-    },
     selectHape(hape) {
       this.selectepHape = hape;
     },
@@ -362,13 +354,6 @@ export default {
         this.$store.commit("SET_IS_MATCHIING", false);
         return;
       }
-
-      if (this.target === "HAPE") {
-        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        this.$store.commit("SET_IS_MATCHIING", false);
-        return;
-      }
-
       if (this.maleBalance == 0) {
         this.errorMsg = `You do not have neither BAYC nor Hapebeast yet. You can buy one here:`;
         this.$store.commit("SET_IS_MATCHIING", false);
@@ -560,7 +545,7 @@ export default {
 .profile-modal {
   position: fixed;
   background-color: rgba(255, 255, 255, 0.25);
-  top: 130px;
+  top: 140px;
   right: 162px;
   z-index: 999;
   opacity: 0;
@@ -585,6 +570,13 @@ export default {
   h1 {
     font-size: 150%;
     margin: 0 0 15px;
+  }
+}
+
+.form-group {
+  & > div {
+    height: 100px;
+    overflow: scroll;
   }
 }
 
