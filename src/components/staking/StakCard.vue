@@ -10,7 +10,7 @@
         <div class="tooltip">
           <button class="btn-check ml-2">
             <input id="brred-bayc" type="radio" name="stack" />
-            <label for="brred-bayc">Breed BAYC</label>
+            <label for="brred-bayc">Bored Kid</label>
           </button>
           <span class="tooltiptext">Coming soon</span>
         </div>
@@ -18,7 +18,7 @@
         <div class="tooltip">
           <button class="btn-check ml-2">
             <input id="brred-hape" type="radio" name="stack" />
-            <label for="brred-hape">Breed Hape</label>
+            <label for="brred-hape">Hape Kid</label>
           </button>
           <span class="tooltiptext">Coming soon</span>
         </div>

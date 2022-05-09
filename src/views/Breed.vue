@@ -56,7 +56,30 @@
       </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC breed</p>
-        <p class="text howMa">Find your partner</p>
+        <p class="text howMa">
+          Find your partner
+
+          <button
+            class="search-btn"
+            :class="showSearch ? 'active' : ''"
+            @click="toggleSearch"
+          >
+            <i class="fas fa-search fa-sm"></i>
+          </button>
+        </p>
+        <div class="modal-body">
+          <div class="search" :class="showSearch ? 'show' : ''">
+            <label>Search</label>
+            <input
+              type="text"
+              ref="search"
+              v-model="search"
+              placeholder="Search by ID"
+              @keydown.enter="filter"
+            />
+            <i class="fas fa-times-circle close clean-search" @click="search = null"></i>
+          </div>
+        </div>
         <button class="connectButton" @click="connectWallet">
           {{
             account === null || !account
@@ -72,6 +95,7 @@
         v-if="freeMgdcs && freeMgdcs.length > 0"
         :breedContract="breedContract"
         @isTinderLoading="isTinderLoading"
+        ref="mgdcTinder"
       />
     </div>
 
@@ -101,13 +125,13 @@
             {{ errorMsg }}
             <span v-if="maleBalance == 0">
               <a
-                href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
+                href="https://opensea.io/collection/boredapeyachtclub"
                 target="_blank"
                 class="buy-bn"
                 >Buy BAYC</a
               >
               or
-              <a href="https://opensea.io/assets/hapeprime" target="_blank" class="buy-bn"
+              <a href="https://opensea.io/collection/hapeprime" target="_blank" class="buy-bn"
                 >Buy an HAPE</a
               >
             </span>
@@ -159,6 +183,8 @@ export default {
       connectedStatus: "Not connected!",
       maleSymbol: null,
       show: false,
+      showSearch: false,
+      search: "",
     };
   },
   computed: {
@@ -171,7 +197,24 @@ export default {
       "isMatching",
       "profile",
       "profiles",
+      "curremgdc",
     ]),
+  },
+  watch: {
+    curremgdc(val) {
+      if (val) {
+        //this.$store.commit("SET_FREE_MGDCS", [val]);
+        this.$refs.mgdcTinder.clearn();
+        this.$refs.mgdcTinder.filtered(val);
+      }
+    },
+    search(val) {
+      if (!val || val.length === 0) {
+        this.$store.dispatch("fetchFreeMgdcs");
+        this.$refs.mgdcTinder.clearn();
+        this.$refs.mgdcTinder.mock();
+      }
+    },
   },
   async mounted() {
     this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
@@ -181,6 +224,12 @@ export default {
     await this.init();
   },
   methods: {
+    toggleSearch() {
+      this.showSearch = !this.showSearch;
+      if (!this.showSearch) {
+        this.search = null;
+      }
+    },
     async init() {
       await this.loadWeb3();
       window.ethereum.on("accountsChanged", function () {
@@ -407,7 +456,6 @@ export default {
         this.$store.commit("SET_IS_MATCHIING", false);
       }
     },
-
     waitForOpenConnection() {
       return new Promise((resolve, reject) => {
         const maxNumberOfAttempts = 10;
@@ -426,7 +474,6 @@ export default {
         }, intervalTime);
       });
     },
-
     async sendMessage(message) {
       let msg = JSON.stringify(message);
       if (this.socket.readyState !== this.socket.OPEN) {
@@ -450,9 +497,12 @@ export default {
       };
       this.$store.commit("SET_MESSAGE", msg);
     },
-
     isTinderLoading(loading) {
       this.isLoading = loading;
+    },
+    async filter() {
+      console.log("this.search)", this.search);
+      await this.$store.dispatch("getMgdc", this.search);
     },
   },
 };
@@ -926,6 +976,56 @@ button {
   100% {
     stroke-dasharray: 90, 150;
     stroke-dashoffset: -124;
+  }
+}
+
+.search-btn {
+  background: none;
+  border: 2px solid #fff;
+  border-radius: 100%;
+  width: 29px;
+  text-align: center;
+  height: 29px;
+}
+.search-btn.active {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0px 0px 7px 0px #ffffff;
+}
+
+.modal-body {
+  width: 100%;
+  color: #000000;
+  .search {
+    border-radius: 18px;
+    margin-left: 25%;
+    width: 50%;
+    padding: 20px 12px 20px;
+    position: relative;
+    background: #edf4f6;
+    display: none;
+    label {
+      background: #edf4f6;
+      position: absolute;
+      top: 12px;
+      left: 21px;
+      padding: 0 5px;
+    }
+    input {
+      border: 1px solid #a0367f;
+      height: 35px;
+      border-radius: 3px;
+      width: 100%;
+      background: transparent;
+    }
+  }
+  .search.show {
+    display: block;
+  }
+  .clean-search {
+    position: absolute;
+    margin-left: -22px;
+    margin-top: 8px;
   }
 }
 </style>

@@ -20,7 +20,7 @@
       </div>
     </div>
     <button class="connectButton" @click="list(localmgdc)">
-      {{ localmgdc.isListed ? "Already Listed" : "List on Tinder-Ape" }}
+      {{ localmgdc.isListed ? "Already Listed" : "List on Kinder-Ape" }}
     </button>
     <div class="modal-window" v-show="show">
       <div>
