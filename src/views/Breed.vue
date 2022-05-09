@@ -99,7 +99,7 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
-            <span v-if="maleBalance == 0 && target === 'BAYC'">
+            <span v-if="maleBalance == 0">
               <a
                 href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
                 target="_blank"
@@ -175,6 +175,9 @@ export default {
   },
   async mounted() {
     this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
+    // if(this.target === "HAPE"){
+    //   this.target = "BAYC"
+    // }
     await this.init();
   },
   methods: {
