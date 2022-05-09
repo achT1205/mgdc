@@ -4,10 +4,6 @@ import Vuex from 'vuex'
 import Web3 from 'web3'
 import axios from "axios";
 import Moralis from "moralis";
-
-// eslint-disable-next-line no-unused-vars
-import mgdcstake from "../abis/mgdcstake.json";
-
 import bayc from "../abis/bayc.json";
 
 const serverUrl = process.env.VUE_APP_MORALIS_SERVER
@@ -206,7 +202,6 @@ export default new Vuex.Store({
     isMatching: false,
     participants: [],
     breeding: false,
-    hapes: null,
     curremgdc: null,
     stakeds: null,
     profileIsLoading: false,
@@ -229,7 +224,6 @@ export default new Vuex.Store({
     isMatching: state => state.isMatching,
     participants: state => state.participants,
     breeding: state => state.breeding,
-    hapes: state => state.hapes,
     curremgdc: state => state.curremgdc,
     profileIsLoading: state => state.profileIsLoading,
     profile: state => state.profile,
@@ -274,9 +268,6 @@ export default new Vuex.Store({
     },
     SET_MGDCS(state, payload) {
       state.mgdcs = payload
-    },
-    SET_HAPES(state, payload) {
-      state.hapes = payload
     },
     SET_WHITELIST_CLAIMED(state, payload) {
       state.mgdcs = payload
@@ -400,30 +391,6 @@ export default new Vuex.Store({
         token_address: process.env.VUE_APP_MGDC,
       });
       commit("SET_MGDCS", resp.result)
-
-      // await fetch(`${process.env.VUE_APP_OPENSEA_API}/assets?owner=${payload}&asset_contract_address=${process.env.VUE_APP_MGDC}&order_direction=desc&offset=0&limit=20`)
-      //   .then((resp) => resp.json)
-      //   .then((resp) => {
-      //     // eslint-disable-next-line no-debugger
-      //     debugger;
-      //     commit("SET_MGDCS", resp.assets)
-      //   })
-      //   .catch((e) => console.log(e))
-
-
-
-    },
-    async getHapes({ commit }, payload) {
-
-      const resp = await Moralis.Web3API.account.getNFTsForContract({
-        chain: "Eth",
-        address: payload.owner,
-        token_address: payload.contract,
-      });
-      commit("SET_HAPES", resp.result)
-
-      // const resp = await fetch(`${process.env.VUE_APP_OPENSEA_API}/assets?owner=${payload.owner}&asset_contract_address=${payload.contract}&order_direction=desc&offset=0&limit=20`)
-      // commit("SET_HAPES", resp.data)
     },
     // eslint-disable-next-line no-empty-pattern
     async upadeteMgdc({ }, payload) {
@@ -436,15 +403,30 @@ export default new Vuex.Store({
       commit("SET_CURRENT_MGDC", resp.data)
     },
     async getProfile({ commit }, payload) {
+      let profile = {}
       if (payload.maleType === "BAYC") {
         const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
-        const profile = {}
         profile.maleId = await maleContract.methods
           .tokenOfOwnerByIndex(payload.account, 0).call();
         const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
         profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
         profile.id = parseInt(profile.maleId)
         commit("SET_PROFILE", profile)
+      } else {
+        const resp = await Moralis.Web3API.account.getNFTsForContract({
+          chain: "Eth",
+          address: "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD",//payload.owner,
+          token_address: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af"//payload.contract,
+        });
+        if (resp.result && resp.result.length > 0) {
+          profile = {
+            id: resp.result[0].token_id,
+            url: `https://meta.hapeprime.com/${resp.result[0].token_id}.png`, //metadada.image,
+            selected: false,
+            maleId: resp.result[0].token_id
+          }
+          commit("SET_PROFILE", profile)
+        }
       }
     },
     async getProfiles({ commit }, payload) {
@@ -462,6 +444,26 @@ export default new Vuex.Store({
           profile.id = parseInt(profile.maleId)
           profile.selected = false
           profiles.push(profile)
+        }
+      }
+      else {
+        const resp = await Moralis.Web3API.account.getNFTsForContract({
+          chain: "Eth",
+          address: "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD",//payload.owner,
+          token_address: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af"//payload.contract,
+        });
+        if (resp.result && resp.result.length > 0) {
+          console.log("resp.result : => ", resp.result)
+          resp.result.forEach(async element => {
+            // const metadada = await axios.get(element.token_uri)
+            const profile = {
+              id: element.token_id,
+              url: `https://meta.hapeprime.com/${element.token_id}.png`, //metadada.image,
+              selected: false,
+              maleId: element.token_id
+            }
+            profiles.push(profile)
+          });
         }
       }
       commit("SET_PROFILES", profiles)

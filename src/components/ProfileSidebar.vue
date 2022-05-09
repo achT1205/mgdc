@@ -73,14 +73,7 @@
 <script>
 import { mapGetters } from "vuex";
 
-import Moralis from "moralis";
-
-const serverUrl = process.env.VUE_APP_MORALIS_SERVER;
-const appId = process.env.VUE_APP_MORALIS_APP_ID;
-Moralis.start({ serverUrl, appId });
-
 export default {
-  props: ["malContractAddress", "malContract"],
   data: () => ({
     show: false,
     showSidebar: false,
