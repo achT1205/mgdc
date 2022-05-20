@@ -6,14 +6,29 @@
         <p class="text pers">{{ percent }}%</p>
       </div>
       <div class="right">
-        <img class="diams" v-for="(empt, i) in percent / 10" :key="'i' + i" :src="require(`@/assets/imgs/diamant_small.png`)" />
-        <img class="empty" v-for="(empt, i) in (100 - percent) / 10" :key="'ii' + i" :src="require(`@/assets/imgs/empty-diamond.png`)" />
+        <img
+          class="diams"
+          v-for="(empt, i) in diams"
+          :key="'diams_' + i"
+          :src="require(`@/assets/imgs/diamant_small.png`)"
+        />
+        <img
+          class="empty"
+          v-for="(empt, i) in empty"
+          :key="'empty_' + i"
+          :src="require(`@/assets/imgs/empty-diamond.png`)"
+        />
       </div>
     </div>
 
     <div class="box11">
       <img class="icon1" :src="require(`@/assets/imgs/Group 19.png`)" alt="" />
-      <p class="text boxTxt1">{{ text }}</p>
+      <p
+        class="text boxTxt1"
+        :class="[5, 10, 20].includes(percent) ? 'line-through' : ''"
+      >
+        {{ text }}
+      </p>
     </div>
   </div>
 </template>
@@ -25,6 +40,8 @@ export default {
     percent: Number,
     color: String,
     text: String,
+    diams: Number,
+    empty: Number,
   },
   data() {
     return {
@@ -35,6 +52,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.line-through {
+  text-decoration: line-through;
+}
+
 .roadMapItem {
   display: flex;
   flex-direction: column;

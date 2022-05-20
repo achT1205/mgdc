@@ -229,6 +229,7 @@ export default {
           border-radius: 3px;
           width: 100%;
           background: transparent;
+          outline: none;
         }
       }
       .search.show {

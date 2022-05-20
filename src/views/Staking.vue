@@ -1,26 +1,26 @@
 <template>
   <div class="page">
     <div class="mint" v-if="mgdcBalance">
-      <stack-header @connect="web3Check" />
+      <stake-header @connect="web3Check" />
       <div class="staking-content">
         <div class="col-12">
           <h1>STAKING</h1>
         </div>
         <div class="col-6">
-          <stak-card
+          <stake-card
             :balance="mgdcBalance"
             :stakecontract="contractMGDCStake"
             :mgdccontract="contractMGDC"
             :approved="approvedForall"
-            class="stak-card"
+            class="stake-card"
           />
         </div>
         <div class="col-6">
-          <unstak-card
+          <unstake-card
             :stakecontract="contractMGDCStake"
             :mgdccontract="contractMGDC"
             :approved="approvedForall"
-            class="stak-card"
+            class="stake-card"
           />
         </div>
       </div>
@@ -28,7 +28,7 @@
         <claiming-card
           :stakecontract="contractMGDCStake"
           :approved="approvedForall"
-          class="stak-card"
+          class="stake-card"
         />
       </div>
     </div>
@@ -63,9 +63,9 @@
   </div>
 </template>
 <script>
-import StackHeader from "@/components/staking/StackHeader.vue";
-import stakCard from "@/components/staking/StakCard.vue";
-import UnstakCard from "@/components/staking/UnstakCard.vue";
+import StakeHeader from "@/components/staking/StakeHeader.vue";
+import stakeCard from "@/components/staking/StakeCard.vue";
+import UnstakeCard from "@/components/staking/UnstakeCard.vue";
 import ClaimingCard from "@/components/staking/ClaimingCard.vue";
 import MGDC from "../abis/mgdc.json";
 import mgdcstake from "../abis/mgdcstake.json";
@@ -74,9 +74,9 @@ import { mapGetters } from "vuex";
 
 export default {
   components: {
-    StackHeader,
-    stakCard,
-    UnstakCard,
+    StakeHeader,
+    stakeCard,
+    UnstakeCard,
     ClaimingCard,
   },
   data() {
@@ -181,7 +181,7 @@ h1 {
   text-shadow: 0 0 3px #ffffff;
   margin-bottom: 20px;
 }
-.stak-card {
+.stake-card {
   width: calc(1050px / 2);
   padding: 20px;
   border-radius: 3px;

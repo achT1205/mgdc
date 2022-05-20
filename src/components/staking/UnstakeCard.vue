@@ -1,15 +1,15 @@
 <template>
   <div class="stak">
     <div class="d-flex align-center checking">
-      <h3>Unstack</h3>
+      <h3>Unstake</h3>
       <div class="d-flex checkeboxes">
-        <button class="btn-check ml-2" :class="{ active: stack === 'mgdc' }">
-          <input id="umgdc" type="radio" name="unstack" v-model="stack" value="mgdc" />
+        <button class="btn-check ml-2" :class="{ active: stake === 'mgdc' }">
+          <input id="umgdc" type="radio" name="unstake" v-model="stake" value="mgdc" />
           <label for="umgdc">mgdc({{ stakedCount }})</label>
         </button>
         <div class="tooltip">
           <button class="btn-check ml-2">
-            <input id="brred-bayc" type="radio" name="stack" />
+            <input id="brred-bayc" type="radio" name="stake" />
             <label for="brred-bayc">Bored Kid</label>
           </button>
           <span class="tooltiptext">Coming soon</span>
@@ -17,7 +17,7 @@
 
         <div class="tooltip">
           <button class="btn-check ml-2">
-            <input id="brred-hape" type="radio" name="stack" />
+            <input id="brred-hape" type="radio" name="stake" />
             <label for="brred-hape">Hape Kid</label>
           </button>
           <span class="tooltiptext">Coming soon</span>
@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="d-flex texts">
-      <p>Selecte the NFTs you want to unstake</p>
+      <p>Select the NFTs you want to unstake</p>
     </div>
     <div class="d-flex stak-ids">
       <div class="form-group">
@@ -72,14 +72,14 @@
       </div>
       <div class="reward-per-day d-flex">
         <p>mgdc reward increase</p>
-        <div class="increase-per-day">+ 65 mgdc / day</div>
+        <div class="increase-per-day">+ 3 mgdc / day</div>
       </div>
     </div>
     <div class="d-flex stak-btn">
-      <button class="approve-stack-btn" @click="appveAndUnstake">
-        Approve & Unstaking
+      <button class="approve-stake-btn" @click="appveAndUnstake">
+        Approve & Unstake
       </button>
-      <button class="approve-stack-btn" @click="unstakeAll">Unstaking all</button>
+      <button class="approve-stake-btn" @click="unstakeAll">Unstake all</button>
     </div>
   </div>
 </template>
@@ -88,7 +88,7 @@ import { mapGetters } from "vuex";
 export default {
   props: ["balance", "stakecontract", "mgdccontract", "approved"],
   data: () => ({
-    stack: "mgdc",
+    stake: "mgdc",
     localmgdcs: [],
     stakedCount: 0,
   }),

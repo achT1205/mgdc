@@ -77,7 +77,11 @@
               placeholder="Search by ID"
               @keydown.enter="filter"
             />
-            <i class="fas fa-times-circle close clean-search" @click="search = null"></i>
+            <i
+              class="fas fa-times-circle close clean-search"
+              v-if="search && search.length > 0"
+              @click="search = null"
+            ></i>
           </div>
         </div>
         <button class="connectButton" @click="connectWallet">
@@ -929,7 +933,7 @@ button {
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
-  z-index: 2000; /* Specify a stack order in case you're using a different order for other elements */
+  z-index: 2000; /* Specify a stake order in case you're using a different order for other elements */
   cursor: pointer; /* Add a pointer on hover */
 }
 
@@ -939,7 +943,7 @@ button {
 }
 
 .close {
-  color: #000;
+  color:#a0367f;
   font-size: 20px;
   margin-left: 10px;
 }
@@ -998,29 +1002,29 @@ button {
 
 .modal-body {
   width: 100%;
-  color: #000000;
+  color: #fff;
   .search-mgdc {
     border-radius: 18px;
     margin-left: 25%;
     width: 50%;
     padding: 20px 12px 20px;
     position: relative;
-    background: #edf4f6;
+    background: pink;
     display: none;
     label {
-      background: #edf4f6;
+      background: #a0367f;
       position: absolute;
       top: 12px;
       left: 21px;
       padding: 0 5px;
     }
-    input,
-    input:focus {
-      border: 1px solid #a0367f;
+    input {
+      border: 1px solid #a0367f!important;
       height: 35px;
       border-radius: 3px;
       width: 100%;
       background: transparent;
+      outline: #a0367f;
     }
   }
   .search-mgdc.show {

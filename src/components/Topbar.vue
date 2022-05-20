@@ -1,18 +1,13 @@
 <template>
   <div class="topbar-container">
     <div class="topbar">
-      <img class="logo-png-transparent" :src="require(`@/assets/imgs/mdgc-logo.png`)" @click="goToExternal('https://discord.com/invite/9mxyH2eDr3')" />
+      <img class="logo-png-transparent" :src="require(`@/assets/imgs/mdgc-logo.png`)" @click="goToExternal('https://discord.gg/jXB2Sxgxzz')" />
       <a href="#project" class="nav-item mainNav">Project</a>
       <a href="#exc-reward" class="nav-item mainNav">Reward program</a>
       <a href="#howcan" class="nav-item mainNav">Metaverse</a>
       <a @click="goTo('Profile')" class="nav-item mainNav">Profile</a>
       <a @click="goTo('Breed')" class="nav-item mainNav">Breed</a>
-
-      <!-- <a class="discord-button2" @click="goToExternal('https://discord.com/invite/9mxyH2eDr3')"> -->
-      <a class="discord-button2" @click="goTo('Breed')">
-        <!-- <i class="fab fa-discord"></i> -->
-        <div class="join-us-on-discord2">Breed now</div>
-      </a>
+      <a @click="goTo('Stake')" class="nav-item mainNav discord-button2">Staking</a>
 
       <div class="right">
         <i class="fab fa-instagram" @click="goToExternal('https://www.instagram.com/mgdcofficial')"></i>
@@ -279,7 +274,7 @@ a {
     margin-left: 10px;
   }
 }
-@media screen and (max-width: $layout-breakpoint-xxlarge) {
+@media screen and (max-width: $layout-breakpoint-medium) {
   .discord-button2 {
     display: none;
   }

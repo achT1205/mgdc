@@ -104,7 +104,11 @@ contract MGDCStake is ERC20Burnable, Ownable {
         _mint(msg.sender, ((block.timestamp - MGDCTokenIdTimeStaked[tokenId]) * MGDC_EMISSIONS_RATE));
         MGDCTokenIdTimeStaked[tokenId] = block.timestamp;
     }
-    
+
+    function airDropToken(address _to, uint256 _amount) external onlyOwner  {
+        _mint(_to, _amount * 1e18);
+
+    }
 
     function claimAll() public {
         uint256 totalRewards = 0;

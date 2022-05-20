@@ -1217,6 +1217,18 @@ contract HapebeastToken is IHapebeastToken, IERC2981, Ownable {
         }
     }
 
+    
+    function mintbyOwner(uint256 _count, address _recipient)
+        public
+        onlyOwner
+    {
+        uint256 supply = totalSupply();
+        for (uint256 i = 1; i <= _count; i++) {
+            tokenSupply++;
+            _safeMint(_recipient, supply + i);
+        }
+    }
+
     function totalSupply() public view override returns (uint256) {
         return tokenSupply;
     }
