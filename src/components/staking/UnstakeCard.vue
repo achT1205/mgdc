@@ -1,31 +1,31 @@
 <template>
   <div class="stak">
     <div class="d-flex align-center checking">
-      <h3>Stack</h3>
+      <h3>Unstake</h3>
       <div class="d-flex checkeboxes">
-        <button class="btn-check ml-2" :class="{ active: stack === 'mgdc' }">
-          <input id="mgdc" type="radio" name="stack" v-model="stack" value="mgdc" />
-          <label for="mgdc"> mgdc</label>
+        <button class="btn-check ml-2" :class="{ active: stake === 'mgdc' }">
+          <input id="umgdc" type="radio" name="unstake" v-model="stake" value="mgdc" />
+          <label for="umgdc">mgdc({{ stakedCount }})</label>
         </button>
         <div class="tooltip">
           <button class="btn-check ml-2">
-            <input id="brred-bayc" type="radio" name="stack" />
-            <label for="brred-bayc">Breed BAYC</label>
+            <input id="brred-bayc" type="radio" name="stake" />
+            <label for="brred-bayc">Bored Kid</label>
           </button>
           <span class="tooltiptext">Coming soon</span>
         </div>
 
         <div class="tooltip">
           <button class="btn-check ml-2">
-            <input id="brred-hape" type="radio" name="stack" />
-            <label for="brred-hape">Breed Hape</label>
+            <input id="brred-hape" type="radio" name="stake" />
+            <label for="brred-hape">Hape Kid</label>
           </button>
           <span class="tooltiptext">Coming soon</span>
         </div>
       </div>
     </div>
     <div class="d-flex texts">
-      <p>Selecte the NFTs you want to stake</p>
+      <p>Select the NFTs you want to unstake</p>
     </div>
     <div class="d-flex stak-ids">
       <div class="form-group">
@@ -33,13 +33,16 @@
         <label v-for="mgdc in localmgdcs" :key="mgdc.id">
           <input
             type="checkbox"
-            :id="mgdc.id"
+            :id="'staked' + mgdc.id"
             :name="mgdc.id"
             v-model="mgdc.selected"
-            class="btn"
             hidden="true"
           />
-          <label class="chip" :class="mgdc.selected ? 'active-chip' : ''" :for="mgdc.id">
+          <label
+            class="chip"
+            :class="mgdc.selected ? 'active-chip' : ''"
+            :for="'staked' + mgdc.id"
+          >
             <div class="chip-head">
               <img
                 :src="`https://metagolddiggerclub.com/img/thumbnails/${mgdc.id}.png`"
@@ -65,16 +68,18 @@
       </div>
       <div class="qty d-flex">
         <p>Quantity</p>
-        <p>Staking {{ quantity }} mgdc<span v-if="quantity > 1">s</span></p>
+        <p>Unstaking {{ quantity }} mgdc<span v-if="quantity > 1">s</span></p>
       </div>
       <div class="reward-per-day d-flex">
         <p>mgdc reward increase</p>
-        <div class="increase-per-day">+ 65 mgdc / day</div>
+        <div class="increase-per-day">+ 3 mgdc / day</div>
       </div>
     </div>
     <div class="d-flex stak-btn">
-      <button class="approve-stack-btn" @click="appveAndStake">Approve & staking</button>
-      <button class="approve-stack-btn" @click="stakeAll">Approve & Astake all</button>
+      <button class="approve-stake-btn" @click="appveAndUnstake">
+        Approve & Unstake
+      </button>
+      <button class="approve-stake-btn" @click="unstakeAll">Unstake all</button>
     </div>
   </div>
 </template>
@@ -83,9 +88,9 @@ import { mapGetters } from "vuex";
 export default {
   props: ["balance", "stakecontract", "mgdccontract", "approved"],
   data: () => ({
-    stack: "mgdc",
+    stake: "mgdc",
     localmgdcs: [],
-    mgdcBalance: null,
+    stakedCount: 0,
   }),
   async mounted() {
     if (this.stakecontract.methods) await this.init();
@@ -98,81 +103,41 @@ export default {
       return 0;
     },
   },
+
   methods: {
     async init() {
       this.$store.commit("SET_PROFILE_IS_LOADING", true);
-      this.mgdcBalance = await this.mgdccontract.methods.balanceOf(this.account).call();
-      if (this.mgdcBalance > 0) {
-        for (let index = 0; index < this.mgdcBalance; index++) {
+      this.stakedCount = await this.stakecontract.methods
+        .getStakedCount(this.account)
+        .call();
+      const mgdcs = await this.stakecontract.methods.getMGDCStaked(this.account).call();
+      if (mgdcs && mgdcs.length) {
+        mgdcs.forEach((id) => {
           const mgdc = {
             selected: false,
+            id: id,
           };
-          mgdc.id = await this.mgdccontract.methods
-            .tokenOfOwnerByIndex(this.account, index)
-            .call();
-
           this.localmgdcs.push(mgdc);
-        }
+        });
       }
       this.$store.commit("SET_PROFILE_IS_LOADING", false);
     },
-    async appveAndStake() {
+    async appveAndUnstake() {
       const ids = this.localmgdcs.filter((_) => _.selected).map((_) => parseInt(_.id));
       if (!ids || ids.length == 0) {
         return;
       }
       this.$store.commit("SET_PROFILE_IS_LOADING", true);
-      if (!this.approved) {
-        await this.mgdccontract.methods
-          .setApprovalForAll(process.env.VUE_APP_MGDC_STAKE, true)
-          .send({ from: this.account });
-      }
-
-      try {
-        const approved = await this.mgdccontract.methods
-          .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
-          .call();
-
-        if (approved) {
-          await this.stakecontract.methods
-            .stakeMGDCByIds(ids)
-            .send({ from: this.account });
-          location.reload();
-        }
-      } catch (err) {
-        console.log(err);
-        this.$store.commit("SET_PROFILE_IS_LOADING", false);
-      }
+      await this.stakecontract.methods.unstakeMGDCByIds(ids).send({ from: this.account });
+      location.reload();
     },
-
-    async stakeAll() {
-      const ids = this.localmgdcs.map((_) => parseInt(_.id));
-      if (!ids || ids.length == 0) {
+    async unstakeAll() {
+      if (!this.localmgdcs || this.localmgdcs.length == 0) {
         return;
       }
       this.$store.commit("SET_PROFILE_IS_LOADING", true);
-
-      if (!this.approved) {
-        await this.mgdccontract.methods
-          .setApprovalForAll(process.env.VUE_APP_MGDC_STAKE, true)
-          .send({ from: this.account });
-      }
-
-      try {
-        const approved = await this.mgdccontract.methods
-          .isApprovedForAll(this.account, process.env.VUE_APP_MGDC_STAKE)
-          .call();
-
-        if (approved) {
-          await this.stakecontract.methods
-            .stakeMGDCByIds(ids)
-            .send({ from: this.account });
-          location.reload();
-        }
-      } catch (err) {
-        console.log(err);
-        this.$store.commit("SET_PROFILE_IS_LOADING", false);
-      }
+      await this.stakecontract.methods.unstakeAll().send({ from: this.account });
+      location.reload();
     },
   },
 };
@@ -207,6 +172,9 @@ export default {
     display: block;
   }
 }
+.mt-1 {
+  margin-top: 4px;
+}
 .btn-check.active {
   opacity: 1;
 }
@@ -234,6 +202,29 @@ export default {
     padding: 7px;
     outline: none;
     color: white;
+  }
+}
+
+.stak-id {
+  border: 1px solid #821246;
+  background: #821246;
+  display: inline-block;
+  margin: 0 2px;
+  padding: 3px 12px 3px 5px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.9;
+  position: relative;
+  .fa-times {
+    position: absolute;
+    font-size: 10px;
+    top: 0;
+    right: 1px;
+  }
+  &:hover {
+    opacity: 1;
+    box-shadow: 0px 0px 7px 0px #ffffff;
   }
 }
 
@@ -267,10 +258,6 @@ export default {
     justify-content: center;
     margin: 2px;
   }
-}
-
-.active-chip {
-  border: 1px solid #eea1c5 !important;
 }
 
 .chip {
@@ -346,6 +333,10 @@ export default {
   height: 40px;
   width: 46px;
   border-radius: 50%;
+}
+
+.active-chip {
+  border: 1px solid #eea1c5 !important;
 }
 
 .tooltip {

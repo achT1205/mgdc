@@ -19,9 +19,14 @@
         </div>
       </div>
     </div>
-    <button class="connectButton" @click="list(localmgdc)">
-      {{ localmgdc.isListed ? "Already Listed" : "List on Tinder-Ape" }}
+    <button class="connectButton" @click="showListintChoices">
+      {{ localmgdc.isListed ? "Already Listed" : "List on Kinder-Ape" }}
     </button>
+    <div v-show="listingChoices" class="listing-choices">
+      <div class="breed-choice" @click="list('eth')">ETH</div>
+      <div class="breed-choice" @click="list('mgdc')">MGDC Token</div>
+      <i class="fas fa-times-circle close-choice" @click="closeBreed"></i>
+    </div>
     <div class="modal-window" v-show="show">
       <div>
         <a title="Close" class="modal-close" @click="show = false">
@@ -45,7 +50,7 @@ import { mapGetters } from "vuex";
 
 export default {
   name: "BreedCard",
-  props: ["mgdc", "contract", "toggleLoading", "listMgdc"],
+  props: ["mgdc", "contract", "toggleLoading", "listMgdc", "target"],
   computed: {
     ...mapGetters(["curremgdc"]),
   },
@@ -62,12 +67,24 @@ export default {
       localmgdc: null,
       show: false,
       biography: null,
+      listingChoices: false,
     };
   },
   async mounted() {
     this.localmgdc = { ...this.mgdc };
   },
   methods: {
+    closeBreed() {
+      this.listingChoices = null;
+    },
+    showListintChoices() {
+      if (this.localmgdc.isListed) return;
+      if (this.target === "BAYC") {
+        this.list("eth");
+      } else {
+        this.listingChoices = true;
+      }
+    },
     async toggle() {
       this.$store.commit("SET_PROFILE_IS_LOADING", true);
       await this.$store.dispatch("getMgdc", this.localmgdc.id);
@@ -86,15 +103,41 @@ export default {
     goToExternal(url) {
       window.open(url);
     },
-    list(mgdc) {
-      if (mgdc.isListed) return;
-      this.$emit("listMgdc", mgdc.id);
+    list(token) {
+      if (this.localmgdc.isListed) return;
+      this.$emit("listMgdc", { id: this.localmgdc.id, token: token });
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+.listing-choices {
+  margin-top: -28px;
+}
+.breed-choice {
+  background-color: #e53261;
+  border-radius: 10px;
+  align-items: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  opacity: 0.9;
+  text-align: center;
+  transition: all 100ms ease-in-out;
+  display: inline;
+  justify-content: center;
+
+  padding-right: 10px;
+  padding-left: 10px;
+  margin-left: 2px;
+  color: white !important;
+  &:hover {
+    filter: drop-shadow(0px 0px 5px $cerise-red);
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
 .teamMember {
   transition: all 500ms ease-in-out;
   margin-bottom: 50px;

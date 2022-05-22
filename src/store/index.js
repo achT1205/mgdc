@@ -18,44 +18,60 @@ export default new Vuex.Store({
   state: {
     RoadMap: [
       {
-        percent: 10,
+        percent: 5,
         color: "#f5819f",
-        text: "We serve champagne to our own real-life gold-diggers.",
+        text: "We update the website (in less than 7 days).",
+        diams: 1,
+        empty: 9
+      },
+      {
+        percent: 10,
+        color: "#f8517d",
+        text: "We create a new MGDC crypto-currency (in less than 14 days) coin.",
+        diams: 2,
+        empty: 8
       },
       {
         percent: 20,
-        color: "#f8517d",
-        text: "We break lose the Gold-Digger’s Furry Lapdog to all MGDC owners.",
+        color: "#e52c5d",
+        text: "We developpe a staking concept, which allows you to stake your gold digger and receive Meta Gold Digger Coin  (in less than 16 days).",
+        diams: 4,
+        empty: 6
       },
       {
         percent: 40,
-        color: "#e52c5d",
-        text: "We give M.G.D.C Gold-Diggers access to our lands in the Metaverse and we eventually allow the most famous Apes to join and meet with them. It’s your Gold-Digger’s chance to test her skills and attributes to seduce the wealthiest Apes in the Gold-Diggers’ Mansion.",
+        color: "#c3093a",
+        diams: 6,
+        empty: 4,
+        text: "We activate the breeding function with the Hape Beast collection, payment available in Meta Gold Digger Coin (TBD).",
       },
       {
         percent: 60,
-        color: "#c3093a",
-        text: "We are publishing the “Final Enigma”, a complex riddle which can only be solved through meticulous observation of our website contents, both pictures, and short film. The first 10 persons to solve the enigma will receive a unique Golden Gold-Digger and one real-life 24K Gold Gold-Digger Ape statue.",
-      },
-      {
-        percent: 70,
         color: "#aa042f",
-        text: "Each Gold-Digger Ape’s owner will receive one Wealthy Ape.",
+        diams: 7,
+        empty: 3,
+        text: "We launch Merch by creating the most famous gold-digger brand with also the possibility to buy it with Meta Gold Digger Coin (TBD).",
       },
       {
         percent: 80,
         color: "#860b2c",
-        text: "We activate the breeding function to allow our Gold-Diggers to breed with their Wealthy Ape: only those who own 2 Gold-Digger Apes will be able to give birth to one Baby Ape.",
+        diams: 8,
+        empty: 2,
+        text: "We launch a new surprise project (TDB).",
       },
       {
         percent: 90,
         color: "#5d001a",
-        text: "Each Gold-Digger Ape in possession of a baby will be paid with our MGDC coin.",
+        diams: 9,
+        empty: 1,
+        text: "We give a second life to our gold diggers by implementing them into the metaverse (TBD).",
       },
       {
         percent: 100,
         color: "#450011",
-        text: "We celebrate the completion of the roadmap in a last expensive night in Saint-Tropez where all the M.G.D.C community will be invited.",
+        diams: 10,
+        empty: 0,
+        text: "We celebrate the completion of the roadmap on a last expensive night in Saint Tropez where all the M.G.D.C. holders will be invited.",
       },
     ],
     TeamBoss: {
@@ -186,6 +202,101 @@ export default new Vuex.Store({
         discord: "",
         twitter: "",
       },
+    ],
+    teams: [
+      {
+        title: "Management",
+        members: [
+          {
+            name: "LOUIS<br/>CO FOUNDER",
+            pic: require("@/assets/imgs/Louis.png"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "CHLOE <br/>COMMUNITY MANAGER",
+            pic: require("@/assets/imgs/teams/chloe.png"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "LAURA<br/>GOLD DIGGER",
+            pic: require("@/assets/imgs/Laura.png"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "ANONYMOUS WHALE<br/>INVESTOR & ULTIMATE GOLD-DIGGER LOVER",
+            pic: require("@/assets/imgs/MGDC_1.jpg"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+        ]
+
+      },
+      {
+        title: "Board team members ",
+        members: [
+          {
+            name: "BEMBIS",
+            pic: require("@/assets/imgs/teams/bembis.jpeg"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "CONTEKK",
+            pic: require("@/assets/imgs/teams/contekk.jpeg"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "OOK",
+            pic: require("@/assets/imgs/teams/ook.jpeg"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "SJOEMH",
+            pic: require("@/assets/imgs/teams/sjoemh.jpeg"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+          {
+            name: "SSG-DaPeif",
+            pic: require("@/assets/imgs/teams/ssg-dapeif.jpeg"),
+            insta: "",
+            linkedin: "",
+            artstation: "",
+            discord: "",
+            twitter: "",
+          },
+        ]
+      }
+
     ],
     account: null,
     error: null,
@@ -408,20 +519,22 @@ export default new Vuex.Store({
         const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
         profile.maleId = await maleContract.methods
           .tokenOfOwnerByIndex(payload.account, 0).call();
-        const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
-        profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
-        profile.id = parseInt(profile.maleId)
-        commit("SET_PROFILE", profile)
+        if (profile.maleId) {
+          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
+          profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+          profile.id = parseInt(profile.maleId)
+          commit("SET_PROFILE", profile)
+        }
       } else {
         const resp = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
-          address: "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD",//payload.owner,
-          token_address: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af"//payload.contract,
+          address: payload.account,
+          token_address: process.env.VUE_APP_HAPE
         });
         if (resp.result && resp.result.length > 0) {
           profile = {
             id: resp.result[0].token_id,
-            url: `https://meta.hapeprime.com/${resp.result[0].token_id}.png`, //metadada.image,
+            url: `https://meta.hapeprime.com/${resp.result[0].token_id}.png`,
             selected: false,
             maleId: resp.result[0].token_id
           }
@@ -434,23 +547,23 @@ export default new Vuex.Store({
       if (payload.maleType === "BAYC") {
         const maleContract = new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
         const maleBalance = await maleContract.methods.balanceOf(payload.account).call();
-
-        for (let index = 0; index < maleBalance; index++) {
-          const profile = {}
-          profile.maleId = await maleContract.methods
-            .tokenOfOwnerByIndex(payload.account, index).call();
-          const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
-          profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
-          profile.id = parseInt(profile.maleId)
-          profile.selected = false
-          profiles.push(profile)
-        }
+        if (maleBalance > 0)
+          for (let index = 0; index < maleBalance; index++) {
+            const profile = {}
+            profile.maleId = await maleContract.methods
+              .tokenOfOwnerByIndex(payload.account, index).call();
+            const metadada = await axios.get(`https://ipfs.io/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/${profile.maleId}`)
+            profile.url = metadada.data.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+            profile.id = parseInt(profile.maleId)
+            profile.selected = false
+            profiles.push(profile)
+          }
       }
       else {
         const resp = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
-          address: "0xf6F6bE2Ceb02DB9953BA9394DC5ee7dcE1fCbbeD",//payload.owner,
-          token_address: "0x4Db1f25D3d98600140dfc18dEb7515Be5Bd293Af"//payload.contract,
+          address: payload.account,
+          token_address: process.env.VUE_APP_HAPE
         });
         if (resp.result && resp.result.length > 0) {
           console.log("resp.result : => ", resp.result)

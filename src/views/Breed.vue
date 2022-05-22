@@ -56,7 +56,34 @@
       </div>
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC breed</p>
-        <p class="text howMa">Find your partner</p>
+        <p class="text howMa">
+          Find your partner
+
+          <button
+            class="search-btn"
+            :class="showSearch ? 'active' : ''"
+            @click="toggleSearch"
+          >
+            <i class="fas fa-search fa-sm"></i>
+          </button>
+        </p>
+        <div class="modal-body">
+          <div class="search-mgdc" :class="showSearch ? 'show' : ''">
+            <label>Search</label>
+            <input
+              type="text"
+              ref="search"
+              v-model="search"
+              placeholder="Search by ID"
+              @keydown.enter="filter"
+            />
+            <i
+              class="fas fa-times-circle close clean-search"
+              v-if="search && search.length > 0"
+              @click="search = null"
+            ></i>
+          </div>
+        </div>
         <button class="connectButton" @click="connectWallet">
           {{
             account === null || !account
@@ -72,12 +99,13 @@
         v-if="freeMgdcs && freeMgdcs.length > 0"
         :breedContract="breedContract"
         @isTinderLoading="isTinderLoading"
+        ref="mgdcTinder"
       />
     </div>
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar @breed="breed" ref="breedSidebar" />
+    <breed-sidebar @breed="breed" :target="target" ref="breedSidebar" />
     <chat @sendMessage="sendMessage" v-if="maleBalance > 0" />
 
     <div
@@ -99,15 +127,18 @@
         <div class="warnning-notification-content">
           <h4 class="warnning-notification-title">
             {{ errorMsg }}
-            <span v-if="maleBalance == 0 && target === 'BAYC'">
+            <span v-if="maleBalance == 0">
               <a
-                href="https://opensea.io/assets?search[query]=0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
+                href="https://opensea.io/collection/boredapeyachtclub"
                 target="_blank"
                 class="buy-bn"
                 >Buy BAYC</a
               >
               or
-              <a href="https://opensea.io/assets/hapeprime" target="_blank" class="buy-bn"
+              <a
+                href="https://opensea.io/collection/hapeprime"
+                target="_blank"
+                class="buy-bn"
                 >Buy an HAPE</a
               >
             </span>
@@ -123,6 +154,7 @@
 
 <script>
 import breed from "../abis/breed.json";
+import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
@@ -159,6 +191,8 @@ export default {
       connectedStatus: "Not connected!",
       maleSymbol: null,
       show: false,
+      showSearch: false,
+      search: "",
     };
   },
   computed: {
@@ -171,13 +205,39 @@ export default {
       "isMatching",
       "profile",
       "profiles",
+      "curremgdc",
     ]),
+  },
+  watch: {
+    curremgdc(val) {
+      if (val) {
+        //this.$store.commit("SET_FREE_MGDCS", [val]);
+        this.$refs.mgdcTinder.clearn();
+        this.$refs.mgdcTinder.filtered(val);
+      }
+    },
+    search(val) {
+      if (!val || val.length === 0) {
+        this.$store.dispatch("fetchFreeMgdcs");
+        this.$refs.mgdcTinder.clearn();
+        this.$refs.mgdcTinder.mock();
+      }
+    },
   },
   async mounted() {
     this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
+    // if(this.target === "HAPE"){
+    //   this.target = "BAYC"
+    // }
     await this.init();
   },
   methods: {
+    toggleSearch() {
+      this.showSearch = !this.showSearch;
+      if (!this.showSearch) {
+        this.search = null;
+      }
+    },
     async init() {
       await this.loadWeb3();
       window.ethereum.on("accountsChanged", function () {
@@ -223,7 +283,6 @@ export default {
       this.isLoading = true;
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
-
         window.ethereum.on("accountsChanged", async (accounts) => {
           this.$store.commit("SET_ACCOUNT", accounts[0]);
           await this.fetchData();
@@ -245,12 +304,10 @@ export default {
         return;
       }
 
-      this.breedAddress =
+      this.breedContract =
         this.target === "HAPE"
-          ? process.env.VUE_APP_BREED_HAPE
-          : process.env.VUE_APP_BREED_BAYC;
-
-      this.breedContract = new web3.eth.Contract(breed, this.breedAddress);
+          ? new web3.eth.Contract(breedhape, process.env.VUE_APP_BREED_HAPE)
+          : new web3.eth.Contract(breed, process.env.VUE_APP_BREED_BAYC);
 
       this.maleContract =
         this.target === "HAPE"
@@ -299,12 +356,37 @@ export default {
         this.errorMsg = "Unable to connect to Metamask";
       }
     },
-    async breed(item) {
+    async breed(payload) {
+      const { item, token } = payload;
       if (this.target === "HAPE") {
-        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        this.$store.commit("SET_IS_MATCHIING", false);
-        this.$store.commit("SET_BREEDING", false);
-        return;
+        if (token === "eth") {
+          console.log(this.account);
+          await this.breedContract.methods.breed(item.mgdcId).send({
+            from: this.account,
+            value: "250000000000000000",
+          });
+          await this.$store.dispatch("breed", {
+            account: this.account,
+            mgdcId: item.mgdcId,
+            mgdcName: item.mgdcName,
+            hasBreed: true,
+          });
+        } else {
+          console.log(this.account);
+          await this.breedContract.methods.breedWithMGDCToken(item.mgdcId).send({
+            from: this.account,
+          });
+          await this.$store.dispatch("breed", {
+            account: this.account,
+            mgdcId: item.mgdcId,
+            mgdcName: item.mgdcName,
+            hasBreed: true,
+          });
+        }
+        // this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        // this.$store.commit("SET_IS_MATCHIING", false);
+        // this.$store.commit("SET_BREEDING", false);
+        // return;
       }
 
       const listed = await this.breedContract.methods
@@ -404,7 +486,6 @@ export default {
         this.$store.commit("SET_IS_MATCHIING", false);
       }
     },
-
     waitForOpenConnection() {
       return new Promise((resolve, reject) => {
         const maxNumberOfAttempts = 10;
@@ -423,7 +504,6 @@ export default {
         }, intervalTime);
       });
     },
-
     async sendMessage(message) {
       let msg = JSON.stringify(message);
       if (this.socket.readyState !== this.socket.OPEN) {
@@ -447,9 +527,12 @@ export default {
       };
       this.$store.commit("SET_MESSAGE", msg);
     },
-
     isTinderLoading(loading) {
       this.isLoading = loading;
+    },
+    async filter() {
+      console.log("this.search)", this.search);
+      await this.$store.dispatch("getMgdc", this.search);
     },
   },
 };
@@ -873,7 +956,7 @@ button {
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
-  z-index: 2000; /* Specify a stack order in case you're using a different order for other elements */
+  z-index: 2000; /* Specify a stake order in case you're using a different order for other elements */
   cursor: pointer; /* Add a pointer on hover */
 }
 
@@ -883,7 +966,7 @@ button {
 }
 
 .close {
-  color: #000;
+  color: #a0367f;
   font-size: 20px;
   margin-left: 10px;
 }
@@ -923,6 +1006,57 @@ button {
   100% {
     stroke-dasharray: 90, 150;
     stroke-dashoffset: -124;
+  }
+}
+
+.search-btn {
+  background: none;
+  border: 2px solid #fff;
+  border-radius: 100%;
+  width: 29px;
+  text-align: center;
+  height: 29px;
+}
+.search-btn.active {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0px 0px 7px 0px #ffffff;
+}
+
+.modal-body {
+  width: 100%;
+  color: #fff;
+  .search-mgdc {
+    border-radius: 18px;
+    margin-left: 25%;
+    width: 50%;
+    padding: 20px 12px 20px;
+    position: relative;
+    background: pink;
+    display: none;
+    label {
+      background: #a0367f;
+      position: absolute;
+      top: 12px;
+      left: 21px;
+      padding: 0 5px;
+    }
+    input {
+      border: 1px solid #a0367f !important;
+      height: 35px;
+      border-radius: 3px;
+      width: 100%;
+      background: transparent;
+      outline: #a0367f;
+    }
+  }
+  .search-mgdc.show {
+    display: block;
+  }
+  .clean-search {
+    position: absolute;
+    margin-left: -22px;
+    margin-top: 8px;
   }
 }
 </style>

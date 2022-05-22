@@ -31,6 +31,7 @@
           {{ curremgdcname }}
         </div>
       </template>
+      
     </beautiful-chat>
   </div>
 </template>

@@ -18,12 +18,12 @@
           </div>
           <div class="modal-body">
             <div class="search" :class="show ? 'show' : ''">
-              <label>Recherche</label>
+              <label>Search</label>
               <input
                 type="text"
                 ref="search"
                 v-model="search"
-                placeholder="Recherche par ID"
+                placeholder="Search by ID"
                 @keydown.enter="filter"
               />
             </div>
@@ -229,6 +229,7 @@ export default {
           border-radius: 3px;
           width: 100%;
           background: transparent;
+          outline: none;
         }
       }
       .search.show {

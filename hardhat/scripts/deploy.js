@@ -12,9 +12,16 @@ async function main() {
   let mgdc;
   let mGDCbreedBAYC;
   let mGDCStake;
+  let mGDCbreedHAPE;
+  let hapebeastToken;
   [owner, addr1, addr2, addr3, ...addrs] = await hre.ethers.getSigners();
 
   console.log(owner, addr1, addr2, addr3,addrs)
+
+  const HapebeastToken = await hre.ethers.getContractFactory("HapebeastToken");
+  hapebeastToken = await HapebeastToken.deploy();
+  await hapebeastToken.deployed();
+
 
   const BoredApeYachtClub = await hre.ethers.getContractFactory("BoredApeYachtClub");
   boredApeYachtClub = await BoredApeYachtClub.deploy("BoredApeYachtClub", "BAYC", 50000, 1650479190);
@@ -35,10 +42,16 @@ async function main() {
   await mGDCStake.deployed();
 
 
+  const MGDCbreedHAPE = await hre.ethers.getContractFactory("MGDCbreedHAPE");
+  mGDCbreedHAPE = await MGDCbreedHAPE.deploy("hapekid/not/reveal/uri", mGDCStake.address, mgdc.address, hapebeastToken.address);
+  await mGDCbreedHAPE.deployed();
+
+
 
   console.log("BoredApeYachtClub deployed to:", boredApeYachtClub.address);
   console.log("mgdc deployed to:", mgdc.address);
   console.log("MGDCbreedBAYC deployed to:", mGDCbreedBAYC.address);
+  console.log("MGDCbreedHAPE deployed to:", mGDCbreedHAPE.address);
   console.log("MGDCStake deployed to:", mGDCStake.address);
 
   // mgdc.setPresaleActive(false)

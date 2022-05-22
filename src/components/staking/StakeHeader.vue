@@ -1,7 +1,7 @@
 <template>
   <div class="topbar-container">
     <div class="topbar staking">
-      <img class="logo-png-transparent" :src="require(`@/assets/imgs/mdgc-logo.png`)" @click="goToExternal('https://discord.com/invite/9mxyH2eDr3')" />
+      <img class="logo-png-transparent" :src="require(`@/assets/imgs/mdgc-logo.png`)" @click="goToExternal('https://discord.gg/jXB2Sxgxzz')" />
       <button class="btn-wallet" @click="$emit('connect')">
           <span>
           {{
