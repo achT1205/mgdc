@@ -76,7 +76,7 @@ library Strings {
 
 // OpenZeppelin Contracts v4.4.1 (utils/Address.sol)
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Collection of functions related to the address type
@@ -296,7 +296,7 @@ library Address {
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC721/IERC721Receiver.sol)
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @title ERC721 token receiver interface
@@ -326,7 +326,7 @@ interface IERC721Receiver {
 
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -354,7 +354,7 @@ interface IERC165 {
 
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -385,7 +385,7 @@ abstract contract ERC165 is IERC165 {
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC721/IERC721.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -530,7 +530,7 @@ interface IERC721 is IERC165 {
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/IERC721Metadata.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -559,7 +559,7 @@ interface IERC721Metadata is IERC721 {
 
 // OpenZeppelin Contracts v4.4.1 (interfaces/IERC165.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 // File: @openzeppelin/contracts/interfaces/IERC2981.sol
@@ -567,7 +567,7 @@ pragma solidity ^0.8.0;
 
 // OpenZeppelin Contracts (last updated v4.5.0) (interfaces/IERC2981.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -594,7 +594,7 @@ interface IERC2981 is IERC165 {
 
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -621,7 +621,7 @@ abstract contract Context {
 
 // OpenZeppelin Contracts v4.4.1 (token/ERC721/ERC721.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 
@@ -1045,7 +1045,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
 // File: contracts/IHapebeastToken.sol
 
 
-pragma solidity ^0.8.6;
+//pragma solidity ^0.8.6;
 
 
 abstract contract IHapebeastToken is ERC721 {
@@ -1067,7 +1067,7 @@ abstract contract IHapebeastToken is ERC721 {
 
 // OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -1143,7 +1143,7 @@ abstract contract Ownable is Context {
 // File: contracts/HapeBeastToken.sol
 
 
-pragma solidity ^0.8.6;
+//pragma solidity ^0.8.6;
 
 // @title:  HAPE PRIME
 // @desc:   NEXT-GEN, HIGH FASHION HAPES

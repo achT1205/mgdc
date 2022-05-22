@@ -528,8 +528,8 @@ export default new Vuex.Store({
       } else {
         const resp = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
-          address: payload.owner,
-          token_address: payload.contract,
+          address: payload.account,
+          token_address: process.env.VUE_APP_HAPE
         });
         if (resp.result && resp.result.length > 0) {
           profile = {
@@ -562,8 +562,8 @@ export default new Vuex.Store({
       else {
         const resp = await Moralis.Web3API.account.getNFTsForContract({
           chain: "Eth",
-          address: payload.owner,
-          token_address: payload.contract,
+          address: payload.account,
+          token_address: process.env.VUE_APP_HAPE
         });
         if (resp.result && resp.result.length > 0) {
           console.log("resp.result : => ", resp.result)

@@ -105,7 +105,7 @@
 
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
     <img class="coin22" :src="require(`@/assets/imgs/coin-5@1x_cut.png`)" />
-    <breed-sidebar @breed="breed" ref="breedSidebar" />
+    <breed-sidebar @breed="breed" :target="target" ref="breedSidebar" />
     <chat @sendMessage="sendMessage" v-if="maleBalance > 0" />
 
     <div
@@ -154,6 +154,7 @@
 
 <script>
 import breed from "../abis/breed.json";
+import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
@@ -282,7 +283,6 @@ export default {
       this.isLoading = true;
       if (window.ethereum) {
         window.web3 = new Web3(window.ethereum);
-
         window.ethereum.on("accountsChanged", async (accounts) => {
           this.$store.commit("SET_ACCOUNT", accounts[0]);
           await this.fetchData();
@@ -304,12 +304,10 @@ export default {
         return;
       }
 
-      this.breedAddress =
+      this.breedContract =
         this.target === "HAPE"
-          ? process.env.VUE_APP_BREED_HAPE
-          : process.env.VUE_APP_BREED_BAYC;
-
-      this.breedContract = new web3.eth.Contract(breed, this.breedAddress);
+          ? new web3.eth.Contract(breedhape, process.env.VUE_APP_BREED_HAPE)
+          : new web3.eth.Contract(breed, process.env.VUE_APP_BREED_BAYC);
 
       this.maleContract =
         this.target === "HAPE"
@@ -358,12 +356,37 @@ export default {
         this.errorMsg = "Unable to connect to Metamask";
       }
     },
-    async breed(item) {
+    async breed(payload) {
+      const { item, token } = payload;
       if (this.target === "HAPE") {
-        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        this.$store.commit("SET_IS_MATCHIING", false);
-        this.$store.commit("SET_BREEDING", false);
-        return;
+        if (token === "eth") {
+          console.log(this.account);
+          await this.breedContract.methods.breed(item.mgdcId).send({
+            from: this.account,
+            value: "250000000000000000",
+          });
+          await this.$store.dispatch("breed", {
+            account: this.account,
+            mgdcId: item.mgdcId,
+            mgdcName: item.mgdcName,
+            hasBreed: true,
+          });
+        } else {
+          console.log(this.account);
+          await this.breedContract.methods.breedWithMGDCToken(item.mgdcId).send({
+            from: this.account,
+          });
+          await this.$store.dispatch("breed", {
+            account: this.account,
+            mgdcId: item.mgdcId,
+            mgdcName: item.mgdcName,
+            hasBreed: true,
+          });
+        }
+        // this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
+        // this.$store.commit("SET_IS_MATCHIING", false);
+        // this.$store.commit("SET_BREEDING", false);
+        // return;
       }
 
       const listed = await this.breedContract.methods
@@ -943,7 +966,7 @@ button {
 }
 
 .close {
-  color:#a0367f;
+  color: #a0367f;
   font-size: 20px;
   margin-left: 10px;
 }
@@ -1019,7 +1042,7 @@ button {
       padding: 0 5px;
     }
     input {
-      border: 1px solid #a0367f!important;
+      border: 1px solid #a0367f !important;
       height: 35px;
       border-radius: 3px;
       width: 100%;
