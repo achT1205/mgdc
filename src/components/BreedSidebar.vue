@@ -170,10 +170,11 @@ export default {
       this.$emit("breed", { item: item, token: token });
     },
     showBreeds(item) {
-      if(this.target === "BAYC") {
-        this.onBreed(item, 'eth')
+      if (this.target === "BAYC") {
+        this.onBreed(item, "eth");
+      } else {
+        this.showBreed = item.mgdcId;
       }
-      this.showBreed = item.mgdcId;
     },
     closeBreed() {
       this.showBreed = null;
