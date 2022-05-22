@@ -18,12 +18,12 @@
           </div>
           <div class="modal-body">
             <div class="search" :class="show ? 'show' : ''">
-              <label>Recherche</label>
+              <label>Search</label>
               <input
                 type="text"
                 ref="search"
                 v-model="search"
-                placeholder="Recherche par ID"
+                placeholder="Search by ID"
                 @keydown.enter="filter"
               />
             </div>
@@ -53,9 +53,26 @@
                   <div
                     class="join-us-on-discord2"
                     v-if="!profile && !item.hasBreed"
-                    @click="onBreed(item)"
+                    @click="showBreeds(item)"
                   >
                     Breed now
+                  </div>
+                  <div v-show="showBreed === item.mgdcId">
+                    <div
+                      class="breed-choice"
+                      v-if="!profile && !item.hasBreed"
+                      @click="onBreed(item, 'eth')"
+                    >
+                      ETH
+                    </div>
+                    <div
+                      class="breed-choice"
+                      v-if="!profile && !item.hasBreed"
+                      @click="onBreed(item, 'mgdc')"
+                    >
+                      MGDC Token
+                    </div>
+                    <i class="fas fa-times-circle close-choice" @click="closeBreed"></i>
                   </div>
                 </div>
                 <svg
@@ -92,12 +109,13 @@
 import { mapGetters } from "vuex";
 
 export default {
-  props: ["breed", "profile"],
+  props: ["breed", "profile", "target"],
   data: () => ({
     show: false,
     showSidebar: false,
     search: "",
     selected: null,
+    showBreed: null,
   }),
   mounted() {},
   watch: {
@@ -146,15 +164,37 @@ export default {
       if (other) participants.push(other);
       this.$store.commit("SET_PARTICIPANTS", participants);
     },
-    onBreed(item) {
+    onBreed(item, token) {
       this.selected = item.mgdcId;
       this.$store.commit("SET_BREEDING", true);
-      this.$emit("breed", item);
+      this.$emit("breed", { item: item, token: token });
+    },
+    showBreeds(item) {
+      if (this.target === "BAYC") {
+        this.onBreed(item, "eth");
+      } else {
+        this.showBreed = item.mgdcId;
+      }
+    },
+    closeBreed() {
+      this.showBreed = null;
     },
   },
 };
 </script>
 <style scoped lang="scss">
+.close-choice {
+  margin-top: -14px;
+
+  color: #aaa;
+  position: absolute;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover {
+    color: pink;
+  }
+}
+
 .spinner {
   animation: rotate 2s linear infinite;
   z-index: 2;
@@ -253,6 +293,7 @@ export default {
           border-radius: 3px;
           width: 100%;
           background: transparent;
+          outline: none;
         }
       }
       .search.show {
@@ -306,6 +347,7 @@ export default {
       box-shadow: 0 0 6px 0 rgba(110, 110, 110, 0.42);
       border-style: solid;
       border-color: pink;
+      padding-bottom: 15px;
     }
   }
 }
@@ -353,6 +395,7 @@ export default {
   justify-content: center;
   max-width: 120px;
   margin: 5px auto 0;
+  margin-bottom: 10px;
   &:hover {
     filter: drop-shadow(0px 0px 5px $cerise-red);
     //  filter: drop-shadow(0px 0px 1px #ffffff);
@@ -360,6 +403,31 @@ export default {
     transform: translateY(-1px);
   }
 }
+
+.breed-choice {
+  background-color: #e53261;
+  border-radius: 10px;
+  align-items: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  opacity: 0.9;
+  text-align: center;
+  transition: all 100ms ease-in-out;
+  display: inline;
+  justify-content: center;
+  margin-bottom: 10px;
+  padding-right: 10px;
+  padding-left: 10px;
+  margin-left: 2px;
+  color: white !important;
+  &:hover {
+    filter: drop-shadow(0px 0px 5px $cerise-red);
+    //  filter: drop-shadow(0px 0px 1px #ffffff);
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
 .match-list.with-search {
   height: 80vh;
 }

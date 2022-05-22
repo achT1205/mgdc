@@ -1,7 +1,7 @@
 <template>
   <div class="stak">
-    <h3>Claiming Reward</h3>
-    <div><p>You will be able to claim your tokens after the marketplace launch.</p></div>
+    <h3>Claim Reward</h3> 
+    <div><p>You will be able to claim your tokens after the marketplace's launch.</p></div>
     <div class="pending-balance">
       <div class="pending">
         {{ rewards ? rewards.substring(0, 6) : "" }} $mgdc
@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="d-flex stak-btn" @click="claim">
-      <button class="approve-stack-btn">Claim</button>
+      <button class="approve-stake-btn">Claim</button>
     </div>
   </div>
 </template>

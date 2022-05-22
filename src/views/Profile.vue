@@ -26,7 +26,8 @@
             :key="mgdc.id"
             :mgdc="mgdc"
             :contract="contract"
-            @listMgdc="list"
+            :target="target"
+            @listMgdc="listMgdc"
           />
         </div>
       </div>
@@ -71,6 +72,7 @@ import BreedCard from "@/components/BreedCard";
 var Web3 = require("web3");
 var CryptoJS = require("crypto-js");
 import breed from "../abis/breed.json";
+import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
@@ -268,12 +270,10 @@ export default {
         return;
       }
 
-      this.breedAddress =
+      this.contract =
         this.target === "HAPE"
-          ? process.env.VUE_APP_BREED_HAPE
-          : process.env.VUE_APP_BREED_BAYC;
-
-      this.contract = new web3.eth.Contract(breed, this.breedAddress);
+          ? new web3.eth.Contract(breedhape, process.env.VUE_APP_BREED_HAPE)
+          : new web3.eth.Contract(breed, process.env.VUE_APP_BREED_BAYC);
 
       this.malContract =
         this.target === "HAPE"
@@ -341,7 +341,8 @@ export default {
         this.errorMsg = "Unable to connect to Metamask";
       }
     },
-    async list(token_id) {
+    async listMgdc(payload) {
+      const { id, token } = payload;
       const web3 = window.web3;
       const networkId = await web3.eth.net.getId();
       if (networkId != process.env.VUE_APP_CHAIN_ID) {
@@ -350,12 +351,23 @@ export default {
       }
 
       if (this.target === "HAPE") {
+        if (token === "eth") {
+          await this.contract.methods.listBreeding(id).send({
+            from: this.accountID,
+            value: "250000000000000000",
+          });
+        } else {
+          await this.contract.methods.listBreedingWithMGDCToken(id).send({
+            from: this.accountID,
+          });
+        }
+
         this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
         return;
       }
 
       try {
-        await this.contract.methods.listBreeding(token_id).send({
+        await this.contract.methods.listBreeding(id).send({
           from: this.accountID,
           value: "250000000000000000",
         });

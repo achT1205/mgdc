@@ -17,7 +17,7 @@
         >
           <div class="info">
             <h3 class="title">{{ scope.data.item.name }}</h3>
-            <p>{{scope.data.item.biography}}</p>
+            <p>{{ scope.data.item.biography }}</p>
           </div>
         </div>
       </template>
@@ -60,10 +60,25 @@ export default {
     ...mapGetters(["matches"]),
   },
   methods: {
+    clearn(){
+      this.queue = [];
+      this.history = [];
+      this.offset = 0;
+    },
+    async filtered(val) {
+      const list = [];
+      if (val) {
+        list.push({
+          title: val.name,
+          item: val,
+        });
+      }
+      this.$emit("isTinderLoading", false);
+      this.queue.unshift(...list);
+    },
     async mock(append = true) {
       const list = [];
       let count = 0;
-
       if (this.source && this.source.length) {
         while (count < 5) {
           const id = this.source[this.offset].id;
