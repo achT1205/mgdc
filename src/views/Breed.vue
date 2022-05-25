@@ -211,7 +211,6 @@ export default {
   watch: {
     curremgdc(val) {
       if (val) {
-        //this.$store.commit("SET_FREE_MGDCS", [val]);
         this.$refs.mgdcTinder.clearn();
         this.$refs.mgdcTinder.filtered(val);
       }
@@ -226,9 +225,6 @@ export default {
   },
   async mounted() {
     this.target = this.$route.query.target ? this.$route.query.target : "BAYC";
-    // if(this.target === "HAPE"){
-    //   this.target = "BAYC"
-    // }
     await this.init();
   },
   methods: {
@@ -357,37 +353,8 @@ export default {
       }
     },
     async breed(payload) {
+      this.$store.commit("SET_BREEDING", true);
       const { item, token } = payload;
-      if (this.target === "HAPE") {
-        if (token === "eth") {
-          console.log(this.account);
-          await this.breedContract.methods.breed(item.mgdcId).send({
-            from: this.account,
-            value: "250000000000000000",
-          });
-          await this.$store.dispatch("breed", {
-            account: this.account,
-            mgdcId: item.mgdcId,
-            mgdcName: item.mgdcName,
-            hasBreed: true,
-          });
-        } else {
-          console.log(this.account);
-          await this.breedContract.methods.breedWithMGDCToken(item.mgdcId).send({
-            from: this.account,
-          });
-          await this.$store.dispatch("breed", {
-            account: this.account,
-            mgdcId: item.mgdcId,
-            mgdcName: item.mgdcName,
-            hasBreed: true,
-          });
-        }
-        // this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        // this.$store.commit("SET_IS_MATCHIING", false);
-        // this.$store.commit("SET_BREEDING", false);
-        // return;
-      }
 
       const listed = await this.breedContract.methods
         .MGDCisBreeding(parseInt(item.mgdcId))
@@ -396,11 +363,26 @@ export default {
         this.errorMsg = `This MGDC is not listed yet`;
         return;
       }
+
       try {
-        await this.breedContract.methods.breed(item.mgdcId).send({
-          from: this.account,
-          value: "250000000000000000",
-        });
+        if (this.target === "HAPE") {
+          if (token === "eth") {
+            await this.breedContract.methods.breed(item.mgdcId).send({
+              from: this.account,
+              value: "250000000000000000",
+            });
+          } else {
+            await this.breedContract.methods.breedWithMGDCToken(item.mgdcId).send({
+              from: this.account,
+            });
+          }
+        } else {
+          await this.breedContract.methods.breed(item.mgdcId).send({
+            from: this.account,
+            value: "250000000000000000",
+          });
+        }
+
         await this.$store.dispatch("breed", {
           account: this.account,
           mgdcId: item.mgdcId,
