@@ -361,9 +361,6 @@ export default {
             from: this.accountID,
           });
         }
-
-        this.errorMsg = `Breeding with Hapebeast is coming soon, stay tuned !`;
-        return;
       }
 
       try {
