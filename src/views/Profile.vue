@@ -76,6 +76,7 @@ import breedhape from "../abis/breedhape.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
+import mgdcstake from "../abis/mgdcstake.json";
 import address from "../address/address.json";
 import Switcher from "../components/Switcher.vue";
 import Chat from "@/components/Chat.vue";
@@ -118,7 +119,7 @@ export default {
       minted: false,
       isMinting: false,
       target: "BAYC",
-      malContractAddress: null,
+      contractMGDCStake: null,
       contractMGDC: [],
       breedAddress: null,
       malContract: null,
@@ -280,8 +281,10 @@ export default {
           ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
-      this.malContractAddress =
-        this.target === "HAPE" ? process.env.VUE_APP_HAPE : process.env.VUE_APP_BAYC;
+      this.contractMGDCStake = new web3.eth.Contract(
+        mgdcstake,
+        process.env.VUE_APP_MGDC_STAKE
+      );
 
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
@@ -349,25 +352,28 @@ export default {
         this.errorMsg = `Please change to ${process.env.VUE_APP_CHAIN_NAME}`;
         return;
       }
-
-      if (this.target === "HAPE") {
+      try {
         if (token === "eth") {
           await this.contract.methods.listBreeding(id).send({
             from: this.accountID,
             value: "250000000000000000",
           });
         } else {
-          await this.contract.methods.listBreedingWithMGDCToken(id).send({
-            from: this.accountID,
-          });
+          if (this.target === "HAPE") {
+            const breedPrice = await this.contract.methods.breedPrice().call();
+            await this.contractMGDCStake.methods
+              .approve(
+                process.env.VUE_APP_BREED_HAPE,
+                web3.utils.toWei(breedPrice.toString(), "ether")
+              )
+              .send({
+                from: this.accountID,
+              });
+            await this.contract.methods.listBreedingWithMGDCToken(id).send({
+              from: this.accountID,
+            });
+          }
         }
-      }
-
-      try {
-        await this.contract.methods.listBreeding(id).send({
-          from: this.accountID,
-          value: "250000000000000000",
-        });
 
         this.minted = true;
         this.isMinting = false;

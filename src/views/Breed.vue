@@ -155,6 +155,7 @@
 <script>
 import breed from "../abis/breed.json";
 import breedhape from "../abis/breedhape.json";
+import mgdcstake from "../abis/mgdcstake.json";
 import MGDC from "../abis/mgdc.json";
 import bayc from "../abis/bayc.json";
 import hape from "../abis/hape.json";
@@ -193,6 +194,7 @@ export default {
       show: false,
       showSearch: false,
       search: "",
+      contractMGDCStake: null,
     };
   },
   computed: {
@@ -310,6 +312,11 @@ export default {
           ? new web3.eth.Contract(hape, process.env.VUE_APP_HAPE)
           : new web3.eth.Contract(bayc, process.env.VUE_APP_BAYC);
 
+      this.contractMGDCStake = new web3.eth.Contract(
+        mgdcstake,
+        process.env.VUE_APP_MGDC_STAKE
+      );
+
       this.contractMGDC = new web3.eth.Contract(MGDC, process.env.VUE_APP_MGDC);
     },
     async fetchData() {
@@ -365,22 +372,26 @@ export default {
       }
 
       try {
-        if (this.target === "HAPE") {
-          if (token === "eth") {
-            await this.breedContract.methods.breed(item.mgdcId).send({
-              from: this.account,
-              value: "250000000000000000",
-            });
-          } else {
-            await this.breedContract.methods.breedWithMGDCToken(item.mgdcId).send({
-              from: this.account,
-            });
-          }
-        } else {
+        if (token === "eth") {
           await this.breedContract.methods.breed(item.mgdcId).send({
             from: this.account,
             value: "250000000000000000",
           });
+        } else {
+          if (this.target === "HAPE") {
+            const breedPrice = await this.breedContract.methods.breedPrice().call();
+            await this.contractMGDCStake.methods
+              .approve(
+                process.env.VUE_APP_BREED_HAPE,
+                Web3.utils.toWei(breedPrice.toString(), "ether")
+              )
+              .send({
+                from: this.account,
+              });
+            await this.breedContract.methods.breedWithMGDCToken(item.mgdcId).send({
+              from: this.account,
+            });
+          }
         }
 
         await this.$store.dispatch("breed", {
