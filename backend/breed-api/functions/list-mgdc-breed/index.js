@@ -21,17 +21,22 @@ exports.handler = async (event) => {
     const result = await clientdb.query(params).promise();
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: buildHeaders(),
       body: JSON.stringify(result.Items),
     };
   } catch (err) {
     console.error("Failed to load MGDC breed", err);
     return {
       statusCode: 500,
+      headers: buildHeaders(),
       body: err,
     };
   }
+};
+
+const buildHeaders = () => {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "application/json",
+  };
 };

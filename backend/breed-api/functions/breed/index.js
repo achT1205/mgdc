@@ -22,6 +22,7 @@ exports.handler = async (event) => {
     console.error("MGDC with %s is already breed", mgdcId);
     return {
       statusCode: 400,
+      headers: buildHeaders(),
       body: JSON.stringify({ error: `MGDC with ${mgdcId} is already breed` }),
     };
   }
@@ -44,15 +45,13 @@ exports.handler = async (event) => {
     console.log("Update successfully");
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: buildHeaders(),
     };
   } catch (err) {
     console.error("Failed to update breed", err);
     return {
       statusCode: 500,
+      headers: buildHeaders(),
       body: err,
     };
   }
@@ -94,4 +93,12 @@ const sendBreedEvent = async (owner, mgdcId) => {
   } catch (err) {
     console.error("Failed to send breed event", err);
   }
+};
+
+const buildHeaders = () => {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Credentials": true,
+  };
 };

@@ -11,6 +11,7 @@ exports.handler = async (event) => {
     console.error("Bad request: body is required");
     return {
       statusCode: 400,
+      headers: buildHeaders(),
       body: "Bad request: body is required",
     };
   }
@@ -22,6 +23,7 @@ exports.handler = async (event) => {
     console.error("Bad request: owner address or mgdc id are required");
     return {
       statusCode: 400,
+      headers: buildHeaders(),
       body: "Bad request: owner address or mgdc id are required",
     };
   }
@@ -31,6 +33,7 @@ exports.handler = async (event) => {
       console.error("MGDC with %s is already breed", mgdcId);
       return {
         statusCode: 400,
+        headers: buildHeaders(),
         body: JSON.stringify({ error: `MGDC with ${mgdcId} is already breed` }),
       };
     }
@@ -68,16 +71,14 @@ exports.handler = async (event) => {
     const rslt = JSON.stringify({ chatId: chatId });
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: buildHeaders(),
       body: rslt,
     };
   } catch (err) {
     console.error("Failed to store mgdc", err);
     return {
       statusCode: 500,
+      headers: buildHeaders(),
       body: err,
     };
   }
@@ -179,4 +180,12 @@ const searchChat = async (from, to, mgdcId) => {
   console.log("Query for searching chat", JSON.stringify(params));
   const result = await clientdb.query(params).promise();
   return result.Items.length > 0 ? result.Items : null;
+};
+
+const buildHeaders = () => {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Credentials": true,
+  };
 };
