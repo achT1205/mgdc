@@ -3,7 +3,7 @@
     <div class="viewContainer mint">
       <div class="mintCard">
         <p class="title1 mintTitle">MGDC mint</p>
-        <p class="text howMa">How many Gold-Diggers do you want to mint ?</p>
+        <p class="text howMa">How many Chihuahua do you want to mint ?</p>
         <div class="inline22">
           <button :class="`mintButton ${nftsCountToMint === 1 ? ' selected' : ''}`" @click="nftsCountToMint = 1">1</button>
           <button :class="`mintButton ${nftsCountToMint === 2 ? ' selected' : ''}`" @click="nftsCountToMint = 2">2</button>
@@ -15,6 +15,9 @@
         <div v-if="!notAllowed && accountID !== ''" class="text nbNft">Minted : {{ parseInt(currentSupply) + 393 }} / {{ parseInt(totalTokens) + 400 }}</div>
         <button class="connectButton" @click="connectWallet">{{ accountID === "" ? "Connect wallet" : accountID.substring(1, 9) + "..." + accountID.substring(accountID.length - 6) }}</button>
         <br />
+        <button v-if="!approved" :disabled="isMinting" class="validateButton" @click="mint">
+          {{ isMinting ? "Waiting..." : "Mint" }}
+        </button>
         <button v-if="!notAllowed" :disabled="isMinting" class="validateButton" @click="mint">
           {{ isMinting ? "Waiting..." : "Mint" }}
         </button>
@@ -57,7 +60,8 @@ export default {
       totalTokens: 5369,
       maxSupply: 5369,
       buyLimit: 2,
-      nftPrice: 250000000000000000,
+      approved: false,
+      nftPrice: 10000000000000000,
       whiteListMaxMint: 2,
       notAllowed: false,
       // Form data

@@ -2,19 +2,27 @@
   <div class="page">
     <div class="viewContainer mint">
       <div class="mintCard">
-        <p class="title1 mintTitle">MGDC mint page</p>
-        <p class="text howMa">How many Gold-Diggers do you want to mint ?</p>
+        <p class="title1 mintTitle">Chihuahua mint</p>
+        <p class="text howMa">How many Chihuahua do you want to mint (max 2) ?</p>
         <div class="inline22">
           <button :class="`mintButton ${nftsCountToMint === 1 ? ' selected' : ''}`" @click="nftsCountToMint = 1">1</button>
           <button :class="`mintButton ${nftsCountToMint === 2 ? ' selected' : ''}`" @click="nftsCountToMint = 2">2</button>
-          <button :class="`mintButton ${nftsCountToMint === 3 ? ' selected' : ''}`" @click="nftsCountToMint = 3">3</button>
         </div>
 
-        <p class="text nftPrice">Price : {{ (nftsCountToMint * nftPrice) / 1000000000000000000 }} ETH</p>
-        <p class="text nbNft">Minted : XXX/3,818</p>
-        <button class="connectButton">Connect wallet</button>
+        <p class="text nftPrice">Price : {{ (nftsCountToMint * nftPrice) / 1000000000000000000 }} MGDC Tokens</p>
+        <div v-if="accountID === ''" class="text nbNft">Minted : XXX / 4000</div>
+        <div v-if="!notAllowed && accountID !== ''" class="text nbNft">Minted : {{ parseInt(currentSupply) + 393 }} / {{ parseInt(totalTokens) + 400 }}</div>
+        <button class="connectButton" @click="connectWallet">{{ accountID === "" ? "Connect wallet" : accountID.substring(1, 9) + "..." + accountID.substring(accountID.length - 6) }}</button>
         <br />
-        <button class="validateButton">Mint</button>
+        <button v-if="!approved" :disabled="isMinting" class="validateButton" @click="approve">
+          {{ isMinting ? "Waiting..." : "Approve" }}
+        </button>
+        <button v-if="!notAllowed" :disabled="isMinting&&!approved" class="validateButton" @click="mint">
+          {{ isMinting ? "Waiting..." : "Mint" }}
+        </button>
+        <button v-if="notAllowed" :disabled="isMinting" class="validateButton" @click="mint">
+          {{ notAllowed ? "Please come back later" : "" }}
+        </button>
       </div>
     </div>
     <img class="redlip22" :src="require(`@/assets/imgs/redlip-2@1x.png`)" />
@@ -23,18 +31,220 @@
 </template>
 
 <script>
+var Web3 = require("web3");
+import mgdc from "../abis/chihuahua.json";
+import mgdcstake from "../abis/mgdcstake1.json";
+
+
 export default {
-  name: "Mint2",
+  name: "Mint",
   data() {
     return {
-      nftPrice: 250000000000000000,
-      nftsCountToMint: 3,
+      address: "",
+      accountID: "",
+      accountBalance: 0,
+      abi: [],
+      abi1:[],
+      contract1: [],
+      contract: [],
+      wlClaimed: 0,
+      // Contract
+      isActive: false,
+      isPresaleActive: false,
+      currentSupply: 0,
+      totalTokens: 4000,
+      approved:false,
+      maxSupply: 4000,
+      buyLimit: 2,
+      nftPrice: 1000000000000000000,
+      whiteListMaxMint: 2,
+      notAllowed: false,
+      // Form data
+      nftsCountToMint: 1,
+      minted: false,
+      isMinting: false,
     };
   },
+  async created() {
+    await this.loadWeb3();
+  },
   methods: {
-    goToExternal(url) {
-      window.open(url);
+    async loadWeb3(){
+      if (window.ethereum) {
+        window.web3 = new Web3(window.ethereum);
+
+        window.ethereum.on("accountsChanged", async (accounts) => {
+          await this.setWallet(accounts[0]);
+        });
+      } else if (window.web3) {
+        window.web3 = new Web3(window.web3.currentProvider);
+      } else {
+        window.alert("Non-Ethereum browser detected. You should consider trying MetaMask !");
+      }
+
+      await this.loadContractData();
+      setInterval(
+        function () {
+          this.loadContractData();
+        }.bind(this),
+        1000
+      );
     },
+    async pick(nftsCountToMint) {
+      this.nftsCountToMint = nftsCountToMint;
+      console.log(this.nftsCountToMint);
+    },
+    async loadContractData() {
+      const web3 = window.web3;
+      const networkId = await web3.eth.net.getId();
+
+      if (networkId !== mgdc.network) {
+        window.alert("Please change to ethereum mainnet.");
+        return;
+      }
+
+      this.abi = mgdc.abi;
+      this.abi1=mgdcstake.abi;
+      this.address = mgdc.address;
+      this.contract1=new web3.eth.Contract(this.abi1, mgdcstake.address);
+      this.contract = new web3.eth.Contract(this.abi, this.address);
+      this.nftPrice = await this.contract.methods.NFTPriceMgdc().call();
+      this.isActive = await this.contract.methods.isActive().call();
+      this.currentSupply = await this.contract.methods.totalSupply().call();
+      
+      
+    },
+    async setWallet(address) {
+      this.accountID = address;
+      this.notAllowed = false;
+      this.accountBalance = await window.web3.eth.getBalance(this.accountID);
+    },
+    async connectWallet() {
+      console.log("Connect to wallet");
+      const web3js = window.web3;
+      if (typeof web3js !== "undefined") {
+        this.web3 = new Web3(web3js.currentProvider);
+        const accounts = await window.ethereum
+          .request({
+            method: "eth_requestAccounts",
+          })
+          .catch((err) => {
+            alert(err.message);
+          });
+        await this.setWallet(accounts[0]);
+        console.log("wlClaimed " + this.wlClaimed);
+      } else {
+        // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
+        alert("Unable to connect to Metamask");
+      }
+    },async approve(e){
+  e.preventDefault();
+  if (this.accountID === "") {
+        window.alert("Please connect wallet first!");
+        this.isMinting = false;
+        return;
+      }
+    console.log(await this.contract1.methods.allowance(this.accountID,mgdc.address).call())
+  if(await this.contract1.methods.allowance(this.accountID,mgdc.address).call()>0){
+    window.alert("already approved");
+    this.approved=await this.contract1.methods.allowance(this.accountID,mgdc.address).call()>0?true:false
+  
+  }
+      
+  await this.contract1.methods.approve(mgdc.address,"10000000000000000000000000").send({
+              from: this.accountID,
+              value: 0,
+            })
+    },
+    //Minting Functionality
+    async mint(e) {
+      this.isMinting = true;
+      e.preventDefault();
+
+      if (this.accountID === "") {
+        window.alert("Please connect wallet first!");
+        this.isMinting = false;
+        return;
+      }
+       if(await this.contract1.methods.allowance(this.accountID,mgdc.address).call()==0){
+        window.alert("Not approved");
+     this.isMinting = false;
+        return;
+     }
+      this.isActive = await this.contract.methods.isActive().call();
+      console.log("isActive : ", this.isActive);
+      if (!this.isActive) {
+        this.isMinting = false;
+        alert("Sale is not active yet!");
+        return;
+      }
+
+      const noOfTokens = this.nftsCountToMint;
+      console.log("nftPrice : ", this.nftPrice);
+    
+            
+          const result = await this.contract.methods
+            .mintNFTWithToken(noOfTokens)
+            .send({
+              from: this.accountID,
+              value: 0,
+            })
+            .on("receipt", function (res) {
+              this.minted = true;
+              this.isMinting = false;
+              console.log("Receipt :", res);
+            })
+            .on("error", function (err) {
+              console.log(err);
+              alert("Transaction Error");
+              this.isMinting = false;
+            });
+          this.minted = true;
+          console.log("Test :", result);
+        
+      this.isMinting = false;
+    },//Minting Functionality
+    async mintNormal(e) {
+      this.isMinting = true;
+      e.preventDefault();
+
+      if (this.accountID === "") {
+        window.alert("Please connect wallet first!");
+        this.isMinting = false;
+        return;
+      }
+
+      this.isActive = await this.contract.methods.isActive().call();
+      console.log("isActive : ", this.isActive);
+      if (!this.isActive) {
+        this.isMinting = false;
+        alert("Sale is not active yet!");
+        return;
+      }
+
+      const noOfTokens = this.nftsCountToMint;
+      console.log("nftPrice : ", this.nftPrice);
+          const result = await this.contract.methods
+            .mintNFT(noOfTokens)
+            .send({
+              from: this.accountID,
+              value: parseInt(this.nftPrice) * noOfTokens,
+            })
+            .on("receipt", function (res) {
+              this.minted = true;
+              this.isMinting = false;
+              console.log("Receipt :", res);
+            })
+            .on("error", function (err) {
+              console.log(err);
+              alert("Transaction Error");
+              this.isMinting = false;
+            });
+          this.minted = true;
+          console.log("Test :", result);
+        
+      this.isMinting = false;
+    }
   },
 };
 </script>
@@ -175,7 +385,7 @@ button {
 .mintButton {
   width: 120px;
   height: 120px;
-  margin: auto;
+  // margin: auto;
   padding: 30px;
   padding-top: 10px;
   padding-left: 35px;
