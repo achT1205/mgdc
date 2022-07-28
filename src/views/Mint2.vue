@@ -3,7 +3,8 @@
     <div class="viewContainer mint">
       <div class="mintCard">
         <p class="title1 mintTitle">Chihuahua mint</p>
-        <p class="text howMa">How many Chihuahua do you want to mint (max 2) ?</p>
+        <p class="text howMa">How many Chihuahua do you want to mint ? (max 2 per wallet) </p>
+        
         <div class="inline22">
           <button :class="`mintButton ${nftsCountToMint === 1 ? ' selected' : ''}`" @click="nftsCountToMint = 1">1</button>
           <button :class="`mintButton ${nftsCountToMint === 2 ? ' selected' : ''}`" @click="nftsCountToMint = 2">2</button>
